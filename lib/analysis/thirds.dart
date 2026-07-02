@@ -31,7 +31,7 @@ ThirdsAlignment computeThirds(double cx, double cy,
       }
     }
   }
-  final score = 1 - (math.min(bestD / 0.4, 1.0) as double);
+  final score = 1.0 - math.min(bestD / 0.4, 1.0);
   final dx = bestX - cx;
   final dy = bestY - cy;
   final parts = <String>[];
