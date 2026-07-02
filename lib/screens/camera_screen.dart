@@ -1,4 +1,5 @@
 // lib/screens/camera_screen.dart
+import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -20,6 +21,7 @@ class _CameraScreenState extends State<CameraScreen> {
   final _camera = CameraService();
   late final PersonDetector _detector;
   late final AnalysisEngine _engine;
+  StreamSubscription<AccelerometerEvent>? _accelSub;
 
   SensorSample _sensor = const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0);
   GuideMetrics _metrics = GuideMetrics(
@@ -35,7 +37,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.initState();
     _detector = MlKitPersonDetector();
     _engine = AnalysisEngine(_detector);
-    accelerometerEventStream().listen((e) {
+    _accelSub = accelerometerEventStream().listen((e) {
       _sensor = SensorSample(accelX: e.x, accelY: e.y, accelZ: e.z);
     });
     _init();
@@ -62,17 +64,29 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _capture() async {
-    final path = await _camera.captureAndSave();
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('저장됨: $path')));
-      _camera.startStream(_onFrame);
+    try {
+      final path = await _camera.captureAndSave();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('저장됨: $path')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      }
+    } finally {
+      if (mounted) {
+        _camera.startStream(_onFrame);
+      }
     }
   }
 
   @override
   void dispose() {
+    _accelSub?.cancel();
     _camera.dispose();
     _detector.dispose();
     super.dispose();
