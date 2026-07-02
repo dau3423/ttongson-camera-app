@@ -48,9 +48,15 @@ lib/
 tool/verify.sh          # format 검사 + analyze + test (완료 게이트)
 flutter test            # 순수 로직 테스트
 flutter test test/analysis/tilt_test.dart   # 단일 파일
+dart analyze lib test   # 정적 분석 (아래 주의 참고)
 dart format lib test    # 포맷
 flutter run             # 실기기에서 앱 실행 (카메라/오버레이 수동 검증)
 ```
+
+> ⚠️ **`flutter analyze` 대신 `dart analyze lib test`를 쓴다.** 한글 디렉토리명(`똥손카메라`)
+> 때문에 `flutter analyze`는 분석 서버 LSP 버그로 크래시한다. `dart analyze`는 정상이며
+> `analysis_options.yaml`(flutter_lints)을 동일하게 적용한다. plan/브리프에 `flutter analyze`가
+> 보이면 `dart analyze lib test`로 대체할 것.
 
 ## 개발 규율
 
