@@ -15,8 +15,7 @@ class CameraService {
     return c;
   }
 
-  int get sensorOrientation =>
-      _controller?.description.sensorOrientation ?? 0;
+  int get sensorOrientation => _controller?.description.sensorOrientation ?? 0;
 
   Future<void> initialize() async {
     final cameras = await availableCameras();

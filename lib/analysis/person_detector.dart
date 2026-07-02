@@ -25,9 +25,11 @@ class MlKitPersonDetector implements PersonDetector {
     if (faces.isEmpty) return null;
 
     // 가장 큰 얼굴 선택 후, 얼굴 상단 위로 확장해 상반신 근사.
-    faces.sort((a, b) =>
-        (b.boundingBox.width * b.boundingBox.height)
-            .compareTo(a.boundingBox.width * a.boundingBox.height));
+    faces.sort(
+      (a, b) => (b.boundingBox.width * b.boundingBox.height).compareTo(
+        a.boundingBox.width * a.boundingBox.height,
+      ),
+    );
     final f = faces.first.boundingBox;
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
@@ -46,10 +48,10 @@ class MlKitPersonDetector implements PersonDetector {
   InputImage? _toInputImage(CameraImage image, int rotationDegrees) {
     final rotation =
         InputImageRotationValue.fromRawValue(rotationDegrees) ??
-            InputImageRotation.rotation0deg;
+        InputImageRotation.rotation0deg;
     final format =
         InputImageFormatValue.fromRawValue(image.format.raw as int) ??
-            InputImageFormat.nv21;
+        InputImageFormat.nv21;
     final plane = image.planes.first;
     return InputImage.fromBytes(
       bytes: plane.bytes,

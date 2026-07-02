@@ -18,8 +18,11 @@ class ThirdsAlignment {
 const _thirds = [1 / 3, 2 / 3];
 
 /// 피사체 중심(cx,cy)에 대해 가장 가까운 3분할 교차점과 정렬 지표를 계산.
-ThirdsAlignment computeThirds(double cx, double cy,
-    {double alignedTolerance = 0.05}) {
+ThirdsAlignment computeThirds(
+  double cx,
+  double cy, {
+  double alignedTolerance = 0.05,
+}) {
   double bestX = _thirds[0], bestY = _thirds[0], bestD = double.infinity;
   for (final tx in _thirds) {
     for (final ty in _thirds) {

@@ -23,10 +23,7 @@ class AnalysisEngine {
   final PersonDetector? detector;
   AnalysisEngine(this.detector);
 
-  GuideMetrics buildMetrics({
-    PersonBox? person,
-    required SensorSample sensor,
-  }) {
+  GuideMetrics buildMetrics({PersonBox? person, required SensorSample sensor}) {
     final tilt = computeTilt(sensor.accelX, sensor.accelY);
     final pitch = computePitch(sensor.accelY, sensor.accelZ);
     final angle = computeAngle(pitch, hasPerson: person != null);

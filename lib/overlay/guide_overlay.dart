@@ -59,8 +59,7 @@ class GuidePainter extends CustomPainter {
     final half = size.width * 0.15;
     final dxr = half * math.cos(rad);
     final dyr = half * math.sin(rad);
-    canvas.drawLine(
-        Offset(cx - dxr, cy - dyr), Offset(cx + dxr, cy + dyr), p);
+    canvas.drawLine(Offset(cx - dxr, cy - dyr), Offset(cx + dxr, cy + dyr), p);
   }
 
   void _paintPerson(Canvas canvas, Size size) {
@@ -72,8 +71,12 @@ class GuidePainter extends CustomPainter {
       ..strokeWidth = 2
       ..color = cropped ? _warn : _good;
     canvas.drawRect(
-      Rect.fromLTWH(person.left * size.width, person.top * size.height,
-          person.width * size.width, person.height * size.height),
+      Rect.fromLTWH(
+        person.left * size.width,
+        person.top * size.height,
+        person.width * size.width,
+        person.height * size.height,
+      ),
       p,
     );
   }

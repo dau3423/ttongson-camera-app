@@ -18,8 +18,11 @@ double computePitch(double accelY, double accelZ) {
 }
 
 /// 인물 촬영 시 눈높이 대비 촬영 각도를 안내.
-AngleAdvice computeAngle(double pitchDegrees,
-    {bool hasPerson = false, double eyeLevelTolerance = 10}) {
+AngleAdvice computeAngle(
+  double pitchDegrees, {
+  bool hasPerson = false,
+  double eyeLevelTolerance = 10,
+}) {
   String hint = '';
   if (hasPerson) {
     if (pitchDegrees > eyeLevelTolerance) {
@@ -32,8 +35,11 @@ AngleAdvice computeAngle(double pitchDegrees,
 }
 
 /// 피사체 높이 비율로 줌/거리 조정을 안내.
-ZoomAdvice computeZoom(double subjectHeightRatio,
-    {double idealMin = 0.5, double idealMax = 0.8}) {
+ZoomAdvice computeZoom(
+  double subjectHeightRatio, {
+  double idealMin = 0.5,
+  double idealMax = 0.8,
+}) {
   String hint;
   if (subjectHeightRatio < idealMin) {
     hint = '조금 다가가거나 확대하세요';
