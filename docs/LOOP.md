@@ -1,0 +1,39 @@
+# 실행 루프 (Loop Engineering)
+
+이 프로젝트는 `docs/superpowers/plans/2026-07-02-ttongson-camera-phase0-1.md`의 13개 태스크를
+**태스크 단위 subagent-driven 루프**로 완성한다.
+
+## 태스크 사이클 (태스크 N마다 반복)
+
+```
+1. 준비    plan에서 Task N의 Files/Interfaces/Steps를 읽는다.
+2. 실행    새 서브에이전트를 띄워 Task N만 수행:
+             - 계산부(analysis 순수함수): 실패 테스트 → 최소 구현 → 통과
+             - 카메라/오버레이/플러그인: 구현 + (기기 필요 시) 수동 검증 지시
+3. 게이트   tool/verify.sh 실행 → 통과해야 다음 단계.
+             (플러그인/UI 태스크는 flutter analyze까지만 자동, 실기기 검증은 사람 확인)
+4. 검토    diff를 검토한다: 규약 준수? 타입 일관성? plan 벗어남 없음?
+5. 커밋    Conventional Commit으로 커밋. 체크박스 [x] 표시.
+6. 다음    Task N+1로. 실패하면 systematic-debugging으로 고친 뒤 재게이트.
+```
+
+## 게이트 규칙
+
+- **계산부 태스크(3,4,5,6,7,10):** `tool/verify.sh` 완전 통과가 하드 게이트.
+- **세팅/플러그인/UI 태스크(1,2,8,9,11,12,13):** `flutter analyze` 통과 + 필요 시 실기기 `flutter run` 수동 확인.
+- 완료 주장 전 항상 게이트를 **실제로 실행**하고 출력으로 증명한다(증거 우선).
+
+## 자동화 (하네스)
+
+- **포맷 훅:** Dart 파일을 Write/Edit하면 `.claude/settings.json`의 PostToolUse 훅이 `dart format`을 자동 적용.
+- **권한:** flutter/dart/git 명령은 `.claude/settings.json`에서 사전 허용 → 루프 중 권한 프롬프트로 끊기지 않음.
+
+## 실행 방식 선택
+
+- **Subagent-Driven (권장):** 태스크당 새 서브에이전트 + 태스크 사이 검토. `superpowers:subagent-driven-development` 사용.
+- **Inline:** 이 세션에서 순차 실행 + 체크포인트. `superpowers:executing-plans` 사용.
+
+## 진행 현황
+
+- Phase 0+1: Task 1~13 (미시작)
+- Phase 2 (클라우드 AI 추천): 별도 plan 예정
