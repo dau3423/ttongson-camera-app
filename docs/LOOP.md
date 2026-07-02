@@ -35,5 +35,10 @@
 
 ## 진행 현황
 
-- Phase 0+1: Task 1~13 (미시작)
+- Phase 0+1: Task 1~13 **완료** (branch `feature/phase0-1`, 17 commits, `tool/verify.sh` 통과, 31/31 tests).
+  - 최종 전체 리뷰(opus)에서 통합 이슈 발견 → 안전 수정 완료(포트레이트 고정, init 에러 UX, activeHints 테스트).
+  - **남은 결정/기기 검증:**
+    - (결정) 크롭 감지: 얼굴만 감지하므로 3× 하단 확장이 bottom-crop 오탐 → 크롭 판정 방식 재설계 필요.
+    - (기기) 90/270° 회전 시 detector 정규화, 오버레이-프리뷰 종횡비 정렬.
+    - (빌드) gallery_saver 2.3.2 Android namespace — `flutter build apk` 실검증.
 - Phase 2 (클라우드 AI 추천): 별도 plan 예정
