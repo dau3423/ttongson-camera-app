@@ -13,8 +13,11 @@ fi
 echo "▶ dart format (검사만)"
 dart format --output=none --set-exit-if-changed lib test
 
-echo "▶ flutter analyze"
-flutter analyze
+# NOTE: `flutter analyze` crashes on this repo's Korean path (똥손카메라) due to an
+# analysis-server LSP bug. `dart analyze` is unaffected and honors analysis_options.yaml
+# (flutter_lints), so we use it as the gate.
+echo "▶ dart analyze"
+dart analyze lib test
 
 echo "▶ flutter test"
 flutter test
