@@ -1,6 +1,6 @@
 // lib/camera/camera_service.dart
 import 'package:camera/camera.dart';
-import 'package:gallery_saver/gallery_saver.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 
 /// 카메라 프리뷰/프레임 스트림/촬영·저장을 캡슐화한다.
 class CameraService {
