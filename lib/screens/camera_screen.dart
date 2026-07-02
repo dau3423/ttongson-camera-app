@@ -31,6 +31,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _ready = false;
   bool _showGrid = true;
   bool _processing = false;
+  String? _initError;
 
   @override
   void initState() {
@@ -44,9 +45,13 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _init() async {
-    await _camera.initialize();
-    _camera.startStream(_onFrame);
-    if (mounted) setState(() => _ready = true);
+    try {
+      await _camera.initialize();
+      _camera.startStream(_onFrame);
+      if (mounted) setState(() => _ready = true);
+    } catch (e) {
+      if (mounted) setState(() => _initError = e.toString());
+    }
   }
 
   Future<void> _onFrame(CameraImage image) async {
@@ -94,6 +99,34 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_initError != null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _initError!,
+                style: const TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _initError = null;
+                    _ready = false;
+                  });
+                  _init();
+                },
+                child: const Text('다시 시도'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     if (!_ready) {
       return const Scaffold(
         backgroundColor: Colors.black,
