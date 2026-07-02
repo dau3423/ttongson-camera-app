@@ -23,7 +23,11 @@ class AnalysisEngine {
   final PersonDetector? detector;
   AnalysisEngine(this.detector);
 
-  GuideMetrics buildMetrics({PersonBox? person, required SensorSample sensor}) {
+  GuideMetrics buildMetrics({
+    PersonBox? person,
+    PersonBox? face,
+    required SensorSample sensor,
+  }) {
     final tilt = computeTilt(sensor.accelX, sensor.accelY);
     final pitch = computePitch(sensor.accelY, sensor.accelZ);
     final angle = computeAngle(pitch, hasPerson: person != null);
@@ -31,13 +35,15 @@ class AnalysisEngine {
     if (person == null) {
       return GuideMetrics(tilt: tilt, angle: angle);
     }
+    // 잘림 감지는 실제 관측된 얼굴 박스 사용(face); 없으면 person으로 폴백.
+    final cropBox = face ?? person;
     return GuideMetrics(
       tilt: tilt,
       angle: angle,
       person: person,
       thirds: computeThirds(person.centerX, person.centerY),
       headroom: computeHeadroom(person),
-      crop: detectCrop(person),
+      crop: detectCrop(cropBox),
       zoom: computeZoom(person.height),
     );
   }

@@ -58,8 +58,15 @@ class _CameraScreenState extends State<CameraScreen> {
     if (_processing) return; // 스로틀: 재진입 방지
     _processing = true;
     try {
-      final person = await _detector.detect(image, _camera.sensorOrientation);
-      final m = _engine.buildMetrics(person: person, sensor: _sensor);
+      final detection = await _detector.detect(
+        image,
+        _camera.sensorOrientation,
+      );
+      final m = _engine.buildMetrics(
+        person: detection?.person,
+        face: detection?.face,
+        sensor: _sensor,
+      );
       if (mounted) setState(() => _metrics = m);
     } catch (_) {
       // 프레임 단위 실패는 무시(다음 프레임 계속)
