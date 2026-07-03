@@ -1,12 +1,19 @@
 // functions/src/advise.ts
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import { requestAdvice } from "./claude.js";
+import { windowStart, overLimit } from "./ratelimit.js";
 import type { OnDeviceMetrics } from "./advice.js";
+
+if (getApps().length === 0) initializeApp();
 
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // base64 기준 대략 상한
+const RATE_MAX = 20; // deviceId당 분당 최대 호출
+const RATE_WINDOW_MS = 60_000;
 
 export const advise = onCall(
   {
@@ -19,6 +26,7 @@ export const advise = onCall(
     const data = request.data as {
       imageBase64?: string;
       mediaType?: string;
+      deviceId?: string;
       metrics?: OnDeviceMetrics;
     };
 
@@ -30,6 +38,24 @@ export const advise = onCall(
     }
     if (data.mediaType !== "image/jpeg") {
       throw new HttpsError("invalid-argument", "mediaType은 image/jpeg만 지원합니다");
+    }
+
+    const deviceId = data.deviceId;
+    if (typeof deviceId !== "string" || deviceId.length === 0 || deviceId.length > 64) {
+      throw new HttpsError("invalid-argument", "deviceId가 필요합니다");
+    }
+
+    const now = Date.now();
+    const win = windowStart(now, RATE_WINDOW_MS);
+    const ref = getFirestore().collection("rate_limits").doc(`${deviceId}_${win}`);
+    const count = await getFirestore().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const current = (snap.exists ? (snap.data()?.count as number) : 0) ?? 0;
+      tx.set(ref, { count: current + 1, expiresAt: win + RATE_WINDOW_MS }, { merge: true });
+      return current + 1;
+    });
+    if (overLimit(count, RATE_MAX)) {
+      throw new HttpsError("resource-exhausted", "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     try {
