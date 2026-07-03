@@ -10,6 +10,11 @@ import '../analysis/guide_metrics.dart';
 import '../analysis/tilt.dart';
 import '../analysis/angle_zoom.dart';
 import '../overlay/guide_overlay.dart';
+import '../cloud/cloud_advisor.dart';
+import '../cloud/composition_advice.dart';
+import '../cloud/advice_overlay.dart';
+import '../cloud/advice_consent.dart';
+import '../cloud/device_id.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -22,6 +27,12 @@ class _CameraScreenState extends State<CameraScreen> {
   late final PersonDetector _detector;
   late final AnalysisEngine _engine;
   StreamSubscription<AccelerometerEvent>? _accelSub;
+
+  final CloudAdvisor _advisor = CloudAdvisor();
+  final AdviceConsentStore _consent = AdviceConsentStore();
+  final DeviceId _deviceId = DeviceId();
+  CompositionAdvice? _advice;
+  bool _adviceLoading = false;
 
   SensorSample _sensor = const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0);
   GuideMetrics _metrics = GuideMetrics(
@@ -93,6 +104,55 @@ class _CameraScreenState extends State<CameraScreen> {
       if (mounted) {
         _camera.startStream(_onFrame);
       }
+    }
+  }
+
+  Future<void> _requestAdvice() async {
+    if (_adviceLoading) return;
+
+    // 최초 1회 동의
+    if (!await _consent.hasConsented()) {
+      if (!mounted) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('구도 추천 안내'),
+          content: const Text(
+            '구도 추천 시 현재 화면 1장을 분석 서버로 전송합니다. '
+            '이미지는 저장하지 않습니다.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('동의'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+      await _consent.setConsented();
+    }
+
+    setState(() => _adviceLoading = true);
+    try {
+      final deviceId = await _deviceId.get();
+      final framePath = await _camera.captureFrameForAdvice();
+      final advice = await _advisor.suggest(framePath, _metrics, deviceId);
+      if (mounted) setState(() => _advice = advice);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('추천을 못 받았어요. 다시 시도해 주세요.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _adviceLoading = false);
+      // 스트림 재개 (captureFrameForAdvice가 멈춤)
+      _camera.startStream(_onFrame);
     }
   }
 
@@ -193,10 +253,29 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 48),
+                IconButton(
+                  icon: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  onPressed: _requestAdvice,
+                ),
               ],
             ),
           ),
+          if (_advice != null)
+            AdviceOverlay(
+              advice: _advice!,
+              onClose: () => setState(() => _advice = null),
+            ),
+          if (_adviceLoading)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black38,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
         ],
       ),
     );
