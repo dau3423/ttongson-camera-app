@@ -838,8 +838,8 @@ git commit -m "feat: add image downsize calc (TDD) and JPEG encoder"
 - Consumes: `cloud_functions`, `CompositionAdvice` (Task 5), `encodeDownsizedJpeg`/`fileToBase64` (Task 6), `GuideMetrics` (Phase 1, `lib/analysis/guide_metrics.dart`).
 - Produces:
   - `class CloudAdviceException implements Exception { final String message; }`
-  - `class CloudAdvisor { CloudAdvisor({FirebaseFunctions? functions}); Future<CompositionAdvice> suggest(String jpegPath, GuideMetrics metrics); }`
-  - `suggest`: 다운사이즈→base64→callable `advise` 호출(5초 타임아웃)→`CompositionAdvice.fromJson`. 실패 시 `CloudAdviceException` throw.
+  - `class CloudAdvisor { CloudAdvisor({FirebaseFunctions? functions}); Future<CompositionAdvice> suggest(String jpegPath, GuideMetrics metrics, String deviceId); }`
+  - `suggest`: 다운사이즈→base64→callable `advise` 호출(5초 타임아웃, `deviceId` 포함)→`CompositionAdvice.fromJson`. 실패 시 `CloudAdviceException` throw. `deviceId`는 백엔드 레이트리밋 키(Task 11).
 
 > callable/네트워크 의존이라 자동 유닛테스트 없음. 게이트는 `dart analyze` + 기기 검증(Task 10). 파싱·인코딩은 Task 5/6에서 테스트됨.
 
@@ -865,7 +865,11 @@ class CloudAdvisor {
   CloudAdvisor({FirebaseFunctions? functions})
       : _functions = functions ?? FirebaseFunctions.instance;
 
-  Future<CompositionAdvice> suggest(String jpegPath, GuideMetrics metrics) async {
+  Future<CompositionAdvice> suggest(
+    String jpegPath,
+    GuideMetrics metrics,
+    String deviceId,
+  ) async {
     try {
       final downsized = await encodeDownsizedJpeg(jpegPath);
       final base64 = await fileToBase64(downsized);
@@ -876,6 +880,7 @@ class CloudAdvisor {
       final result = await callable.call<Map<String, dynamic>>({
         'imageBase64': base64,
         'mediaType': 'image/jpeg',
+        'deviceId': deviceId,
         'metrics': _metricsPayload(metrics),
       });
       return CompositionAdvice.fromJson(Map<String, dynamic>.from(result.data));
@@ -949,16 +954,17 @@ git commit -m "feat: add captureFrameForAdvice (no gallery save)"
 
 ---
 
-## Task 9: `AdviceOverlay` 위젯 + 동의 저장소
+## Task 9: `AdviceOverlay` 위젯 + 동의 저장소 + DeviceId
 
 **Files:**
-- Create: `lib/cloud/advice_overlay.dart`, `lib/cloud/advice_consent.dart`
+- Create: `lib/cloud/advice_overlay.dart`, `lib/cloud/advice_consent.dart`, `lib/cloud/device_id.dart`
 
 **Interfaces:**
 - Consumes: `CompositionAdvice`/`AdviceAxis` (Task 5), `shared_preferences`.
 - Produces:
   - `class AdviceOverlay extends StatelessWidget { final CompositionAdvice advice; final VoidCallback onClose; }` — headline·directions·rationale 카드 표시.
   - `class AdviceConsentStore { Future<bool> hasConsented(); Future<void> setConsented(); }` — SharedPreferences 플래그.
+  - `class DeviceId { Future<String> get(); }` — 기기별 안정 UUID를 SharedPreferences에 1회 생성·보관(레이트리밋 키).
 
 > 위젯/플러그인 의존이라 자동 테스트 없음. 게이트는 `dart analyze` + 시각 검증(Task 10).
 
@@ -1070,16 +1076,46 @@ class AdviceOverlay extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 3: 분석 + 전체 테스트**
+- [ ] **Step 3: device_id.dart 구현**
+
+```dart
+// lib/cloud/device_id.dart
+import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// 기기별 안정 식별자(레이트리밋 키). 최초 1회 생성해 SharedPreferences에 보관.
+/// 계정/인증이 아니며 프라이버시 목적으로만 사용(개인정보 아님).
+class DeviceId {
+  static const _key = 'device_id';
+
+  Future<String> get() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_key);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final id = _randomId();
+    await prefs.setString(_key, id);
+    return id;
+  }
+
+  String _randomId() {
+    // dart:math Random.secure 기반 16바이트 hex (UUID 형식 불필요, 충돌만 회피).
+    final rnd = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+}
+```
+
+- [ ] **Step 4: 분석 + 전체 테스트**
 
 Run: `dart analyze lib test && flutter test 2>&1 | tail -3`
 Expected: analyze 에러 없음, 기존 테스트 전부 PASS.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add lib/cloud/advice_overlay.dart lib/cloud/advice_consent.dart
-git commit -m "feat: add AdviceOverlay card and consent store"
+git add lib/cloud/advice_overlay.dart lib/cloud/advice_consent.dart lib/cloud/device_id.dart
+git commit -m "feat: add AdviceOverlay card, consent store, and device id"
 ```
 
 ---
@@ -1101,6 +1137,7 @@ git commit -m "feat: add AdviceOverlay card and consent store"
 ```dart
   final CloudAdvisor _advisor = CloudAdvisor();
   final AdviceConsentStore _consent = AdviceConsentStore();
+  final DeviceId _deviceId = DeviceId();
   CompositionAdvice? _advice;
   bool _adviceLoading = false;
 ```
@@ -1110,6 +1147,7 @@ import '../cloud/cloud_advisor.dart';
 import '../cloud/composition_advice.dart';
 import '../cloud/advice_overlay.dart';
 import '../cloud/advice_consent.dart';
+import '../cloud/device_id.dart';
 ```
 
 - [ ] **Step 2: 트리거 핸들러 추가**
@@ -1142,8 +1180,9 @@ import '../cloud/advice_consent.dart';
     setState(() => _adviceLoading = true);
     String? framePath;
     try {
+      final deviceId = await _deviceId.get();
       framePath = await _camera.captureFrameForAdvice();
-      final advice = await _advisor.suggest(framePath, _metrics);
+      final advice = await _advisor.suggest(framePath, _metrics, deviceId);
       if (mounted) setState(() => _advice = advice);
     } catch (e) {
       if (mounted) {
@@ -1208,27 +1247,287 @@ git commit -m "feat: wire cloud advice trigger, consent, loading, and fallback"
 
 ---
 
+## Task 11: 백엔드 레이트리밋 (Firestore 고정 윈도우, deviceId 기준)
+
+**Files:**
+- Create: `functions/src/ratelimit.ts`, `functions/test/ratelimit.test.ts`
+- Modify: `functions/src/advise.ts`
+
+**Interfaces:**
+- Consumes: `firebase-admin/firestore`.
+- Produces:
+  - `functions/src/ratelimit.ts`: `export function windowStart(nowMs: number, windowMs: number): number` (윈도우 시작 ms), `export function overLimit(count: number, max: number): boolean`. [순수, TDD]
+  - `advise.ts`: `deviceId` 검증 + Firestore 고정 윈도우 카운터로 분당 `RATE_MAX`회 초과 시 `HttpsError("resource-exhausted")`.
+
+- [ ] **Step 1: 순수 로직 실패 테스트 작성**
+
+`functions/test/ratelimit.test.ts`:
+```typescript
+import { describe, it, expect } from "vitest";
+import { windowStart, overLimit } from "../src/ratelimit.js";
+
+describe("windowStart", () => {
+  it("윈도우 경계로 내림", () => {
+    expect(windowStart(12_345, 60_000)).toBe(0);
+    expect(windowStart(65_000, 60_000)).toBe(60_000);
+    expect(windowStart(120_000, 60_000)).toBe(120_000);
+  });
+});
+
+describe("overLimit", () => {
+  it("count가 max 이상이면 true", () => {
+    expect(overLimit(5, 5)).toBe(true);
+    expect(overLimit(6, 5)).toBe(true);
+    expect(overLimit(4, 5)).toBe(false);
+  });
+});
+```
+
+- [ ] **Step 2: 테스트 실패 확인**
+
+Run: `cd functions && npx vitest run 2>&1 | tail -20 ; cd ..`
+Expected: FAIL — `ratelimit.js` 없음.
+
+- [ ] **Step 3: ratelimit.ts 구현**
+
+```typescript
+// functions/src/ratelimit.ts
+/** 고정 윈도우 시작 시각(ms). */
+export function windowStart(nowMs: number, windowMs: number): number {
+  return Math.floor(nowMs / windowMs) * windowMs;
+}
+
+/** 현재 카운트가 상한 이상인지. */
+export function overLimit(count: number, max: number): boolean {
+  return count >= max;
+}
+```
+
+- [ ] **Step 4: 테스트 통과 확인**
+
+Run: `cd functions && npx vitest run 2>&1 | tail -20 ; cd ..`
+Expected: PASS (전체, 기존 advice.test 포함).
+
+- [ ] **Step 5: advise.ts에 레이트리밋 통합**
+
+`functions/src/advise.ts` 상단 import·초기화 추가:
+```typescript
+import { getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { windowStart, overLimit } from "./ratelimit.js";
+
+if (getApps().length === 0) initializeApp();
+
+const RATE_MAX = 20; // deviceId당 분당 최대 호출
+const RATE_WINDOW_MS = 60_000;
+```
+핸들러 내부, 이미지 검증 직후·`requestAdvice` 호출 전에 추가:
+```typescript
+    const deviceId = data.deviceId;
+    if (typeof deviceId !== "string" || deviceId.length === 0 || deviceId.length > 64) {
+      throw new HttpsError("invalid-argument", "deviceId가 필요합니다");
+    }
+
+    const now = Date.now();
+    const win = windowStart(now, RATE_WINDOW_MS);
+    const ref = getFirestore().collection("rate_limits").doc(`${deviceId}_${win}`);
+    const count = await getFirestore().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const current = (snap.exists ? (snap.data()?.count as number) : 0) ?? 0;
+      tx.set(ref, { count: current + 1, expiresAt: win + RATE_WINDOW_MS }, { merge: true });
+      return current + 1;
+    });
+    if (overLimit(count, RATE_MAX)) {
+      throw new HttpsError("resource-exhausted", "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.");
+    }
+```
+그리고 요청 타입에 `deviceId`를 추가:
+```typescript
+    const data = request.data as {
+      imageBase64?: string;
+      mediaType?: string;
+      deviceId?: string;
+      metrics?: OnDeviceMetrics;
+    };
+```
+
+- [ ] **Step 6: 빌드 확인**
+
+Run: `cd functions && npm run build 2>&1 | tail -10 ; cd ..`
+Expected: tsc 에러 없음.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add functions/src/ratelimit.ts functions/test/ratelimit.test.ts functions/src/advise.ts
+git commit -m "feat(functions): per-device fixed-window rate limiting (TDD)"
+```
+
+---
+
+## Task 12: 2초 정지 자동 트리거 (StillnessDetector TDD + 배선)
+
+**Files:**
+- Create: `lib/cloud/stillness_detector.dart`, `test/cloud/stillness_detector_test.dart`
+- Modify: `lib/screens/camera_screen.dart`
+
+**Interfaces:**
+- Consumes: 가속도계 크기(magnitude) 샘플 + 타임스탬프. `_requestAdvice`(Task 10).
+- Produces:
+  - `class StillnessDetector { StillnessDetector({double moveThreshold, int stillMs}); bool update(double magnitude, int nowMs); void reset(); }` — 연속 정지가 `stillMs` 이상 지속되면 **에피소드당 한 번** true. 다시 움직이면 재무장. [순수, TDD]
+  - `camera_screen.dart`: 가속도계 리스너에서 detector에 공급, true + 동의됨 + 쿨다운(10초) 경과 + 비로딩이면 `_requestAdvice()` 자동 호출.
+
+- [ ] **Step 1: 실패 테스트 작성**
+
+```dart
+// test/cloud/stillness_detector_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ttongson_camera/cloud/stillness_detector.dart';
+
+void main() {
+  test('정지가 stillMs 이상 지속되면 한 번 true', () {
+    final d = StillnessDetector(moveThreshold: 0.5, stillMs: 2000);
+    // 첫 샘플은 기준선(이전 값 없음) → false
+    expect(d.update(9.8, 0), isFalse);
+    expect(d.update(9.8, 500), isFalse);   // 정지 지속 중이나 2초 미달
+    expect(d.update(9.8, 1500), isFalse);
+    expect(d.update(9.8, 2000), isTrue);   // 2초 도달 → 발화
+    expect(d.update(9.8, 2500), isFalse);  // 같은 에피소드 재발화 안 함
+  });
+
+  test('움직이면 타이머 리셋 후 다시 무장', () {
+    final d = StillnessDetector(moveThreshold: 0.5, stillMs: 2000);
+    d.update(9.8, 0);
+    expect(d.update(9.8, 2000), isTrue);   // 첫 발화
+    expect(d.update(12.0, 2100), isFalse); // 큰 변화 = 움직임 → 리셋
+    expect(d.update(12.0, 4000), isFalse); // 새 정지 구간 2초 미달(기준 2100)
+    expect(d.update(12.0, 4100), isTrue);  // 2초 도달 → 재발화
+  });
+}
+```
+
+- [ ] **Step 2: 테스트 실패 확인**
+
+Run: `flutter test test/cloud/stillness_detector_test.dart`
+Expected: FAIL — `stillness_detector.dart` 없음.
+
+- [ ] **Step 3: 구현**
+
+```dart
+// lib/cloud/stillness_detector.dart
+/// 가속도계 크기 샘플로 "정지 지속"을 감지한다.
+/// 연속 정지가 stillMs 이상이면 에피소드당 한 번 true. 순수 로직(플러그인 무관).
+class StillnessDetector {
+  final double moveThreshold;
+  final int stillMs;
+
+  double? _lastMagnitude;
+  int _stillSinceMs = 0;
+  bool _fired = false;
+
+  StillnessDetector({this.moveThreshold = 0.5, this.stillMs = 2000});
+
+  /// 새 샘플. 정지가 stillMs 이상 지속되는 순간 처음 한 번만 true.
+  bool update(double magnitude, int nowMs) {
+    final prev = _lastMagnitude;
+    _lastMagnitude = magnitude;
+    if (prev == null) {
+      _stillSinceMs = nowMs;
+      return false;
+    }
+    final moved = (magnitude - prev).abs() > moveThreshold;
+    if (moved) {
+      _stillSinceMs = nowMs;
+      _fired = false;
+      return false;
+    }
+    if (!_fired && nowMs - _stillSinceMs >= stillMs) {
+      _fired = true;
+      return true;
+    }
+    return false;
+  }
+
+  void reset() {
+    _lastMagnitude = null;
+    _fired = false;
+    _stillSinceMs = 0;
+  }
+}
+```
+
+- [ ] **Step 4: 테스트 통과 확인**
+
+Run: `flutter test test/cloud/stillness_detector_test.dart`
+Expected: PASS (2개).
+
+- [ ] **Step 5: camera_screen.dart에 자동 트리거 배선**
+
+import 추가: `import '../cloud/stillness_detector.dart';` 그리고 `dart:math`(magnitude 계산용) `import 'dart:math' as math;`.
+`_CameraScreenState` 필드 추가:
+```dart
+  final StillnessDetector _stillness = StillnessDetector();
+  int _lastAdviceMs = 0;
+  static const int _adviceCooldownMs = 10000;
+```
+기존 가속도계 리스너(Phase 1에서 `accelerometerEventStream().listen(...)`로 `_sensor` 갱신하는 곳)의 콜백 안에 추가:
+```dart
+      final mag = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (_stillness.update(mag, nowMs)) {
+        _maybeAutoAdvise(nowMs);
+      }
+```
+그리고 메서드 추가:
+```dart
+  Future<void> _maybeAutoAdvise(int nowMs) async {
+    if (_adviceLoading || _advice != null) return;
+    if (nowMs - _lastAdviceMs < _adviceCooldownMs) return;
+    if (!await _consent.hasConsented()) return; // 동의 전에는 자동 트리거 안 함
+    _lastAdviceMs = nowMs;
+    await _requestAdvice();
+  }
+```
+또한 `_requestAdvice` 성공/실패와 무관하게 쿨다운이 갱신되도록, `_requestAdvice`의 `finally`에 추가:
+```dart
+      _lastAdviceMs = DateTime.now().millisecondsSinceEpoch;
+```
+
+> 자동 트리거는 **이미 동의한 경우에만** 발동한다(동의 다이얼로그를 자동으로 띄우지 않음). 수동 버튼이 최초 동의를 받는 경로.
+
+- [ ] **Step 6: 분석 + 전체 테스트 + 게이트**
+
+Run: `dart analyze lib test && flutter test 2>&1 | tail -3 && bash tool/verify.sh 2>&1 | tail -3`
+Expected: analyze 에러 없음, 순수 로직 테스트 전부 PASS, `verify.sh` 통과.
+
+- [ ] **Step 7: 기기 수동 검증**
+
+실기기에서 `flutter run`:
+- (동의 후) 폰을 2초 이상 가만히 들고 있으면 자동으로 추천이 뜬다.
+- 추천 직후 10초 내에는 재자동 트리거되지 않는다(쿨다운).
+- 움직이는 동안엔 자동 트리거가 발동하지 않는다.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add lib/cloud/stillness_detector.dart test/cloud/stillness_detector_test.dart lib/screens/camera_screen.dart
+git commit -m "feat: add 2s-stillness auto-trigger for cloud advice (TDD)"
+```
+
+---
+
 ## Self-Review 결과
 
 **Spec 커버리지:**
 - §2 스택(Firebase Functions/App Check/Secret/sonnet-4-6/구조화 출력) → Task 1,3,4 ✅
 - §3 모듈: CloudAdvisor→Task 7, CompositionAdvice→Task 5, AdviceOverlay→Task 9, advise 함수→Task 3 ✅
 - §4 데이터 계약(스키마·필드) → Task 2(백엔드 스키마/파서), Task 5(앱 모델) — 필드·enum 일치 ✅
-- §5 트리거/UX(버튼·로딩·결과·폴백) → Task 10 ✅ (2초 자동 트리거는 §11 P2-D 범위에서 옵션 — 이 계획은 수동 버튼까지; 자동 트리거는 후속. 아래 주 참고)
+- §5 트리거/UX(버튼·로딩·결과·폴백·2초 자동 트리거) → Task 10(수동·로딩·폴백), Task 12(2초 자동 트리거) ✅
 - §6 프라이버시(동의·미보관·HTTPS·최소 전송) → Task 9(동의), Task 3(미보관/로그), Task 6(다운사이즈) ✅
-- §7 비기능(지연 타임아웃·레이트리밋·토큰절감) → Task 7(5초 타임아웃), Task 3(App Check/timeout), Task 6(다운사이즈) ✅
-  - **주의(의도적 축소):** spec §5의 "2초 정지 자동 트리거"와 §7의 "백엔드 레이트리밋(분당 N회)"은 이 계획의 필수 태스크에 넣지 않았다 — 자동 트리거는 수동 버튼 검증 후 후속 태스크로, 명시적 레이트리밋은 App Check로 1차 방어하고 별도 태스크로 미룬다. 실행 시작 전 사람에게 이 축소를 확인받는다(아래 Pre-Flight).
+- §7 비기능(지연 타임아웃·레이트리밋·토큰절감) → Task 7(5초 타임아웃), Task 3(App Check/timeout), Task 11(deviceId 분당 레이트리밋), Task 6(다운사이즈) ✅
 
 **플레이스홀더 스캔:** Task 1의 `advise.ts` placeholder는 Task 3에서 교체하도록 명시 — 잔여 없음. 프로젝트 ID `ttongson-camera`는 실제 값으로 교체 안내. ✅
 
-**타입 일관성:** `CompositionAdvice`/`AdviceDirection`/axis enum(`move|tilt|zoom|angle`)이 백엔드(Task 2)·앱(Task 5)에서 일치. `OnDeviceMetrics`(백엔드)와 `_metricsPayload`(Task 7) 키(`tiltDeg`/`hasPerson`/`personCenterX`/`personCenterY`) 일치. `captureFrameForAdvice`(Task 8)↔`_requestAdvice`(Task 10), `suggest(jpegPath, metrics)`(Task 7) 시그니처 일치. ✅
+**타입 일관성:** `CompositionAdvice`/`AdviceDirection`/axis enum(`move|tilt|zoom|angle`)이 백엔드(Task 2)·앱(Task 5)에서 일치. `OnDeviceMetrics`(백엔드)와 `_metricsPayload`(Task 7) 키(`tiltDeg`/`hasPerson`/`personCenterX`/`personCenterY`) 일치. `captureFrameForAdvice`(Task 8)↔`_requestAdvice`(Task 10), `suggest(jpegPath, metrics, deviceId)`(Task 7)↔호출(Task 10) 시그니처 일치. `deviceId`가 앱(Task 9 DeviceId → Task 7 payload) ↔ 백엔드(Task 11 검증/레이트리밋) 일치. `StillnessDetector.update`(Task 12)↔가속도계 리스너 배선 일치. ✅
 
----
-
-## 실행 전 사람 확인 (Pre-Flight)
-
-이 계획은 spec 대비 두 가지를 **의도적으로 후속으로 미뤘다**. 실행 시작 전 확인받을 것:
-1. **2초 정지 자동 트리거** — 이 계획은 수동 "구도 추천" 버튼까지만. 자동 트리거는 별도 후속 태스크.
-2. **명시적 백엔드 레이트리밋(분당 N회)** — App Check로 1차 방어만. 별도 rate-limit 태스크는 후속.
-
-두 가지를 이번 범위에 포함할지, 후속으로 둘지 사용자에게 물은 뒤 진행한다.
+**범위:** spec의 2초 자동 트리거·백엔드 레이트리밋을 이번 범위에 포함(Task 11, 12)했다.
