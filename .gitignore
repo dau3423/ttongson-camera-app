@@ -12,3 +12,8 @@ build/
 
 # Claude local overrides
 .claude/settings.local.json
+
+# Firebase functions build
+functions/lib/
+functions/node_modules/
+.firebase/
