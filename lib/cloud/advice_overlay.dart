@@ -2,20 +2,7 @@
 import 'package:flutter/material.dart';
 import 'composition_advice.dart';
 
-String _axisLabel(AdviceAxis axis) {
-  switch (axis) {
-    case AdviceAxis.move:
-      return '이동';
-    case AdviceAxis.tilt:
-      return '수평';
-    case AdviceAxis.zoom:
-      return '줌';
-    case AdviceAxis.angle:
-      return '각도';
-  }
-}
-
-/// 클라우드 구도 추천 결과 카드. 판단 없음 — advice를 그대로 표시.
+/// 클라우드 구도 추천 카드(축소판) — headline + rationale만 표시.
 class AdviceOverlay extends StatelessWidget {
   final CompositionAdvice advice;
   final VoidCallback onClose;
@@ -60,14 +47,6 @@ class AdviceOverlay extends StatelessWidget {
                   ),
                 ],
               ),
-              for (final d in advice.directions)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text(
-                    '· [${_axisLabel(d.axis)}] ${d.instruction}',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ),
               if (advice.rationale.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
