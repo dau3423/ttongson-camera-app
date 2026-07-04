@@ -26,7 +26,9 @@ class CloudAdvisor {
       final base64 = await fileToBase64(downsized);
       final callable = _functions.httpsCallable(
         'advise',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 5)),
+        // Sonnet 4.6 비전+구조화 출력은 보통 5초를 넘긴다. 서버 타임아웃(30s)보다
+        // 짧게 20초로 둔다. (너무 짧으면 서버는 성공하는데 앱만 폴백됨)
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
       );
       final result = await callable.call<Map<String, dynamic>>({
         'imageBase64': base64,
