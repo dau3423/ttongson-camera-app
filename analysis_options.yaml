@@ -9,6 +9,14 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # build/ 안에는 iOS/macOS용으로 체크아웃된 Firebase 플러그인 소스(및 example 앱)가
+  # 들어와서 IDE 분석기가 우리 코드가 아닌 파일에 오류를 낸다. 분석 대상에서 제외한다.
+  exclude:
+    - build/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
