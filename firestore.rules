@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 클라이언트는 어떤 문서도 직접 읽거나 쓸 수 없다.
+    // advise Cloud Function은 Admin SDK로 접근하므로 이 규칙을 우회한다.
+    // (rate_limits 카운터를 클라이언트가 조작하지 못하게 막는다.)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
