@@ -41,4 +41,12 @@
   - **남은 기기(실물) 검증:**
     - 90/270° 회전 시 detector 정규화, 오버레이-프리뷰 종횡비 정렬.
     - 런타임 동작: 카메라 프리뷰/권한 프롬프트, ML Kit 얼굴 모델 최초 다운로드, 촬영→갤러리 저장.
-- Phase 2 (클라우드 AI 추천): 별도 plan 예정
+- Phase 2 (클라우드 AI 구도 추천): **완료** (master 병합, 12 tasks, 앱 41/41 + 백엔드 8/8, 최종 리뷰 READY).
+  - Firebase Functions `advise`(sonnet-4-6 vision + structured output + App Check + deviceId 레이트리밋) + 앱 `CloudAdvisor`/동의/오버레이/2초 정지 자동 트리거 + 온디바이스 폴백.
+  - **배포 전 사용자 후속(코드 아님):**
+    - Firebase Blaze 업그레이드 → `firebase functions:secrets:set ANTHROPIC_API_KEY` → `firebase deploy --only functions`.
+    - Firestore `rate_limits`에 TTL 정책 + 클라이언트 접근 차단 보안 규칙(Admin SDK는 우회).
+    - App Check debug provider → Play Integrity/DeviceCheck 교체(배포 시).
+    - 클라이언트 콜러블 타임아웃(현재 5초) 튜닝 검토(비전 응답이 더 걸릴 수 있음).
+    - 실기기 스모크 테스트(동의→수동 추천→2초 자동 트리거→카드 렌더).
+  - 후속 개선(minor): 임시 JPEG 정리, StillnessDetector.reset() 사용/테스트, 자동+수동 동시 트리거 동기 가드.
