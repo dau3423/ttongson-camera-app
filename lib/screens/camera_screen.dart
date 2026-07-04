@@ -137,6 +137,7 @@ class _CameraScreenState extends State<CameraScreen> {
       await _consent.setConsented();
     }
 
+    if (!mounted) return;
     setState(() => _adviceLoading = true);
     try {
       final deviceId = await _deviceId.get();
@@ -151,8 +152,7 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     } finally {
       if (mounted) setState(() => _adviceLoading = false);
-      // 스트림 재개 (captureFrameForAdvice가 멈춤)
-      _camera.startStream(_onFrame);
+      if (mounted) _camera.startStream(_onFrame);
     }
   }
 
