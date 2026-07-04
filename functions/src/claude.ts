@@ -10,14 +10,16 @@ export async function requestAdvice(
   metrics: OnDeviceMetrics | undefined,
 ): Promise<CompositionAdvice> {
   const client = new Anthropic({ apiKey });
-  // SDK 0.70.x: structured output는 beta API의 output_format 필드 사용
-  const response = await client.beta.messages.create({
+  // 구조화 출력: output_config.format(json_schema). (구 output_format 필드는 폐기됨)
+  const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
-    output_format: {
-      type: "json_schema",
-      schema: COMPOSITION_SCHEMA as { [key: string]: unknown },
+    output_config: {
+      format: {
+        type: "json_schema",
+        schema: COMPOSITION_SCHEMA as { [key: string]: unknown },
+      },
     },
     messages: [
       {
