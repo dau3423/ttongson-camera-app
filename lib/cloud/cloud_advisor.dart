@@ -14,7 +14,7 @@ class CloudAdviceException implements Exception {
 class CloudAdvisor {
   final FirebaseFunctions _functions;
   CloudAdvisor({FirebaseFunctions? functions})
-      : _functions = functions ?? FirebaseFunctions.instance;
+    : _functions = functions ?? FirebaseFunctions.instance;
 
   Future<CompositionAdvice> suggest(
     String jpegPath,
@@ -47,8 +47,10 @@ class CloudAdvisor {
     return {
       'tiltDeg': double.parse(m.tilt.rollDegrees.toStringAsFixed(1)),
       'hasPerson': person != null,
-      if (person != null) 'personCenterX': double.parse(person.centerX.toStringAsFixed(2)),
-      if (person != null) 'personCenterY': double.parse(person.centerY.toStringAsFixed(2)),
+      if (person != null)
+        'personCenterX': double.parse(person.centerX.toStringAsFixed(2)),
+      if (person != null)
+        'personCenterY': double.parse(person.centerY.toStringAsFixed(2)),
     };
   }
 }

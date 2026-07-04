@@ -42,7 +42,9 @@ class CompositionAdvice {
           final axis = _axisFromString(d['axis'] as String?);
           final instruction = d['instruction'];
           if (axis != null && instruction is String) {
-            directions.add(AdviceDirection(axis: axis, instruction: instruction));
+            directions.add(
+              AdviceDirection(axis: axis, instruction: instruction),
+            );
           }
         }
       }

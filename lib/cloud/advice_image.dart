@@ -33,7 +33,8 @@ Future<String> encodeDownsizedJpeg(
     throw StateError('이미지 디코딩 실패: $srcPath');
   }
   final target = fitWithin(decoded.width, decoded.height, maxLongEdge);
-  final resized = (target.width == decoded.width && target.height == decoded.height)
+  final resized =
+      (target.width == decoded.width && target.height == decoded.height)
       ? decoded
       : img.copyResize(decoded, width: target.width, height: target.height);
   final jpeg = img.encodeJpg(resized, quality: quality);

@@ -38,7 +38,11 @@ class AdviceOverlay extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 20),
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.amberAccent,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
