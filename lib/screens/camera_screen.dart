@@ -60,7 +60,7 @@ class _CameraScreenState extends State<CameraScreen> {
       final mag = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       if (_stillness.update(mag, nowMs)) {
-        _maybeAutoAdvise(nowMs);
+        unawaited(_maybeAutoAdvise(nowMs));
       }
     });
     _init();
