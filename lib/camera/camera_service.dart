@@ -53,6 +53,14 @@ class CameraService {
     return file.path;
   }
 
+  /// 구도 추천용으로 현재 프레임을 촬영해 임시 파일 경로를 반환한다.
+  /// 갤러리에 저장하지 않는다. 호출 후 스트림 재개는 호출측 책임.
+  Future<String> captureFrameForAdvice() async {
+    if (_streaming) await stopStream();
+    final file = await controller.takePicture();
+    return file.path;
+  }
+
   Future<void> dispose() async {
     await stopStream();
     await _controller?.dispose();

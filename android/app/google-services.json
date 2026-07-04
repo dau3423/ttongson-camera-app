@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "855623506561",
+    "project_id": "ttongson-camera",
+    "storage_bucket": "ttongson-camera.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855623506561:android:108d91bdabdd4f216fcb80",
+        "android_client_info": {
+          "package_name": "com.junicode.ttongson_camera"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2t8hatdbhlcMb35wIkGIsyhZgzV2DKks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
