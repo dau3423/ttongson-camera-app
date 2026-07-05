@@ -451,15 +451,27 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
                         ),
                       ),
-                      // 중앙: 촬영 버튼(고정)
+                      // 중앙: 촬영 버튼(고정). ready('찍으세요!')면 초록으로 발광.
                       GestureDetector(
                         onTap: _capture,
-                        child: Container(
-                          width: 72,
-                          height: 72,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 76,
+                          height: 76,
+                          decoration: BoxDecoration(
+                            color: _step.kind == GuideStepKind.ready
+                                ? const Color(0xFF69F0AE)
+                                : Colors.white,
                             shape: BoxShape.circle,
+                            boxShadow: _step.kind == GuideStepKind.ready
+                                ? const [
+                                    BoxShadow(
+                                      color: Color(0xAA69F0AE),
+                                      blurRadius: 20,
+                                      spreadRadius: 4,
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
                       ),

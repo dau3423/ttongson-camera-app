@@ -81,16 +81,13 @@ class GuidePainter extends CustomPainter {
   void _paintPerson(Canvas canvas, Size size) {
     final person = metrics.person;
     if (person == null) return;
-    // 잘림 단계면 빨강, 모두 통과(ready)면 초록, 그 외 중립.
-    final color = step.kind == GuideStepKind.crop
-        ? _warn
-        : step.kind == GuideStepKind.ready
-        ? _good
-        : _neutral;
+    // 단순화: 평소엔 피사체 박스를 숨겨 화면을 비운다.
+    // '잘림' 경고일 때만 빨간 박스로 무엇이 잘렸는지 보여준다.
+    if (step.kind != GuideStepKind.crop) return;
     final p = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = step.kind == GuideStepKind.ready ? 3 : 2
-      ..color = color;
+      ..strokeWidth = 2
+      ..color = _warn;
     canvas.drawRect(
       Rect.fromLTWH(
         person.left * size.width,
