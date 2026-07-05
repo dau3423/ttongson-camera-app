@@ -9,7 +9,11 @@ import '../analysis/person_detector.dart';
 import '../analysis/guide_metrics.dart';
 import '../analysis/tilt.dart';
 import '../analysis/angle_zoom.dart';
+import '../models/shooting_mode.dart';
+import '../analysis/object_detector.dart';
+import '../camera/mode_store.dart';
 import '../overlay/guide_overlay.dart';
+import '../overlay/mode_selector.dart';
 import '../cloud/cloud_advisor.dart';
 import '../cloud/composition_advice.dart';
 import '../cloud/advice_overlay.dart';
@@ -27,7 +31,10 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   final _camera = CameraService();
-  late final PersonDetector _detector;
+  late final PersonDetector _faceDetector;
+  late final PersonDetector _objectDetector;
+  final ModeStore _modeStore = ModeStore();
+  ShootingMode _mode = ShootingMode.person;
   late final AnalysisEngine _engine;
   StreamSubscription<AccelerometerEvent>? _accelSub;
 
@@ -50,8 +57,9 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void initState() {
     super.initState();
-    _detector = MlKitPersonDetector();
-    _engine = AnalysisEngine(_detector);
+    _faceDetector = MlKitPersonDetector();
+    _objectDetector = MlKitObjectDetector();
+    _engine = AnalysisEngine(null);
     _accelSub = accelerometerEventStream().listen((e) {
       _sensor = SensorSample(accelX: e.x, accelY: e.y, accelZ: e.z);
     });
@@ -61,6 +69,8 @@ class _CameraScreenState extends State<CameraScreen> {
   Future<void> _init() async {
     try {
       await _camera.initialize();
+      final savedMode = await _modeStore.load();
+      if (mounted) setState(() => _mode = savedMode);
       _camera.startStream(_onFrame);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
@@ -72,14 +82,25 @@ class _CameraScreenState extends State<CameraScreen> {
     if (_processing) return; // 스로틀: 재진입 방지
     _processing = true;
     try {
-      final detection = await _detector.detect(
-        image,
-        _camera.sensorOrientation,
-      );
+      final mode = _mode;
+      Detection? detection;
+      if (mode == ShootingMode.person) {
+        detection = await _faceDetector.detect(
+          image,
+          _camera.sensorOrientation,
+        );
+      } else if (mode == ShootingMode.object) {
+        detection = await _objectDetector.detect(
+          image,
+          _camera.sensorOrientation,
+        );
+      }
+      // 자연 모드: 감지 없음.
       final m = _engine.buildMetrics(
         person: detection?.person,
         face: detection?.face,
         sensor: _sensor,
+        mode: mode,
       );
       if (mounted) setState(() => _metrics = m);
     } catch (_) {
@@ -87,6 +108,19 @@ class _CameraScreenState extends State<CameraScreen> {
     } finally {
       _processing = false;
     }
+  }
+
+  Future<void> _onModeChanged(ShootingMode mode) async {
+    setState(() {
+      _mode = mode;
+      _advice = null; // 이전 추천/시각 가이드 무효화
+      // 이전 대상 박스 즉시 제거(다음 프레임까지 잔상 방지).
+      _metrics = GuideMetrics(
+        tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
+        angle: const AngleAdvice(pitchDegrees: 0, hint: ''),
+      );
+    });
+    await _modeStore.save(mode);
   }
 
   Future<void> _capture() async {
@@ -147,7 +181,12 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       final deviceId = await _deviceId.get();
       final framePath = await _camera.captureFrameForAdvice();
-      final advice = await _advisor.suggest(framePath, _metrics, deviceId);
+      final advice = await _advisor.suggest(
+        framePath,
+        _metrics,
+        deviceId,
+        _mode,
+      );
       if (mounted) setState(() => _advice = advice);
     } catch (e) {
       if (mounted) {
@@ -165,7 +204,8 @@ class _CameraScreenState extends State<CameraScreen> {
   void dispose() {
     _accelSub?.cancel();
     _camera.dispose();
-    _detector.dispose();
+    _faceDetector.dispose();
+    _objectDetector.dispose();
     super.dispose();
   }
 
@@ -274,35 +314,42 @@ class _CameraScreenState extends State<CameraScreen> {
             bottom: 40,
             left: 0,
             right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: Icon(
-                    _showGrid ? Icons.grid_on : Icons.grid_off,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  onPressed: () => setState(() => _showGrid = !_showGrid),
-                ),
-                GestureDetector(
-                  onTap: _capture,
-                  child: Container(
-                    width: 72,
-                    height: 72,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+                ModeSelector(current: _mode, onChanged: _onModeChanged),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _showGrid ? Icons.grid_on : Icons.grid_off,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      onPressed: () => setState(() => _showGrid = !_showGrid),
                     ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  onPressed: _requestAdvice,
+                    GestureDetector(
+                      onTap: _capture,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      onPressed: _requestAdvice,
+                    ),
+                  ],
                 ),
               ],
             ),
