@@ -66,10 +66,17 @@ class GuidePainter extends CustomPainter {
     final person = metrics.person;
     if (person == null) return;
     final cropped = metrics.crop?.any ?? false;
+    final aligned = metrics.thirds?.hint == '좋아요';
+    // 잘림(경고)이 최우선 → 빨강. 잘림 없고 구도 정렬되면 초록, 아니면 중립.
+    final color = cropped
+        ? _warn
+        : aligned
+        ? _good
+        : _neutral;
     final p = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = cropped ? _warn : _good;
+      ..strokeWidth = aligned ? 3 : 2
+      ..color = color;
     canvas.drawRect(
       Rect.fromLTWH(
         person.left * size.width,
@@ -85,12 +92,21 @@ class GuidePainter extends CustomPainter {
     final thirds = metrics.thirds;
     if (thirds == null) return;
     final aligned = thirds.hint == '좋아요';
-    final p = Paint()..color = aligned ? _good : _warn;
-    canvas.drawCircle(
-      Offset(thirds.targetX * size.width, thirds.targetY * size.height),
-      8,
-      p,
+    final color = aligned ? _good : _warn;
+    final center = Offset(
+      thirds.targetX * size.width,
+      thirds.targetY * size.height,
     );
+    // 바깥 링(윤곽) + 중앙 점 — 정렬되면 초록으로 크게 바뀌어 눈에 잘 띈다.
+    canvas.drawCircle(
+      center,
+      aligned ? 20 : 14,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = color,
+    );
+    canvas.drawCircle(center, 4, Paint()..color = color);
   }
 
   @override
