@@ -7,7 +7,7 @@ export interface TargetBox {
 
 export interface CompositionAdvice {
   headline: string;
-  targetBox: TargetBox;
+  targetBox?: TargetBox;
   rationale: string;
 }
 
@@ -16,6 +16,14 @@ export interface OnDeviceMetrics {
   personCenterX?: number;
   personCenterY?: number;
   hasPerson?: boolean;
+}
+
+export type Mode = "person" | "nature" | "object";
+
+/** 요청 mode 파싱. 화이트리스트 외 값/누락은 person 폴백. */
+export function parseMode(raw: unknown): Mode {
+  if (raw === "person" || raw === "nature" || raw === "object") return raw;
+  return "person";
 }
 
 function parseTargetBox(raw: unknown): TargetBox {
@@ -27,7 +35,7 @@ function parseTargetBox(raw: unknown): TargetBox {
     typeof t.width !== "number" ||
     typeof t.height !== "number"
   ) {
-    throw new Error("targetBox 누락 또는 형식 오류");
+    throw new Error("targetBox 형식 오류");
   }
   return { x: t.x, y: t.y, width: t.width, height: t.height };
 }
@@ -38,6 +46,7 @@ export function parseAdvice(text: string): CompositionAdvice {
   if (typeof raw.headline !== "string" || typeof raw.rationale !== "string") {
     throw new Error("headline/rationale 누락");
   }
-  const targetBox = parseTargetBox(raw.targetBox);
+  // targetBox는 선택: 있으면 검증(틀리면 throw), 없으면 생략.
+  const targetBox = raw.targetBox === undefined ? undefined : parseTargetBox(raw.targetBox);
   return { headline: raw.headline, targetBox, rationale: raw.rationale };
 }
