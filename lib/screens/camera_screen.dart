@@ -80,7 +80,9 @@ class _CameraScreenState extends State<CameraScreen> {
     _objectDetector = MlKitObjectDetector();
     _engine = AnalysisEngine(null);
     _accelSub = accelerometerEventStream().listen((e) {
-      _sensor = SensorSample(accelX: e.x, accelY: e.y, accelZ: e.z);
+      // sensors_plus는 비중력(specific force, 중력 반대) 부호로 값을 준다.
+      // 좌우(x)·앞뒤(z) 기울기 안내가 실제와 반대로 나오므로 부호를 뒤집어 보정한다.
+      _sensor = SensorSample(accelX: -e.x, accelY: e.y, accelZ: -e.z);
     });
     _init();
   }
