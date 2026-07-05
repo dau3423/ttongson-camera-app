@@ -180,6 +180,19 @@ class _CameraScreenState extends State<CameraScreen> {
     if (mounted && applied != _zoom) setState(() => _zoom = applied);
   }
 
+  Future<void> _switchCamera() async {
+    try {
+      await _camera.switchCamera(_onFrame);
+      if (mounted) setState(() => _zoom = _camera.currentZoom);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('카메라 전환에 실패했어요')));
+      }
+    }
+  }
+
   Future<void> _openGallery() async {
     try {
       final ok = await openDeviceGallery();
@@ -427,6 +440,19 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
+                ),
+              ),
+            if (_camera.canSwitch)
+              Positioned(
+                top: 44,
+                right: 8,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.cameraswitch,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onPressed: _switchCamera,
                 ),
               ),
             Positioned(

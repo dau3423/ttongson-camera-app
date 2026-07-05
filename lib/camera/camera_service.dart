@@ -7,10 +7,18 @@ import 'package:gallery_saver_plus/gallery_saver.dart';
 class CameraService {
   CameraController? _controller;
   bool _streaming = false;
+  List<CameraDescription> _cameras = const [];
+  CameraLensDirection _lens = CameraLensDirection.back;
 
   double _minZoom = 1.0;
   double _maxZoom = 1.0;
   double _currentZoom = 1.0;
+
+  CameraLensDirection get lensDirection => _lens;
+  bool get isFront => _lens == CameraLensDirection.front;
+  bool get canSwitch =>
+      _cameras.any((c) => c.lensDirection == CameraLensDirection.front) &&
+      _cameras.any((c) => c.lensDirection == CameraLensDirection.back);
 
   CameraController get controller {
     final c = _controller;
@@ -27,13 +35,18 @@ class CameraService {
   double get currentZoom => _currentZoom;
 
   Future<void> initialize() async {
-    final cameras = await availableCameras();
-    final back = cameras.firstWhere(
-      (c) => c.lensDirection == CameraLensDirection.back,
-      orElse: () => cameras.first,
+    _cameras = await availableCameras();
+    await _open(CameraLensDirection.back);
+  }
+
+  /// 지정한 렌즈 방향의 카메라를 열어 컨트롤러를 준비한다.
+  Future<void> _open(CameraLensDirection lens) async {
+    final desc = _cameras.firstWhere(
+      (c) => c.lensDirection == lens,
+      orElse: () => _cameras.first,
     );
     final ctrl = CameraController(
-      back,
+      desc,
       ResolutionPreset.high,
       enableAudio: false,
       // ML Kit이 처리 가능한 포맷으로 프레임을 받는다.
@@ -47,6 +60,23 @@ class CameraService {
     _maxZoom = await ctrl.getMaxZoomLevel();
     _currentZoom = _minZoom;
     _controller = ctrl;
+    _lens = desc.lensDirection;
+  }
+
+  /// 전/후면 카메라를 전환한다. 반대 렌즈가 없으면 false.
+  /// 스트리밍 중이었다면 [onFrame]으로 재개한다.
+  Future<bool> switchCamera(void Function(CameraImage) onFrame) async {
+    final target = _lens == CameraLensDirection.back
+        ? CameraLensDirection.front
+        : CameraLensDirection.back;
+    if (!_cameras.any((c) => c.lensDirection == target)) return false;
+    final wasStreaming = _streaming;
+    await stopStream();
+    await _controller?.dispose();
+    _controller = null;
+    await _open(target);
+    if (wasStreaming) startStream(onFrame);
+    return true;
   }
 
   /// 줌 배율을 지원 범위로 클램프해 적용하고, 실제 적용된 배율을 반환한다.
