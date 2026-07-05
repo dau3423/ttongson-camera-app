@@ -58,6 +58,7 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _ready = false;
   bool _showGrid = true;
   bool _processing = false;
+  bool _flash = false; // 촬영 순간 화면 번쩍임
   String? _initError;
 
   GuideStep _step = const GuideStep(kind: GuideStepKind.level, message: '');
@@ -213,7 +214,18 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
+  /// 촬영됐다는 걸 인지하도록 셔터음 + 진동 + 화면 번쩍임.
+  void _triggerCaptureFeedback() {
+    SystemSound.play(SystemSoundType.click);
+    HapticFeedback.mediumImpact();
+    setState(() => _flash = true);
+    Future.delayed(const Duration(milliseconds: 60), () {
+      if (mounted) setState(() => _flash = false);
+    });
+  }
+
   Future<void> _capture() async {
+    _triggerCaptureFeedback();
     try {
       final saved = await _camera.captureAndSave();
       if (mounted) {
@@ -575,6 +587,16 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                 ),
               ),
+            // 촬영 순간 화면 번쩍임(플래시). 나타났다 짧게 사라짐.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: _flash ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const ColoredBox(color: Colors.white),
+                ),
+              ),
+            ),
           ],
         ),
       ),
