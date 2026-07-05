@@ -43,6 +43,8 @@ dependencies:
   firebase_core: ^4.11.0
   cloud_functions: ^6.3.3
   firebase_app_check: ^0.4.5
+  firebase_auth: ^6.5.4
+  google_sign_in: ^6.2.1
   shared_preferences: ^2.5.5
   google_mlkit_object_detection: ^0.15.1
   url_launcher: ^6.3.1
