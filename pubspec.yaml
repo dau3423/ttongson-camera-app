@@ -45,6 +45,7 @@ dependencies:
   firebase_app_check: ^0.4.5
   firebase_auth: ^6.5.4
   cloud_firestore: ^6.0.2
+  kakao_flutter_sdk_user: ^1.9.6
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.0
   shared_preferences: ^2.5.5
