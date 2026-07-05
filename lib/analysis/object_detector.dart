@@ -1,0 +1,66 @@
+import 'dart:ui' show Size;
+
+import 'package:camera/camera.dart';
+import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
+
+import '../models/person_box.dart';
+import 'person_detector.dart';
+
+/// ML Kit Object Detection 기반 사물 감지. 가장 큰 사물 박스 하나를 정규화 PersonBox로 반환.
+class MlKitObjectDetector implements PersonDetector {
+  final ObjectDetector _detector = ObjectDetector(
+    options: ObjectDetectorOptions(
+      classifyObjects: false,
+      multipleObjects: true,
+      mode: DetectionMode.stream,
+    ),
+  );
+
+  @override
+  Future<Detection?> detect(CameraImage image, int rotationDegrees) async {
+    final input = _toInputImage(image, rotationDegrees);
+    if (input == null) return null;
+    final objects = await _detector.processImage(input);
+    if (objects.isEmpty) return null;
+
+    // 면적이 가장 큰 사물 선택.
+    objects.sort(
+      (a, b) => (b.boundingBox.width * b.boundingBox.height).compareTo(
+        a.boundingBox.width * a.boundingBox.height,
+      ),
+    );
+    final o = objects.first.boundingBox;
+    final imgW = image.width.toDouble();
+    final imgH = image.height.toDouble();
+    final box = PersonBox(
+      left: (o.left / imgW).clamp(0.0, 1.0),
+      top: (o.top / imgH).clamp(0.0, 1.0),
+      width: (o.width / imgW).clamp(0.0, 1.0),
+      height: (o.height / imgH).clamp(0.0, 1.0),
+    );
+    // 사물엔 얼굴 개념이 없어 face/person 모두 같은 박스(사물 모드는 face 미사용).
+    return Detection(face: box, person: box);
+  }
+
+  InputImage? _toInputImage(CameraImage image, int rotationDegrees) {
+    final rotation =
+        InputImageRotationValue.fromRawValue(rotationDegrees) ??
+        InputImageRotation.rotation0deg;
+    final format =
+        InputImageFormatValue.fromRawValue(image.format.raw as int) ??
+        InputImageFormat.nv21;
+    final plane = image.planes.first;
+    return InputImage.fromBytes(
+      bytes: plane.bytes,
+      metadata: InputImageMetadata(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        rotation: rotation,
+        format: format,
+        bytesPerRow: plane.bytesPerRow,
+      ),
+    );
+  }
+
+  @override
+  void dispose() => _detector.close();
+}
