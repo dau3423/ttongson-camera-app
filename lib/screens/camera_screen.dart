@@ -102,11 +102,13 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _capture() async {
     try {
-      final path = await _camera.captureAndSave();
+      final saved = await _camera.captureAndSave();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('저장됨: $path')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(saved ? '사진첩에 저장했어요' : '저장 실패 — 사진첩 권한을 확인해 주세요'),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

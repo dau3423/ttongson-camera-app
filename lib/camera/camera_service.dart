@@ -44,13 +44,13 @@ class CameraService {
     await controller.stopImageStream();
   }
 
-  /// 촬영 후 갤러리에 저장하고 파일 경로를 반환.
-  Future<String> captureAndSave() async {
+  /// 촬영 후 사진첩(갤러리)에 저장한다. 저장 성공 여부를 반환.
+  Future<bool> captureAndSave() async {
     final wasStreaming = _streaming;
     if (wasStreaming) await stopStream();
     final file = await controller.takePicture();
-    await GallerySaver.saveImage(file.path);
-    return file.path;
+    final saved = await GallerySaver.saveImage(file.path);
+    return saved ?? false;
   }
 
   /// 구도 추천용으로 현재 프레임을 촬영해 임시 파일 경로를 반환한다.
