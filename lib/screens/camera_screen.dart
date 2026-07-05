@@ -189,6 +189,23 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
+  /// 카메라 프리뷰를 종횡비 왜곡 없이 화면을 덮도록(cover) 렌더한다.
+  /// StackFit.expand로 강제로 늘리면 비율이 깨지므로 스케일로 보정한다.
+  Widget _buildPreview() {
+    final controller = _camera.controller;
+    final mediaSize = MediaQuery.of(context).size;
+    // 프리뷰 비율과 화면 비율의 곱이 1보다 작으면 역수로 뒤집어 항상 cover.
+    var scale = controller.value.aspectRatio * mediaSize.aspectRatio;
+    if (scale < 1) scale = 1 / scale;
+    return ClipRect(
+      child: Transform.scale(
+        scale: scale,
+        alignment: Alignment.center,
+        child: Center(child: CameraPreview(controller)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_initError != null) {
@@ -236,7 +253,7 @@ class _CameraScreenState extends State<CameraScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          CameraPreview(_camera.controller),
+          _buildPreview(),
           GuideOverlay(metrics: _metrics, showGrid: _showGrid),
           if (targetBox != null)
             TargetGuideOverlay(
