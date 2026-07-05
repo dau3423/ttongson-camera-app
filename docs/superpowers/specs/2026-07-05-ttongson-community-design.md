@@ -19,7 +19,7 @@
 ### 1.3 핵심 결정 (확정)
 - **콘텐츠**: 사진 1장 + 한 줄 자유 캡션(팁/질문). 사진은 갤러리에서 선택(image_picker).
 - **상호작용**: 좋아요 + 댓글 + 신고.
-- **로그인**: Google 로그인. **커뮤니티 접근 자체가 회원 전용(피드 읽기 포함 로그인 필수)** + **✨구도 추천도 로그인 필수**. 로그인 없이 쓰는 건 **카메라 가이드뿐**.
+- **로그인**: **Google · Apple · Kakao** 소셜 로그인. **커뮤니티 접근 자체가 회원 전용(피드 읽기 포함 로그인 필수)** + **✨구도 추천도 로그인 필수**. 로그인 없이 쓰는 건 **카메라 가이드뿐**.
 - **개인정보 가림**: 업로드 전 **기기 내에서** 얼굴 자동 가림 + 수동 박스 가림(모자이크/스티커).
 - **검열**: 신고 기반 + N회 신고 시 자동 숨김 + 사용자 차단. 관리자 검토는 Firestore 콘솔 수동.
 - **피드 정렬**: 최신순 무한 스크롤.
@@ -36,8 +36,14 @@
 이미 Firebase(cloud_functions, app_check)를 쓰므로 **Auth + Firestore + Storage + Functions**로 확장한다.
 
 ### 2.1 신규 패키지
-- 앱: `firebase_auth`, `google_sign_in`, `cloud_firestore`, `firebase_storage`, `image_picker`.
+- 앱: `firebase_auth`, `google_sign_in`, `sign_in_with_apple`, `kakao_flutter_sdk_user`, `cloud_firestore`, `firebase_storage`, `image_picker`.
 - (이미 있음: `firebase_core`, `firebase_app_check`, `cloud_functions`, `image`.)
+
+### 2.1.1 소셜 로그인 제공자
+셋 다 최종적으로 **Firebase Auth 사용자(uid)** 로 수렴한다 → Firestore/Storage 규칙은 uid만 보므로 이후 시스템은 동일.
+- **Google**: `google_sign_in` → Firebase `GoogleAuthProvider` credential.
+- **Apple**: `sign_in_with_apple` → Firebase `AppleAuthProvider`/OAuth credential. (iOS는 App Store 정책상 타 소셜 로그인 제공 시 Apple 로그인 필수. Apple Developer 설정·엔타이틀먼트 필요.)
+- **Kakao**: `kakao_flutter_sdk_user`로 카카오 로그인 → 액세스 토큰을 **`kakaoCustomToken` 클라우드 함수**로 보내 검증(카카오 API) 후 **Firebase 커스텀 토큰** 발급 → 앱이 `signInWithCustomToken`. 네이티브 키(Android 키해시/네이티브 앱키, iOS URL 스킴) 설정 필요.
 
 ### 2.2 데이터 모델 (Firestore)
 ```
@@ -84,6 +90,7 @@ post_images/{uid}/{postId}.jpg   # 가림 처리된 최종 이미지만 저장
 - `onReportCreate`(reports/{id} onCreate): 대상 `reportCount++`, 임계(기본 5) 도달 시 `hidden=true`.
 - `onLikeWrite`(posts/{id}/likes/{uid} onCreate·onDelete): `likeCount` 증감.
 - `onCommentWrite`(comments onCreate·onDelete): `commentCount` 증감.
+- `kakaoCustomToken`(호출형): 카카오 액세스 토큰을 받아 카카오 API로 검증 → 대응하는 Firebase 사용자 생성/조회 → **커스텀 토큰** 반환.
 - `advise`(기존): **auth 컨텍스트 검증 추가** — `context.auth` 없으면 `unauthenticated` 반환.
 - 임계값·집계는 **함수 전용 권한**으로만 필드를 수정(클라이언트는 `hidden`/`*Count` 직접 못 씀).
 
@@ -129,7 +136,7 @@ post_images/{uid}/{postId}.jpg   # 가림 처리된 최종 이미지만 저장
 
 ```
 lib/community/
-  auth_service.dart              # Google 로그인/로그아웃/현재 사용자 (firebase_auth+google_sign_in 래퍼)
+  auth_service.dart              # Google/Apple/Kakao 로그인·로그아웃·현재 사용자 (모두 Firebase Auth uid로 수렴)
   community_repository.dart      # Firestore/Storage 접근(게시·피드·좋아요·댓글·신고·차단)
   models/
     post.dart comment.dart mask_region.dart   # 값 객체(순수)
@@ -152,7 +159,8 @@ lib/community/
 규모가 커서 **하나의 계획으로 만들지 않는다.** 각 단계는 독립적으로 동작·테스트 가능한 산출물이다.
 
 - **계획 A — 인증 + 추천 게이팅**
-  `firebase_auth`+`google_sign_in`, `AuthService`, 로그인 게이트, `advise` 함수 auth 검증, 미로그인 시 ✨추천 차단.
+  `firebase_auth`, Google(`google_sign_in`)·Apple(`sign_in_with_apple`)·Kakao(`kakao_flutter_sdk_user` + `kakaoCustomToken` 함수) 로그인, `AuthService`, 로그인 게이트, `advise` 함수 auth 검증, 미로그인 시 ✨추천 차단.
+  (규모가 크면 A1: 인증 기반+Google, A2: Apple, A3: Kakao 커스텀 토큰으로 세분 가능.)
 - **계획 B — 게시·피드·좋아요**
   Firestore/Storage 세팅, 보안 규칙, `Post` 모델·리포지토리, 피드/상세/작성 화면, 좋아요, 집계 함수.
 - **계획 C — 개인정보 가림**
@@ -169,7 +177,7 @@ lib/community/
 - 업로드 시 자동 이미지 안전성 검열(NSFW 자동 필터) — 후속.
 - 번호판 자동 감지(수동 박스로 대체).
 - 프로필 편집(닉네임은 Google 이름 사용).
-- 이메일/애플 등 타 로그인 수단.
+- 이메일/전화 등 그 외 로그인 수단(소셜 3종 외).
 
 ---
 
