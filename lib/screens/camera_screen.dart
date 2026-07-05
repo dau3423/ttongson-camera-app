@@ -12,6 +12,7 @@ import '../analysis/angle_zoom.dart';
 import '../models/shooting_mode.dart';
 import '../analysis/object_detector.dart';
 import '../camera/mode_store.dart';
+import '../camera/gallery_launcher.dart';
 import '../overlay/guide_overlay.dart';
 import '../overlay/mode_selector.dart';
 import '../cloud/cloud_advisor.dart';
@@ -54,6 +55,9 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _processing = false;
   String? _initError;
 
+  double _zoom = 1.0;
+  double _baseZoom = 1.0;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +74,7 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       await _camera.initialize();
       final savedMode = await _modeStore.load();
+      _zoom = _camera.currentZoom;
       if (mounted) setState(() => _mode = savedMode);
       _camera.startStream(_onFrame);
       if (mounted) setState(() => _ready = true);
@@ -121,6 +126,34 @@ class _CameraScreenState extends State<CameraScreen> {
       );
     });
     await _modeStore.save(mode);
+  }
+
+  void _onScaleStart(ScaleStartDetails details) {
+    _baseZoom = _zoom;
+  }
+
+  Future<void> _onScaleUpdate(ScaleUpdateDetails details) async {
+    // 두 손가락 핀치가 아니면(scale==1) 무시.
+    if (details.pointerCount < 2) return;
+    final applied = await _camera.setZoom(_baseZoom * details.scale);
+    if (mounted && applied != _zoom) setState(() => _zoom = applied);
+  }
+
+  Future<void> _openGallery() async {
+    try {
+      final ok = await openDeviceGallery();
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('사진첩을 열 수 없어요')));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('사진첩을 열 수 없어요')));
+      }
+    }
   }
 
   Future<void> _capture() async {
@@ -209,20 +242,21 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
-  /// 카메라 프리뷰를 종횡비 왜곡 없이 화면을 덮도록(cover) 렌더한다.
-  /// StackFit.expand로 강제로 늘리면 비율이 깨지므로 스케일로 보정한다.
-  Widget _buildPreview() {
+  /// 센서 전체 프레임을 왜곡·크롭 없이 그대로 보여준다(contain).
+  /// 화면 비율과 센서 비율이 달라 위아래(또는 좌우)에 검은 여백이 생길 수 있으나,
+  /// 프리뷰에 보이는 영역이 저장 사진과 정확히 일치한다(WYSIWYG).
+  /// [child]는 프리뷰 위에 겹칠 좌표 기반 오버레이(격자·인물 박스 등)이며,
+  /// 프리뷰와 같은 박스를 공유하므로 정규화 좌표가 정확히 정렬된다.
+  Widget _buildPreviewArea({required Widget child}) {
     final controller = _camera.controller;
-    final mediaSize = MediaQuery.of(context).size;
-    // 프리뷰 비율과 화면 비율의 곱이 1보다 작으면 역수로 뒤집어 항상 cover.
-    var scale = controller.value.aspectRatio * mediaSize.aspectRatio;
-    if (scale < 1) scale = 1 / scale;
-    return ClipRect(
-      child: Transform.scale(
-        scale: scale,
-        alignment: Alignment.center,
-        child: Center(child: CameraPreview(controller)),
-      ),
+    final size = MediaQuery.of(context).size;
+    final isPortrait = size.height >= size.width;
+    // controller.value.aspectRatio는 가로 기준(폭/높이). 세로 화면에선 역수.
+    final aspect = isPortrait
+        ? 1 / controller.value.aspectRatio
+        : controller.value.aspectRatio;
+    return Center(
+      child: AspectRatio(aspectRatio: aspect, child: child),
     );
   }
 
@@ -270,103 +304,161 @@ class _CameraScreenState extends State<CameraScreen> {
         : null;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildPreview(),
-          GuideOverlay(metrics: _metrics, showGrid: _showGrid),
-          if (targetBox != null)
-            TargetGuideOverlay(
-              target: targetBox,
-              current: person,
-              alignment: alignment,
-            ),
-          if (targetBox != null)
-            Positioned(
-              top: 100,
-              right: 12,
-              child: AdviceMinimap(
-                target: targetBox,
-                current: person,
-                alignment: alignment,
+      body: GestureDetector(
+        onScaleStart: _onScaleStart,
+        onScaleUpdate: _onScaleUpdate,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildPreviewArea(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CameraPreview(_camera.controller),
+                  GuideOverlay(metrics: _metrics, showGrid: _showGrid),
+                  if (targetBox != null)
+                    TargetGuideOverlay(
+                      target: targetBox,
+                      current: person,
+                      alignment: alignment,
+                    ),
+                ],
               ),
             ),
-          Positioned(
-            top: 48,
-            left: 16,
-            right: 16,
-            child: Column(
-              children: [
-                for (final h in hints)
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    color: Colors.black54,
-                    child: Text(h, style: const TextStyle(color: Colors.white)),
-                  ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ModeSelector(current: _mode, onChanged: _onModeChanged),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        _showGrid ? Icons.grid_on : Icons.grid_off,
-                        color: Colors.white,
-                        size: 32,
+            if (targetBox != null)
+              Positioned(
+                top: 100,
+                right: 12,
+                child: AdviceMinimap(
+                  target: targetBox,
+                  current: person,
+                  alignment: alignment,
+                ),
+              ),
+            Positioned(
+              top: 48,
+              left: 16,
+              right: 16,
+              child: Column(
+                children: [
+                  for (final h in hints)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                      onPressed: () => setState(() => _showGrid = !_showGrid),
+                      color: Colors.black54,
+                      child: Text(
+                        h,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
-                    GestureDetector(
-                      onTap: _capture,
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                ],
+              ),
+            ),
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ModeSelector(current: _mode, onChanged: _onModeChanged),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      // 좌측: 사진첩 바로가기
+                      Expanded(
+                        child: Center(
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.photo_library,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                            onPressed: _openGallery,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.auto_awesome,
-                        color: Colors.white,
-                        size: 32,
+                      // 중앙: 촬영 버튼(고정)
+                      GestureDetector(
+                        onTap: _capture,
+                        child: Container(
+                          width: 72,
+                          height: 72,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
-                      onPressed: _requestAdvice,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (_advice != null)
-            AdviceOverlay(
-              advice: _advice!,
-              onClose: () => setState(() => _advice = null),
-            ),
-          if (_adviceLoading)
-            const Positioned.fill(
-              child: ColoredBox(
-                color: Colors.black38,
-                child: Center(child: CircularProgressIndicator()),
+                      // 우측: AI 추천 + 격자 토글(격자를 맨 오른쪽)
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                              onPressed: _requestAdvice,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _showGrid ? Icons.grid_on : Icons.grid_off,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _showGrid = !_showGrid),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-        ],
+            if (_advice != null)
+              AdviceOverlay(
+                advice: _advice!,
+                onClose: () => setState(() => _advice = null),
+              ),
+            if (_adviceLoading)
+              const Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.black38,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+            if (_camera.maxZoom > _camera.minZoom)
+              Positioned(
+                bottom: 160,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '${_zoom.toStringAsFixed(1)}x',
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
