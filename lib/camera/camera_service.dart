@@ -1,4 +1,5 @@
 // lib/camera/camera_service.dart
+import 'dart:io' show Platform;
 import 'package:camera/camera.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
 
@@ -35,6 +36,11 @@ class CameraService {
       back,
       ResolutionPreset.high,
       enableAudio: false,
+      // ML Kit이 처리 가능한 포맷으로 프레임을 받는다.
+      // Android는 NV21(기본 YUV_420_888은 ML Kit이 거부), iOS는 BGRA8888.
+      imageFormatGroup: Platform.isAndroid
+          ? ImageFormatGroup.nv21
+          : ImageFormatGroup.bgra8888,
     );
     await ctrl.initialize();
     _minZoom = await ctrl.getMinZoomLevel();
