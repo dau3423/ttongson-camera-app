@@ -26,6 +26,15 @@ Future<bool> showSignInSheet(BuildContext context, AuthService auth) async {
                 if (ctx.mounted) Navigator.pop(ctx, user != null);
               },
             ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.apple),
+              label: const Text('Apple로 계속하기'),
+              onPressed: () async {
+                final user = await auth.signInWithApple();
+                if (ctx.mounted) Navigator.pop(ctx, user != null);
+              },
+            ),
           ],
         ),
       ),
