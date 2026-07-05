@@ -1,7 +1,10 @@
 // lib/community/auth_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' hide User;
 import 'user_repository.dart';
 import 'models/user_profile.dart';
 
@@ -60,6 +63,32 @@ class AuthService {
       if (e.code == AuthorizationErrorCode.canceled) return null; // 취소
       rethrow;
     }
+  }
+
+  /// 카카오 로그인. 사용자가 취소하면 null.
+  Future<User?> signInWithKakao() async {
+    final OAuthToken kakaoToken;
+    try {
+      kakaoToken = await isKakaoTalkInstalled()
+          ? await UserApi.instance.loginWithKakaoTalk()
+          : await UserApi.instance.loginWithKakaoAccount();
+    } on PlatformException catch (e) {
+      if (e.code == 'CANCELED') return null; // 사용자 취소
+      rethrow;
+    }
+    final callable = FirebaseFunctions.instance.httpsCallable(
+      'kakaoCustomToken',
+    );
+    final result = await callable.call<Map<String, dynamic>>({
+      'accessToken': kakaoToken.accessToken,
+    });
+    final customToken = result.data['token'] as String;
+    final cred = await _auth.signInWithCustomToken(customToken);
+    final user = cred.user;
+    if (user != null) {
+      await _users.ensureProfile(user: user, loginType: LoginType.kakao);
+    }
+    return user;
   }
 
   Future<void> signOut() async {

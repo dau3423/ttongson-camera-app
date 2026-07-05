@@ -99,6 +99,16 @@ class _SignInSheetState extends State<_SignInSheet> {
                 bordered: true,
                 onTap: _busy ? null : () => _run(widget.auth.signInWithGoogle),
               ),
+              const SizedBox(height: 12),
+              _ProviderButton(
+                label: '카카오로 계속하기',
+                icon: Icons.chat_bubble,
+                iconColor: const Color(0xFF3C1E1E),
+                background: const Color(0xFFFEE500),
+                foreground: const Color(0xFF3C1E1E),
+                bordered: false,
+                onTap: _busy ? null : () => _run(widget.auth.signInWithKakao),
+              ),
               // Apple 로그인은 애플 기기에서만 노출.
               if (Platform.isIOS) ...[
                 const SizedBox(height: 12),
