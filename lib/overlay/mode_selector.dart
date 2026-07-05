@@ -41,11 +41,21 @@ class ModeSelector extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 드래그 가능함을 알리는 좌우 화살표(탭으로도 이동).
+          _chevron(Icons.chevron_left, () => _select(prev)),
           _slot(prev, selected: false),
           _slot(current, selected: true),
           _slot(next, selected: false),
+          _chevron(Icons.chevron_right, () => _select(next)),
         ],
       ),
+    );
+  }
+
+  Widget _chevron(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(icon, color: Colors.white54, size: 22),
     );
   }
 
