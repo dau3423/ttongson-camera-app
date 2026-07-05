@@ -6,6 +6,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { requestAdvice } from "./claude.js";
 import { windowStart, overLimit } from "./ratelimit.js";
 import { parseMode, type OnDeviceMetrics } from "./advice.js";
+import { requireAuthUid } from "./auth_guard.js";
 
 if (getApps().length === 0) initializeApp();
 
@@ -23,6 +24,7 @@ export const advise = onCall(
     memory: "512MiB",
   },
   async (request) => {
+    requireAuthUid(request.auth);
     const data = request.data as {
       imageBase64?: string;
       mediaType?: string;

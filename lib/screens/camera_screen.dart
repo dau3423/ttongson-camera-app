@@ -17,6 +17,8 @@ import '../camera/mode_store.dart';
 import '../camera/gallery_launcher.dart';
 import '../overlay/guide_overlay.dart';
 import '../overlay/mode_selector.dart';
+import '../community/auth_service.dart';
+import '../community/screens/sign_in_sheet.dart';
 import '../cloud/cloud_advisor.dart';
 import '../cloud/composition_advice.dart';
 import '../cloud/advice_overlay.dart';
@@ -41,6 +43,7 @@ class _CameraScreenState extends State<CameraScreen> {
   late final AnalysisEngine _engine;
   StreamSubscription<AccelerometerEvent>? _accelSub;
 
+  final AuthService _auth = AuthService();
   final CloudAdvisor _advisor = CloudAdvisor();
   final AdviceConsentStore _consent = AdviceConsentStore();
   final DeviceId _deviceId = DeviceId();
@@ -235,6 +238,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _requestAdvice() async {
     if (_adviceLoading) return;
+
+    if (!_auth.isSignedIn) {
+      final signedIn = await showSignInSheet(context, _auth);
+      if (!signedIn) return;
+    }
 
     // 최초 1회 동의
     if (!await _consent.hasConsented()) {
