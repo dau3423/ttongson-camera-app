@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../auth_service.dart';
 
@@ -92,20 +93,24 @@ class _SignInSheetState extends State<_SignInSheet> {
               _ProviderButton(
                 label: 'Google로 계속하기',
                 icon: Icons.g_mobiledata,
+                iconColor: const Color(0xFFEA4335), // Google 레드
                 background: Colors.white,
                 foreground: Colors.black87,
                 bordered: true,
                 onTap: _busy ? null : () => _run(widget.auth.signInWithGoogle),
               ),
-              const SizedBox(height: 12),
-              _ProviderButton(
-                label: 'Apple로 계속하기',
-                icon: Icons.apple,
-                background: Colors.black,
-                foreground: Colors.white,
-                bordered: false,
-                onTap: _busy ? null : () => _run(widget.auth.signInWithApple),
-              ),
+              // Apple 로그인은 애플 기기에서만 노출.
+              if (Platform.isIOS) ...[
+                const SizedBox(height: 12),
+                _ProviderButton(
+                  label: 'Apple로 계속하기',
+                  icon: Icons.apple,
+                  background: Colors.black,
+                  foreground: Colors.white,
+                  bordered: false,
+                  onTap: _busy ? null : () => _run(widget.auth.signInWithApple),
+                ),
+              ],
               SizedBox(
                 height: 28,
                 child: Center(
@@ -132,6 +137,7 @@ class _ProviderButton extends StatelessWidget {
   final Color background;
   final Color foreground;
   final bool bordered;
+  final Color? iconColor;
   final VoidCallback? onTap;
   const _ProviderButton({
     required this.label,
@@ -140,6 +146,7 @@ class _ProviderButton extends StatelessWidget {
     required this.foreground,
     required this.bordered,
     required this.onTap,
+    this.iconColor,
   });
 
   @override
@@ -163,7 +170,7 @@ class _ProviderButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 24),
+            Icon(icon, size: 24, color: iconColor),
             const SizedBox(width: 8),
             Text(
               label,
