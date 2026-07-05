@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../models/person_box.dart';
+import 'box_normalize.dart';
 
 /// 감지 결과: 원시 얼굴 박스(face)와 상반신 근사 박스(person)를 함께 보유.
 class Detection {
@@ -38,25 +39,32 @@ class MlKitPersonDetector implements PersonDetector {
       ),
     );
     final f = faces.first.boundingBox;
-    final imgW = image.width.toDouble();
-    final imgH = image.height.toDouble();
+    // 회전 보정: ML Kit은 세운 좌표계의 박스를 반환하므로 세운 크기로 정규화.
+    final s = uprightSize(image.width, image.height, rotationDegrees);
 
-    // 원시 얼굴 박스(정규화, 확장 없음) — 잘림 감지용.
-    final faceBox = PersonBox(
-      left: (f.left / imgW).clamp(0.0, 1.0),
-      top: (f.top / imgH).clamp(0.0, 1.0),
-      width: (f.width / imgW).clamp(0.0, 1.0),
-      height: (f.height / imgH).clamp(0.0, 1.0),
+    // 원시 얼굴 박스(확장 없음) — 잘림 감지용.
+    final faceBox = normalizeBox(
+      f.left,
+      f.top,
+      f.width,
+      f.height,
+      image.width,
+      image.height,
+      rotationDegrees,
     );
 
     // 얼굴 박스를 인물 근사로 확장(위 0.5×h, 아래 3×h) — 구도/여백/줌용.
-    final top = (f.top - f.height * 0.5).clamp(0.0, imgH);
-    final bottom = (f.bottom + f.height * 3.0).clamp(0.0, imgH);
-    final personBox = PersonBox(
-      left: (f.left / imgW).clamp(0.0, 1.0),
-      top: (top / imgH).clamp(0.0, 1.0),
-      width: (f.width / imgW).clamp(0.0, 1.0),
-      height: ((bottom - top) / imgH).clamp(0.0, 1.0),
+    // 확장·클램프는 세운 이미지 높이(s.h) 기준.
+    final top = (f.top - f.height * 0.5).clamp(0.0, s.h);
+    final bottom = (f.bottom + f.height * 3.0).clamp(0.0, s.h);
+    final personBox = normalizeBox(
+      f.left,
+      top,
+      f.width,
+      bottom - top,
+      image.width,
+      image.height,
+      rotationDegrees,
     );
 
     return Detection(face: faceBox, person: personBox);

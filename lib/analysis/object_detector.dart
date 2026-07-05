@@ -3,8 +3,8 @@ import 'dart:ui' show Size;
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 
-import '../models/person_box.dart';
 import 'person_detector.dart';
+import 'box_normalize.dart';
 
 /// ML Kit Object Detection 기반 사물 감지. 가장 큰 사물 박스 하나를 정규화 PersonBox로 반환.
 class MlKitObjectDetector implements PersonDetector {
@@ -30,13 +30,15 @@ class MlKitObjectDetector implements PersonDetector {
       ),
     );
     final o = objects.first.boundingBox;
-    final imgW = image.width.toDouble();
-    final imgH = image.height.toDouble();
-    final box = PersonBox(
-      left: (o.left / imgW).clamp(0.0, 1.0),
-      top: (o.top / imgH).clamp(0.0, 1.0),
-      width: (o.width / imgW).clamp(0.0, 1.0),
-      height: (o.height / imgH).clamp(0.0, 1.0),
+    // 회전 보정: ML Kit은 세운 좌표계의 박스를 반환하므로 세운 크기로 정규화.
+    final box = normalizeBox(
+      o.left,
+      o.top,
+      o.width,
+      o.height,
+      image.width,
+      image.height,
+      rotationDegrees,
     );
     // 사물엔 얼굴 개념이 없어 face/person 모두 같은 박스(사물 모드는 face 미사용).
     return Detection(face: box, person: box);
