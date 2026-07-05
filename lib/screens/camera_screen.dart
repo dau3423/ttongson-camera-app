@@ -94,13 +94,13 @@ class _CameraScreenState extends State<CameraScreen> {
           image,
           _camera.sensorOrientation,
         );
-      } else if (mode == ShootingMode.object) {
+      } else {
+        // 사물·자연: 객체 검출로 주제 박스 확보(자연은 미검출 시 null).
         detection = await _objectDetector.detect(
           image,
           _camera.sensorOrientation,
         );
       }
-      // 자연 모드: 감지 없음.
       final m = _engine.buildMetrics(
         person: detection?.person,
         face: detection?.face,
