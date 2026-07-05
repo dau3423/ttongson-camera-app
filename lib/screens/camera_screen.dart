@@ -2,6 +2,8 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../analysis/guide_step.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../camera/camera_service.dart';
 import '../analysis/analysis_engine.dart';
@@ -55,6 +57,19 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _processing = false;
   String? _initError;
 
+  GuideStep _step = const GuideStep(kind: GuideStepKind.level, message: '');
+  GuideStepKind? _prevStepKind;
+
+  static const _stepOrder = <GuideStepKind>[
+    GuideStepKind.level,
+    GuideStepKind.crop,
+    GuideStepKind.distance,
+    GuideStepKind.position,
+    GuideStepKind.headroom,
+    GuideStepKind.angle,
+    GuideStepKind.ready,
+  ];
+
   double _zoom = 1.0;
   double _baseZoom = 1.0;
 
@@ -107,7 +122,14 @@ class _CameraScreenState extends State<CameraScreen> {
         sensor: _sensor,
         mode: mode,
       );
-      if (mounted) setState(() => _metrics = m);
+      final step = computeCurrentStep(m);
+      _handleStepFeedback(step.kind);
+      if (mounted) {
+        setState(() {
+          _metrics = m;
+          _step = step;
+        });
+      }
     } catch (_) {
       // 프레임 단위 실패는 무시(다음 프레임 계속)
     } finally {
@@ -124,8 +146,25 @@ class _CameraScreenState extends State<CameraScreen> {
         tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
         angle: const AngleAdvice(pitchDegrees: 0, hint: ''),
       );
+      _prevStepKind = null;
+      _step = const GuideStep(kind: GuideStepKind.level, message: '');
     });
     await _modeStore.save(mode);
+  }
+
+  /// 단계가 앞으로 전진했을 때만 1회 진동+소리. 후퇴는 무음.
+  void _handleStepFeedback(GuideStepKind kind) {
+    final prev = _prevStepKind;
+    _prevStepKind = kind;
+    if (prev == null || kind == prev) return;
+    if (_stepOrder.indexOf(kind) <= _stepOrder.indexOf(prev)) return;
+    if (kind == GuideStepKind.ready) {
+      HapticFeedback.heavyImpact();
+      SystemSound.play(SystemSoundType.alert);
+    } else {
+      HapticFeedback.mediumImpact();
+      SystemSound.play(SystemSoundType.click);
+    }
   }
 
   void _onScaleStart(ScaleStartDetails details) {
@@ -296,7 +335,6 @@ class _CameraScreenState extends State<CameraScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    final hints = _metrics.activeHints;
     final person = _metrics.person;
     final targetBox = _advice?.targetBox;
     final alignment = (targetBox != null && person != null)
@@ -315,7 +353,11 @@ class _CameraScreenState extends State<CameraScreen> {
                 fit: StackFit.expand,
                 children: [
                   CameraPreview(_camera.controller),
-                  GuideOverlay(metrics: _metrics, showGrid: _showGrid),
+                  GuideOverlay(
+                    metrics: _metrics,
+                    step: _step,
+                    showGrid: _showGrid,
+                  ),
                   if (targetBox != null)
                     TargetGuideOverlay(
                       target: targetBox,
@@ -335,28 +377,56 @@ class _CameraScreenState extends State<CameraScreen> {
                   alignment: alignment,
                 ),
               ),
-            Positioned(
-              top: 48,
-              left: 16,
-              right: 16,
-              child: Column(
-                children: [
-                  for (final h in hints)
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 2),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+            if (_step.kind != GuideStepKind.ready && _step.message.isNotEmpty)
+              Positioned(
+                top: 48,
+                left: 16,
+                right: 16,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
                       color: Colors.black54,
-                      child: Text(
-                        h,
-                        style: const TextStyle(color: Colors.white),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _step.message,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                ),
+              ),
+            if (_step.kind == GuideStepKind.ready)
+              Positioned(
+                top: 44,
+                left: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xCC2E7D32),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Text(
+                        '✓ 찍으세요!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
             Positioned(
               bottom: 40,
               left: 0,
