@@ -50,6 +50,17 @@ void main() {
     expect(m.crop!.any, isFalse, reason: '잘림 감지는 face 박스 기준이므로 경계에 닿지 않아야 함');
   });
 
+  test('인물 모드 3분할은 얼굴 중심 기준 — 얼굴이 교차점에 오면 좋아요', () {
+    // 얼굴 중심이 (1/3, 1/3) 교차점. 몸통(person) 중심은 아래로 치우쳐 있어도
+    // 3분할 정렬은 얼굴 기준이라 '좋아요'가 나와야 한다.
+    final m = engine.buildMetrics(
+      person: const PersonBox(left: 0.28, top: 0.3, width: 0.1, height: 0.5),
+      face: const PersonBox(left: 0.283, top: 0.283, width: 0.1, height: 0.1),
+      sensor: const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0),
+    );
+    expect(m.thirds!.hint, '좋아요');
+  });
+
   test('face null 이면 person 박스로 폴백해 잘림 감지', () {
     // person: bottom = 0.1 + 0.9 = 1.0 → 아래 잘림
     final m = engine.buildMetrics(

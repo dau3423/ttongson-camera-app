@@ -38,7 +38,7 @@ lib/
 - 좌표계: 모든 인물/포인트 좌표는 **정규화 0.0~1.0**, 원점 **좌상단**(x→오른쪽, y→아래).
 - 각도 단위: **도(degree)**. 수평 허용오차 기본 **±1.5°**, 눈높이 허용오차 **±10°**.
 - 머리 공간 적정 비율: **0.05~0.15**. 피사체 높이 적정 비율: **0.5~0.8**.
-- `lib/analysis/` 중 `person_detector.dart`·`analysis_engine.dart`를 제외한 파일은 **Flutter/plugin import 금지**(순수 Dart).
+- `lib/analysis/` 중 `person_detector.dart`·`analysis_engine.dart`·`object_detector.dart`를 제외한 파일은 **Flutter/plugin import 금지**(순수 Dart).
 - **Phase 0+1은 네트워크 호출 0회.** 모든 분석은 온디바이스.
 - 정렬 판정 문자열은 `'좋아요'`로 통일(GuideMetrics·GuidePainter가 이 값으로 분기).
 

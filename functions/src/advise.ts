@@ -5,7 +5,7 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { requestAdvice } from "./claude.js";
 import { windowStart, overLimit } from "./ratelimit.js";
-import type { OnDeviceMetrics } from "./advice.js";
+import { parseMode, type OnDeviceMetrics } from "./advice.js";
 
 if (getApps().length === 0) initializeApp();
 
@@ -28,6 +28,7 @@ export const advise = onCall(
       mediaType?: string;
       deviceId?: string;
       metrics?: OnDeviceMetrics;
+      mode?: unknown;
     };
 
     if (typeof data.imageBase64 !== "string" || data.imageBase64.length === 0) {
@@ -64,6 +65,7 @@ export const advise = onCall(
         data.imageBase64,
         "image/jpeg",
         data.metrics,
+        parseMode(data.mode),
       );
     } catch (err) {
       console.error("advise failed", err);

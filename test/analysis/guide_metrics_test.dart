@@ -19,6 +19,8 @@ void main() {
         ),
         headroom: const HeadroomAdvice(ratio: 0.3, hint: '카메라를 살짝 내리세요'),
         thirds: const ThirdsAlignment(
+          currentX: 0.667,
+          currentY: 0.333,
           targetX: 0.667,
           targetY: 0.333,
           distance: 0.15,
@@ -51,6 +53,8 @@ void main() {
         ),
         headroom: const HeadroomAdvice(ratio: 0.1, hint: ''),
         thirds: const ThirdsAlignment(
+          currentX: 0.333,
+          currentY: 0.333,
           targetX: 0.333,
           targetY: 0.333,
           distance: 0.01,
@@ -68,6 +72,8 @@ void main() {
         tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
         angle: const AngleAdvice(pitchDegrees: 0, hint: ''),
         thirds: const ThirdsAlignment(
+          currentX: 0.333,
+          currentY: 0.333,
           targetX: 0.333,
           targetY: 0.333,
           distance: 0.01,
@@ -85,6 +91,8 @@ void main() {
         tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
         angle: const AngleAdvice(pitchDegrees: 0, hint: ''),
         thirds: const ThirdsAlignment(
+          currentX: 0.667,
+          currentY: 0.333,
           targetX: 0.667,
           targetY: 0.333,
           distance: 0.2,

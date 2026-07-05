@@ -44,6 +44,9 @@ dependencies:
   cloud_functions: ^6.3.3
   firebase_app_check: ^0.4.5
   shared_preferences: ^2.5.5
+  google_mlkit_object_detection: ^0.15.1
+  url_launcher: ^6.3.1
+  android_intent_plus: ^5.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

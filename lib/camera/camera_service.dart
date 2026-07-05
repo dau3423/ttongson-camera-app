@@ -7,6 +7,10 @@ class CameraService {
   CameraController? _controller;
   bool _streaming = false;
 
+  double _minZoom = 1.0;
+  double _maxZoom = 1.0;
+  double _currentZoom = 1.0;
+
   CameraController get controller {
     final c = _controller;
     if (c == null) {
@@ -16,6 +20,10 @@ class CameraService {
   }
 
   int get sensorOrientation => _controller?.description.sensorOrientation ?? 0;
+
+  double get minZoom => _minZoom;
+  double get maxZoom => _maxZoom;
+  double get currentZoom => _currentZoom;
 
   Future<void> initialize() async {
     final cameras = await availableCameras();
@@ -29,7 +37,18 @@ class CameraService {
       enableAudio: false,
     );
     await ctrl.initialize();
+    _minZoom = await ctrl.getMinZoomLevel();
+    _maxZoom = await ctrl.getMaxZoomLevel();
+    _currentZoom = _minZoom;
     _controller = ctrl;
+  }
+
+  /// 줌 배율을 지원 범위로 클램프해 적용하고, 실제 적용된 배율을 반환한다.
+  Future<double> setZoom(double zoom) async {
+    final clamped = zoom.clamp(_minZoom, _maxZoom);
+    await controller.setZoomLevel(clamped);
+    _currentZoom = clamped;
+    return clamped;
   }
 
   void startStream(void Function(CameraImage) onFrame) {
@@ -45,6 +64,8 @@ class CameraService {
   }
 
   /// 촬영 후 사진첩(갤러리)에 저장한다. 저장 성공 여부를 반환.
+  /// 프리뷰가 센서 전체 프레임을 그대로(contain) 보여주므로, 저장 사진도
+  /// 크롭 없이 그대로 저장하면 프리뷰와 일치한다(WYSIWYG).
   Future<bool> captureAndSave() async {
     final wasStreaming = _streaming;
     if (wasStreaming) await stopStream();

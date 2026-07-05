@@ -1,20 +1,21 @@
 // functions/src/claude.ts
 import Anthropic from "@anthropic-ai/sdk";
-import { COMPOSITION_SCHEMA, SYSTEM_PROMPT, buildUserText } from "./schema.js";
-import { parseAdvice, type CompositionAdvice, type OnDeviceMetrics } from "./advice.js";
+import { COMPOSITION_SCHEMA, buildSystemPrompt, buildUserText } from "./schema.js";
+import { parseAdvice, type CompositionAdvice, type Mode, type OnDeviceMetrics } from "./advice.js";
 
 export async function requestAdvice(
   apiKey: string,
   imageBase64: string,
   mediaType: "image/jpeg",
   metrics: OnDeviceMetrics | undefined,
+  mode: Mode,
 ): Promise<CompositionAdvice> {
   const client = new Anthropic({ apiKey });
-  // 구조화 출력: output_config.format(json_schema). (구 output_format 필드는 폐기됨)
+  // 구조화 출력: output_config.format(json_schema).
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(mode),
     output_config: {
       format: {
         type: "json_schema",
@@ -29,7 +30,7 @@ export async function requestAdvice(
             type: "image",
             source: { type: "base64", media_type: mediaType, data: imageBase64 },
           },
-          { type: "text", text: buildUserText(metrics) },
+          { type: "text", text: buildUserText(mode, metrics) },
         ],
       },
     ],
