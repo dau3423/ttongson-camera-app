@@ -33,15 +33,20 @@ class AnalysisEngine {
     final tilt = computeTilt(sensor.accelX, sensor.accelY);
     final pitch = computePitch(sensor.accelY, sensor.accelZ);
 
-    // 자연: 수평·격자만. 대상 감지 무시.
+    // 자연: 수평 + 앞뒤 기울기(항상). 주제가 잡히면 거리·위치도.
     if (mode == ShootingMode.nature) {
       return GuideMetrics(
         tilt: tilt,
-        angle: computeAngle(pitch, guide: AngleGuide.none),
+        angle: computeAngle(pitch, guide: AngleGuide.frontal),
+        person: person,
+        thirds: person == null
+            ? null
+            : computeThirds(person.centerX, person.centerY),
+        zoom: person == null ? null : computeZoom(person.height),
       );
     }
 
-    // 대상 미감지: 수평·각도만.
+    // 대상 미감지(인물/사물): 수평만.
     if (person == null) {
       return GuideMetrics(
         tilt: tilt,
@@ -49,27 +54,24 @@ class AnalysisEngine {
       );
     }
 
-    // 사물: 중앙(3분할)·줌만. 헤드룸/크롭/눈높이각 없음.
+    // 사물: 수평·잘림·거리·위치·정면 각도. 헤드룸 없음.
     if (mode == ShootingMode.object) {
       return GuideMetrics(
         tilt: tilt,
-        angle: computeAngle(pitch, guide: AngleGuide.none),
+        angle: computeAngle(pitch, guide: AngleGuide.frontal),
         person: person,
         thirds: computeThirds(person.centerX, person.centerY),
+        crop: detectCrop(person),
         zoom: computeZoom(person.height),
       );
     }
 
-    // 인물(기본): 전체 지표.
-    // 3분할 정렬은 얼굴(눈높이)을 교차점에 두는 구도 규칙을 따르므로 얼굴 중심 기준.
-    // 몸통 근사 박스의 중심(≈가슴)을 쓰면 세로로 교차점에 닿기 어려워 '좋아요'가
-    // 사실상 안 나온다.
-    final angle = computeAngle(pitch, guide: AngleGuide.eyeLevel);
+    // 인물(기본): 전체 지표. 3분할·잘림은 얼굴 기준.
     final cropBox = face ?? person;
     final thirdsBox = face ?? person;
     return GuideMetrics(
       tilt: tilt,
-      angle: angle,
+      angle: computeAngle(pitch, guide: AngleGuide.eyeLevel),
       person: person,
       thirds: computeThirds(thirdsBox.centerX, thirdsBox.centerY),
       headroom: computeHeadroom(person),
