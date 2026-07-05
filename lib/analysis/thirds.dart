@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
 class ThirdsAlignment {
+  final double currentX;
+  final double currentY;
   final double targetX;
   final double targetY;
   final double distance;
   final double score;
   final String hint;
   const ThirdsAlignment({
+    required this.currentX,
+    required this.currentY,
     required this.targetX,
     required this.targetY,
     required this.distance,
@@ -50,6 +54,8 @@ ThirdsAlignment computeThirds(
   }
   final hint = parts.isEmpty ? '좋아요' : parts.join(' · ');
   return ThirdsAlignment(
+    currentX: cx,
+    currentY: cy,
     targetX: bestX,
     targetY: bestY,
     distance: bestD,

@@ -26,4 +26,10 @@ void main() {
     final far = computeThirds(0.9, 0.9);
     expect(far.score, lessThan(near.score));
   });
+
+  test('입력한 피사체 중심을 currentX/currentY 로 그대로 담는다', () {
+    final a = computeThirds(0.2, 0.7);
+    expect(a.currentX, closeTo(0.2, 1e-9));
+    expect(a.currentY, closeTo(0.7, 1e-9));
+  });
 }
