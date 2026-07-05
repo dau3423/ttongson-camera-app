@@ -1,6 +1,5 @@
 // lib/screens/camera_screen.dart
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -16,7 +15,6 @@ import '../cloud/composition_advice.dart';
 import '../cloud/advice_overlay.dart';
 import '../cloud/advice_consent.dart';
 import '../cloud/device_id.dart';
-import '../cloud/stillness_detector.dart';
 import '../cloud/target_alignment.dart';
 import '../cloud/target_guide_overlay.dart';
 import '../cloud/advice_minimap.dart';
@@ -39,10 +37,6 @@ class _CameraScreenState extends State<CameraScreen> {
   CompositionAdvice? _advice;
   bool _adviceLoading = false;
 
-  final StillnessDetector _stillness = StillnessDetector();
-  int _lastAdviceMs = 0;
-  static const int _adviceCooldownMs = 10000;
-
   SensorSample _sensor = const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0);
   GuideMetrics _metrics = GuideMetrics(
     tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
@@ -60,11 +54,6 @@ class _CameraScreenState extends State<CameraScreen> {
     _engine = AnalysisEngine(_detector);
     _accelSub = accelerometerEventStream().listen((e) {
       _sensor = SensorSample(accelX: e.x, accelY: e.y, accelZ: e.z);
-      final mag = math.sqrt(e.x * e.x + e.y * e.y + e.z * e.z);
-      final nowMs = DateTime.now().millisecondsSinceEpoch;
-      if (_stillness.update(mag, nowMs)) {
-        unawaited(_maybeAutoAdvise(nowMs));
-      }
     });
     _init();
   }
@@ -169,16 +158,7 @@ class _CameraScreenState extends State<CameraScreen> {
     } finally {
       if (mounted) setState(() => _adviceLoading = false);
       if (mounted) _camera.startStream(_onFrame);
-      _lastAdviceMs = DateTime.now().millisecondsSinceEpoch;
     }
-  }
-
-  Future<void> _maybeAutoAdvise(int nowMs) async {
-    if (_adviceLoading || _advice != null) return;
-    if (nowMs - _lastAdviceMs < _adviceCooldownMs) return;
-    if (!await _consent.hasConsented()) return; // 동의 전에는 자동 트리거 안 함
-    _lastAdviceMs = nowMs;
-    await _requestAdvice();
   }
 
   @override
