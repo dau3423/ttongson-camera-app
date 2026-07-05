@@ -37,7 +37,7 @@ class AnalysisEngine {
     if (mode == ShootingMode.nature) {
       return GuideMetrics(
         tilt: tilt,
-        angle: computeAngle(pitch, hasPerson: false),
+        angle: computeAngle(pitch, guide: AngleGuide.none),
       );
     }
 
@@ -45,7 +45,7 @@ class AnalysisEngine {
     if (person == null) {
       return GuideMetrics(
         tilt: tilt,
-        angle: computeAngle(pitch, hasPerson: false),
+        angle: computeAngle(pitch, guide: AngleGuide.none),
       );
     }
 
@@ -53,7 +53,7 @@ class AnalysisEngine {
     if (mode == ShootingMode.object) {
       return GuideMetrics(
         tilt: tilt,
-        angle: computeAngle(pitch, hasPerson: false),
+        angle: computeAngle(pitch, guide: AngleGuide.none),
         person: person,
         thirds: computeThirds(person.centerX, person.centerY),
         zoom: computeZoom(person.height),
@@ -64,7 +64,7 @@ class AnalysisEngine {
     // 3분할 정렬은 얼굴(눈높이)을 교차점에 두는 구도 규칙을 따르므로 얼굴 중심 기준.
     // 몸통 근사 박스의 중심(≈가슴)을 쓰면 세로로 교차점에 닿기 어려워 '좋아요'가
     // 사실상 안 나온다.
-    final angle = computeAngle(pitch, hasPerson: true);
+    final angle = computeAngle(pitch, guide: AngleGuide.eyeLevel);
     final cropBox = face ?? person;
     final thirdsBox = face ?? person;
     return GuideMetrics(

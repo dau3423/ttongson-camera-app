@@ -17,18 +17,27 @@ double computePitch(double accelY, double accelZ) {
   return math.atan2(accelZ, accelY) * 180 / math.pi;
 }
 
-/// 인물 촬영 시 눈높이 대비 촬영 각도를 안내.
+enum AngleGuide { none, eyeLevel, frontal }
+
+/// 촬영 각도를 모드에 맞게 안내한다.
+/// eyeLevel(인물): 눈높이 기준. frontal(사물·자연): 정면·수평 기준.
 AngleAdvice computeAngle(
   double pitchDegrees, {
-  bool hasPerson = false,
-  double eyeLevelTolerance = 10,
+  AngleGuide guide = AngleGuide.none,
+  double tolerance = 10,
 }) {
   String hint = '';
-  if (hasPerson) {
-    if (pitchDegrees > eyeLevelTolerance) {
+  if (guide == AngleGuide.eyeLevel) {
+    if (pitchDegrees > tolerance) {
       hint = '카메라를 눈높이로 내리세요';
-    } else if (pitchDegrees < -eyeLevelTolerance) {
+    } else if (pitchDegrees < -tolerance) {
       hint = '카메라를 눈높이로 올리세요';
+    }
+  } else if (guide == AngleGuide.frontal) {
+    if (pitchDegrees > tolerance) {
+      hint = '카메라를 수평으로 내리세요';
+    } else if (pitchDegrees < -tolerance) {
+      hint = '카메라를 수평으로 올리세요';
     }
   }
   return AngleAdvice(pitchDegrees: pitchDegrees, hint: hint);
