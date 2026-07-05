@@ -17,3 +17,8 @@ build/
 functions/lib/
 functions/node_modules/
 .firebase/
+
+# Flutter/tooling generated
+devtools_options.yaml
+macos/Podfile
+**/xcshareddata/swiftpm/

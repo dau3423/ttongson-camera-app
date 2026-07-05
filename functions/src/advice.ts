@@ -1,11 +1,13 @@
-export interface AdviceDirection {
-  axis: "move" | "tilt" | "zoom" | "angle";
-  instruction: string;
+export interface TargetBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface CompositionAdvice {
   headline: string;
-  directions: AdviceDirection[];
+  targetBox: TargetBox;
   rationale: string;
 }
 
@@ -16,7 +18,19 @@ export interface OnDeviceMetrics {
   hasPerson?: boolean;
 }
 
-const VALID_AXES = new Set(["move", "tilt", "zoom", "angle"]);
+function parseTargetBox(raw: unknown): TargetBox {
+  const t = raw as Record<string, unknown>;
+  if (
+    !t ||
+    typeof t.x !== "number" ||
+    typeof t.y !== "number" ||
+    typeof t.width !== "number" ||
+    typeof t.height !== "number"
+  ) {
+    throw new Error("targetBox 누락 또는 형식 오류");
+  }
+  return { x: t.x, y: t.y, width: t.width, height: t.height };
+}
 
 /** 모델이 반환한 JSON 텍스트를 CompositionAdvice로 검증·파싱. 위반 시 throw. */
 export function parseAdvice(text: string): CompositionAdvice {
@@ -24,15 +38,6 @@ export function parseAdvice(text: string): CompositionAdvice {
   if (typeof raw.headline !== "string" || typeof raw.rationale !== "string") {
     throw new Error("headline/rationale 누락");
   }
-  if (!Array.isArray(raw.directions)) {
-    throw new Error("directions 누락");
-  }
-  const directions: AdviceDirection[] = raw.directions.map((d: unknown) => {
-    const dir = d as Record<string, unknown>;
-    if (!VALID_AXES.has(dir.axis as string) || typeof dir.instruction !== "string") {
-      throw new Error(`잘못된 direction: ${JSON.stringify(d)}`);
-    }
-    return { axis: dir.axis as AdviceDirection["axis"], instruction: dir.instruction };
-  });
-  return { headline: raw.headline, directions, rationale: raw.rationale };
+  const targetBox = parseTargetBox(raw.targetBox);
+  return { headline: raw.headline, targetBox, rationale: raw.rationale };
 }

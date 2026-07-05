@@ -17,6 +17,9 @@ import '../cloud/advice_overlay.dart';
 import '../cloud/advice_consent.dart';
 import '../cloud/device_id.dart';
 import '../cloud/stillness_detector.dart';
+import '../cloud/target_alignment.dart';
+import '../cloud/target_guide_overlay.dart';
+import '../cloud/advice_minimap.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -221,6 +224,11 @@ class _CameraScreenState extends State<CameraScreen> {
       );
     }
     final hints = _metrics.activeHints;
+    final person = _metrics.person;
+    final targetBox = _advice?.targetBox;
+    final alignment = (targetBox != null && person != null)
+        ? computeAlignment(person, targetBox)
+        : null;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -228,6 +236,22 @@ class _CameraScreenState extends State<CameraScreen> {
         children: [
           CameraPreview(_camera.controller),
           GuideOverlay(metrics: _metrics, showGrid: _showGrid),
+          if (targetBox != null)
+            TargetGuideOverlay(
+              target: targetBox,
+              current: person,
+              alignment: alignment,
+            ),
+          if (targetBox != null)
+            Positioned(
+              top: 100,
+              right: 12,
+              child: AdviceMinimap(
+                target: targetBox,
+                current: person,
+                alignment: alignment,
+              ),
+            ),
           Positioned(
             top: 48,
             left: 16,
