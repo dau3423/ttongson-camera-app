@@ -1,6 +1,7 @@
 // lib/community/auth_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Firebase Auth 래퍼. 소셜 로그인은 모두 Firebase 사용자(uid)로 수렴한다.
 /// (A1: Google. Apple/Kakao는 후속 계획에서 메서드 추가.)
@@ -26,6 +27,27 @@ class AuthService {
     );
     final result = await _auth.signInWithCredential(credential);
     return result.user;
+  }
+
+  /// Apple 로그인. 사용자가 취소하면 null.
+  Future<User?> signInWithApple() async {
+    try {
+      final apple = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      final oauth = OAuthProvider('apple.com').credential(
+        idToken: apple.identityToken,
+        accessToken: apple.authorizationCode,
+      );
+      final result = await _auth.signInWithCredential(oauth);
+      return result.user;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) return null; // 취소
+      rethrow;
+    }
   }
 
   Future<void> signOut() async {
