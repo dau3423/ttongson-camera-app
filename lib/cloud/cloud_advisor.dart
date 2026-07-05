@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import '../analysis/guide_metrics.dart';
+import '../models/shooting_mode.dart';
 import 'advice_image.dart';
 import 'composition_advice.dart';
 
@@ -20,6 +21,7 @@ class CloudAdvisor {
     String jpegPath,
     GuideMetrics metrics,
     String deviceId,
+    ShootingMode mode,
   ) async {
     try {
       final downsized = await encodeDownsizedJpeg(jpegPath);
@@ -34,6 +36,7 @@ class CloudAdvisor {
         'imageBase64': base64,
         'mediaType': 'image/jpeg',
         'deviceId': deviceId,
+        'mode': mode.wire,
         'metrics': _metricsPayload(metrics),
       });
       return CompositionAdvice.fromJson(Map<String, dynamic>.from(result.data));
