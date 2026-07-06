@@ -130,6 +130,81 @@ class PostRepository {
         .delete();
   }
 
+  /// 게시물 신고(대상별 1건, 문서 id=uid). reportCount/hidden은 함수가 관리.
+  Future<void> reportPost({
+    required String postId,
+    required String uid,
+    required String reason,
+  }) async {
+    await _db
+        .collection('posts')
+        .doc(postId)
+        .collection('reports')
+        .doc(uid)
+        .set({
+          'reporterUid': uid,
+          'reason': reason,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  /// 댓글 신고(대상별 1건, 문서 id=uid).
+  Future<void> reportComment({
+    required String postId,
+    required String commentId,
+    required String uid,
+    required String reason,
+  }) async {
+    await _db
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .collection('reports')
+        .doc(uid)
+        .set({
+          'reporterUid': uid,
+          'reason': reason,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  /// 내가 신고한 게시물 id 집합(collectionGroup). 경로가 posts/{id}/reports/{uid}인 것.
+  Stream<Set<String>> myReportedPostIds(String uid) {
+    return _db
+        .collectionGroup('reports')
+        .where('reporterUid', isEqualTo: uid)
+        .snapshots()
+        .map((q) {
+          final ids = <String>{};
+          for (final d in q.docs) {
+            final target = d.reference.parent.parent; // post 또는 comment 문서
+            if (target != null && target.parent.id == 'posts') {
+              ids.add(target.id);
+            }
+          }
+          return ids;
+        });
+  }
+
+  /// 내가 신고한 댓글 id 집합(collectionGroup). 경로가 .../comments/{id}/reports/{uid}인 것.
+  Stream<Set<String>> myReportedCommentIds(String uid) {
+    return _db
+        .collectionGroup('reports')
+        .where('reporterUid', isEqualTo: uid)
+        .snapshots()
+        .map((q) {
+          final ids = <String>{};
+          for (final d in q.docs) {
+            final target = d.reference.parent.parent; // post 또는 comment 문서
+            if (target != null && target.parent.id == 'comments') {
+              ids.add(target.id);
+            }
+          }
+          return ids;
+        });
+  }
+
   Map<String, dynamic> _withDate(Map<String, dynamic> raw) {
     final data = Map<String, dynamic>.from(raw);
     final ts = data['createdAt'];
