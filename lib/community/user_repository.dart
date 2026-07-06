@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'models/user_profile.dart';
+import 'models/blocked_user.dart';
 import 'nickname_generator.dart';
 
 /// Firestore /users 접근. 판단 로직 없음(생성/조회만).
@@ -47,5 +48,59 @@ class UserRepository {
     final ts = data['createdAt'];
     data['createdAt'] = ts is Timestamp ? ts.toDate() : null;
     return UserProfile.fromData(uid, data);
+  }
+
+  /// 사용자 차단(내 blocks/{uid}/blocked/{blockedUid} 문서 생성).
+  Future<void> blockUser({
+    required String uid,
+    required String blockedUid,
+    required String blockedName,
+  }) async {
+    await _db
+        .collection('blocks')
+        .doc(uid)
+        .collection('blocked')
+        .doc(blockedUid)
+        .set({
+          'blockedName': blockedName,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  /// 차단 해제(문서 삭제).
+  Future<void> unblockUser({
+    required String uid,
+    required String blockedUid,
+  }) async {
+    await _db
+        .collection('blocks')
+        .doc(uid)
+        .collection('blocked')
+        .doc(blockedUid)
+        .delete();
+  }
+
+  /// 내가 차단한 uid 집합(필터용).
+  Stream<Set<String>> blockedUids(String uid) {
+    return _db
+        .collection('blocks')
+        .doc(uid)
+        .collection('blocked')
+        .snapshots()
+        .map((q) => q.docs.map((d) => d.id).toSet());
+  }
+
+  /// 내가 차단한 사용자 목록(목록 화면용, 최신순).
+  Stream<List<BlockedUser>> blockedList(String uid) {
+    return _db
+        .collection('blocks')
+        .doc(uid)
+        .collection('blocked')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (q) =>
+              q.docs.map((d) => BlockedUser.fromData(d.id, d.data())).toList(),
+        );
   }
 }
