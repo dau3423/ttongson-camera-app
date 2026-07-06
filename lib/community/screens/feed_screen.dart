@@ -4,6 +4,7 @@ import '../auth_service.dart';
 import '../models/post.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
+import 'report_sheet.dart';
 
 /// 최신순 게시물 피드. 로그인 게이트 뒤에서 진입.
 class FeedScreen extends StatelessWidget {
@@ -26,23 +27,35 @@ class FeedScreen extends StatelessWidget {
         ),
         child: const Icon(Icons.add_a_photo),
       ),
-      body: StreamBuilder<List<Post>>(
-        stream: posts.feed(),
-        builder: (context, snap) {
-          if (snap.hasError) {
-            return const Center(child: Text('불러오지 못했어요'));
-          }
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final items = snap.data!;
-          if (items.isEmpty) {
-            return const Center(child: Text('아직 게시물이 없어요. 첫 사진을 올려보세요!'));
-          }
-          return ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (_, i) =>
-                _PostCard(post: items[i], posts: posts, uid: uid, auth: auth),
+      body: StreamBuilder<Set<String>>(
+        stream: posts.myReportedPostIds(uid),
+        builder: (context, reportedSnap) {
+          final reported = reportedSnap.data ?? <String>{};
+          return StreamBuilder<List<Post>>(
+            stream: posts.feed(),
+            builder: (context, snap) {
+              if (snap.hasError) {
+                return const Center(child: Text('불러오지 못했어요'));
+              }
+              if (!snap.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final items = snap.data!
+                  .where((p) => !reported.contains(p.id))
+                  .toList();
+              if (items.isEmpty) {
+                return const Center(child: Text('아직 게시물이 없어요. 첫 사진을 올려보세요!'));
+              }
+              return ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (_, i) => _PostCard(
+                  post: items[i],
+                  posts: posts,
+                  uid: uid,
+                  auth: auth,
+                ),
+              );
+            },
           );
         },
       ),
@@ -62,6 +75,20 @@ class _PostCard extends StatelessWidget {
     required this.auth,
   });
 
+  Future<void> _report(BuildContext context) async {
+    final reason = await showReportSheet(context);
+    if (reason == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await posts.reportPost(postId: post.id, uid: uid, reason: reason);
+      messenger.showSnackBar(const SnackBar(content: Text('신고되었습니다')));
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('신고에 실패했어요 (이미 신고했을 수 있어요)')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -71,10 +98,24 @@ class _PostCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              post.authorName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    post.authorName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (uid.isNotEmpty && uid != post.authorUid)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (_) => _report(context),
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'report', child: Text('신고하기')),
+                    ],
+                  ),
+              ],
             ),
           ),
           AspectRatio(
