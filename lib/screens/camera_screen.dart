@@ -18,6 +18,7 @@ import '../camera/gallery_launcher.dart';
 import '../overlay/guide_overlay.dart';
 import '../overlay/mode_selector.dart';
 import '../community/auth_service.dart';
+import '../community/screens/feed_screen.dart';
 import '../community/screens/sign_in_sheet.dart';
 import '../cloud/cloud_advisor.dart';
 import '../cloud/composition_advice.dart';
@@ -504,6 +505,24 @@ class _CameraScreenState extends State<CameraScreen> {
                   onPressed: _switchCamera,
                 ),
               ),
+            Positioned(
+              top: 44,
+              left: 8,
+              child: IconButton(
+                icon: const Icon(Icons.people, color: Colors.white, size: 30),
+                onPressed: () async {
+                  if (!_auth.isSignedIn) {
+                    final ok = await showSignInSheet(context, _auth);
+                    if (!ok) return;
+                  }
+                  if (!context.mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FeedScreen(auth: _auth)),
+                  );
+                },
+              ),
+            ),
             Positioned(
               bottom: 40,
               left: 0,
