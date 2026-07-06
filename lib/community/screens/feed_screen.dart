@@ -3,6 +3,7 @@ import '../post_repository.dart';
 import '../auth_service.dart';
 import '../models/post.dart';
 import 'create_post_screen.dart';
+import 'post_detail_screen.dart';
 
 /// 최신순 게시물 피드. 로그인 게이트 뒤에서 진입.
 class FeedScreen extends StatelessWidget {
@@ -41,7 +42,7 @@ class FeedScreen extends StatelessWidget {
           return ListView.builder(
             itemCount: items.length,
             itemBuilder: (_, i) =>
-                _PostCard(post: items[i], posts: posts, uid: uid),
+                _PostCard(post: items[i], posts: posts, uid: uid, auth: auth),
           );
         },
       ),
@@ -53,7 +54,13 @@ class _PostCard extends StatelessWidget {
   final Post post;
   final PostRepository posts;
   final String uid;
-  const _PostCard({required this.post, required this.posts, required this.uid});
+  final AuthService auth;
+  const _PostCard({
+    required this.post,
+    required this.posts,
+    required this.uid,
+    required this.auth,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +101,17 @@ class _PostCard extends StatelessWidget {
               ),
               Text('${post.likeCount}'),
               const SizedBox(width: 12),
+              IconButton(
+                icon: const Icon(Icons.mode_comment_outlined),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PostDetailScreen(post: post, auth: auth, posts: posts),
+                  ),
+                ),
+              ),
+              Text('${post.commentCount}'),
             ],
           ),
         ],
