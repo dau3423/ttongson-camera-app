@@ -40,7 +40,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         authorName: profile?.nickname ?? '익명',
         text: text,
       );
-      _input.clear();
+      if (mounted) _input.clear();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -70,6 +70,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
     );
     if (ok != true) return;
+    if (!mounted) return;
     try {
       await widget.posts.deleteComment(postId: widget.post.id, commentId: c.id);
     } catch (_) {
