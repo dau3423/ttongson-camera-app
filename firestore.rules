@@ -41,6 +41,7 @@ service cloud.firestore {
           allow read: if request.auth != null
                       && resource.data.reporterUid == request.auth.uid;
           allow create: if request.auth != null
+                        && request.auth.uid == uid
                         && request.resource.data.reporterUid == request.auth.uid
                         && request.resource.data.reason is string;
           allow update, delete: if false;
@@ -50,6 +51,7 @@ service cloud.firestore {
         allow read: if request.auth != null
                     && resource.data.reporterUid == request.auth.uid;
         allow create: if request.auth != null
+                      && request.auth.uid == uid
                       && request.resource.data.reporterUid == request.auth.uid
                       && request.resource.data.reason is string;
         allow update, delete: if false;
