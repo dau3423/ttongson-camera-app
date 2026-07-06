@@ -79,8 +79,10 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
   void _onPanEnd() {
     final a = _dragStart;
     final b = _dragNow;
-    _dragStart = null;
-    _dragNow = null;
+    setState(() {
+      _dragStart = null;
+      _dragNow = null;
+    });
     if (a == null || b == null) return;
     final left = a.x < b.x ? a.x : b.x;
     final top = a.y < b.y ? a.y : b.y;
@@ -307,10 +309,5 @@ class _MaskPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_MaskPainter old) =>
-      old.regions != regions ||
-      old.selected != selected ||
-      old.fit != fit ||
-      old.dragStart != dragStart ||
-      old.dragNow != dragNow;
+  bool shouldRepaint(_MaskPainter old) => true;
 }
