@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'models/post.dart';
+import 'models/comment.dart';
 
 /// Firestore /posts + Storage 접근. 판단 로직 없음.
 class PostRepository {
@@ -79,6 +80,54 @@ class PostRepository {
         .doc(uid)
         .snapshots()
         .map((s) => s.exists);
+  }
+
+  /// 게시물에 댓글을 추가한다. commentCount는 함수가 관리.
+  Future<void> addComment({
+    required String postId,
+    required String uid,
+    required String authorName,
+    required String text,
+  }) async {
+    final comment = Comment(
+      id: '',
+      authorUid: uid,
+      authorName: authorName,
+      text: text,
+    );
+    await _db.collection('posts').doc(postId).collection('comments').add({
+      ...comment.toCreateMap(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// 댓글 목록(숨김 제외, 오래된 순).
+  Stream<List<Comment>> comments(String postId) {
+    return _db
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .where('hidden', isEqualTo: false)
+        .orderBy('createdAt')
+        .snapshots()
+        .map(
+          (q) => q.docs
+              .map((d) => Comment.fromData(d.id, _withDate(d.data())))
+              .toList(),
+        );
+  }
+
+  /// 댓글 삭제(본인 것만 — 규칙으로 강제).
+  Future<void> deleteComment({
+    required String postId,
+    required String commentId,
+  }) async {
+    await _db
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .delete();
   }
 
   Map<String, dynamic> _withDate(Map<String, dynamic> raw) {
