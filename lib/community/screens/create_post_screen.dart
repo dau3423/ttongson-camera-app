@@ -22,7 +22,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _pick() async {
     final x = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (x != null) setState(() => _image = File(x.path));
+    if (x != null && mounted) setState(() => _image = File(x.path));
   }
 
   Future<void> _submit() async {
