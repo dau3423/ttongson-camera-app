@@ -107,3 +107,64 @@ Dimensions fitDimensions(int w, int h, int maxLongSide) {
   final scale = maxLongSide / longEdge;
   return Dimensions((w * scale).round(), (h * scale).round());
 }
+
+/// BoxFit.contain으로 배치된 이미지의 표시 사각형(위젯 좌표계, 레터박스 포함).
+class FitRect {
+  final double left;
+  final double top;
+  final double width;
+  final double height;
+  const FitRect(this.left, this.top, this.width, this.height);
+
+  @override
+  bool operator ==(Object other) =>
+      other is FitRect &&
+      other.left == left &&
+      other.top == top &&
+      other.width == width &&
+      other.height == height;
+
+  @override
+  int get hashCode => Object.hash(left, top, width, height);
+}
+
+/// box(boxW×boxH) 안에 image(imgW×imgH)를 contain으로 배치했을 때의 표시 사각형.
+FitRect containRect(double boxW, double boxH, double imgW, double imgH) {
+  final boxAspect = boxW / boxH;
+  final imgAspect = imgW / imgH;
+  double w;
+  double h;
+  if (imgAspect > boxAspect) {
+    // 이미지가 더 넓다 → 너비 맞춤
+    w = boxW;
+    h = boxW / imgAspect;
+  } else {
+    // 이미지가 더 높다(또는 동일) → 높이 맞춤
+    h = boxH;
+    w = boxH * imgAspect;
+  }
+  final left = (boxW - w) / 2;
+  final top = (boxH - h) / 2;
+  return FitRect(left, top, w, h);
+}
+
+/// 정규화 점(순수 값 타입).
+class NormPoint {
+  final double x;
+  final double y;
+  const NormPoint(this.x, this.y);
+
+  @override
+  bool operator ==(Object other) =>
+      other is NormPoint && other.x == x && other.y == y;
+
+  @override
+  int get hashCode => Object.hash(x, y);
+}
+
+/// 위젯 로컬 좌표(dx,dy)를 표시 사각형 fit 기준 정규화(0~1)로. 밖은 clamp.
+NormPoint normFromWidget(double dx, double dy, FitRect fit) {
+  final x = ((dx - fit.left) / fit.width).clamp(0.0, 1.0);
+  final y = ((dy - fit.top) / fit.height).clamp(0.0, 1.0);
+  return NormPoint(x, y);
+}

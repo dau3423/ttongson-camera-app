@@ -75,4 +75,38 @@ void main() {
       expect(d.height, 600);
     });
   });
+
+  group('containRect (BoxFit.contain)', () {
+    test('가로가 더 넓은 이미지: 너비 맞춤, 상하 레터박스', () {
+      // box 200x200, image 400x200(aspect 2) → w=200, h=100, top=50
+      final fit = containRect(200, 200, 400, 200);
+      expect(fit.width, closeTo(200, 1e-6));
+      expect(fit.height, closeTo(100, 1e-6));
+      expect(fit.left, closeTo(0, 1e-6));
+      expect(fit.top, closeTo(50, 1e-6));
+    });
+    test('세로가 더 긴 이미지: 높이 맞춤, 좌우 레터박스', () {
+      // box 200x200, image 100x400(aspect 0.25) → h=200, w=50, left=75
+      final fit = containRect(200, 200, 100, 400);
+      expect(fit.height, closeTo(200, 1e-6));
+      expect(fit.width, closeTo(50, 1e-6));
+      expect(fit.top, closeTo(0, 1e-6));
+      expect(fit.left, closeTo(75, 1e-6));
+    });
+  });
+
+  group('normFromWidget', () {
+    test('표시 영역 내부 좌표를 정규화', () {
+      final fit = containRect(200, 200, 400, 200); // left0 top50 w200 h100
+      final p = normFromWidget(100, 100, fit); // 중앙
+      expect(p.x, closeTo(0.5, 1e-6));
+      expect(p.y, closeTo(0.5, 1e-6));
+    });
+    test('표시 영역 밖은 0~1로 clamp', () {
+      final fit = containRect(200, 200, 400, 200);
+      final p = normFromWidget(-50, 0, fit);
+      expect(p.x, 0.0);
+      expect(p.y, 0.0);
+    });
+  });
 }
