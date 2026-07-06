@@ -4,8 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import '../auth_service.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
+import 'mask_editor_screen.dart';
 
-/// 사진 선택 → 캡션 → 업로드. (가림 편집 단계는 계획 C에서 삽입)
+/// 사진 선택 → 가림 편집 → 캡션 → 업로드.
 class CreatePostScreen extends StatefulWidget {
   final AuthService auth;
   final PostRepository posts;
@@ -22,7 +23,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _pick() async {
     final x = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (x != null && mounted) setState(() => _image = File(x.path));
+    if (x == null || !mounted) return;
+    final masked = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(builder: (_) => MaskEditorScreen(image: File(x.path))),
+    );
+    // 편집 취소(null) 시 이미지 미설정 유지.
+    if (masked != null && mounted) setState(() => _image = masked);
   }
 
   Future<void> _submit() async {
