@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../auth_service.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
+import '../moderation.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 import 'report_sheet.dart';
@@ -102,6 +103,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  Future<void> _blockAuthor(Comment c) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        content: Text('${c.authorName} 님을 차단할까요? 이 사용자의 게시물과 댓글이 보이지 않아요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('차단'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _users.blockUser(
+        uid: _uid,
+        blockedUid: c.authorUid,
+        blockedName: c.authorName,
+      );
+      messenger.showSnackBar(const SnackBar(content: Text('차단했어요')));
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('차단에 실패했어요')));
+    }
+  }
+
   @override
   void dispose() {
     _input.dispose();
@@ -165,62 +197,91 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
                 const Divider(),
                 StreamBuilder<Set<String>>(
-                  stream: widget.posts.myReportedCommentIds(_uid),
-                  builder: (context, reportedSnap) {
-                    final reported = reportedSnap.data ?? <String>{};
-                    return StreamBuilder<List<Comment>>(
-                      stream: widget.posts.comments(post.id),
-                      builder: (context, snap) {
-                        if (snap.hasError) {
-                          return const Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Center(child: Text('댓글을 불러오지 못했어요')),
-                          );
-                        }
-                        if (!snap.hasData) {
-                          return const Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        final items = snap.data!
-                            .where((c) => !reported.contains(c.id))
-                            .toList();
-                        if (items.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Center(child: Text('첫 댓글을 남겨보세요')),
-                          );
-                        }
-                        return Column(
-                          children: [
-                            for (final c in items)
-                              ListTile(
-                                title: Text(
-                                  c.authorName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
+                  stream: _users.blockedUids(_uid),
+                  builder: (context, blockedSnap) {
+                    final blocked = blockedSnap.data ?? <String>{};
+                    return StreamBuilder<Set<String>>(
+                      stream: widget.posts.myReportedCommentIds(_uid),
+                      builder: (context, reportedSnap) {
+                        final reported = reportedSnap.data ?? <String>{};
+                        return StreamBuilder<List<Comment>>(
+                          stream: widget.posts.comments(post.id),
+                          builder: (context, snap) {
+                            if (snap.hasError) {
+                              return const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Center(child: Text('댓글을 불러오지 못했어요')),
+                              );
+                            }
+                            if (!snap.hasData) {
+                              return const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
                                 ),
-                                subtitle: Text(c.text),
-                                trailing: c.authorUid == _uid
-                                    ? IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          size: 20,
-                                        ),
-                                        onPressed: () => _confirmDelete(c),
-                                      )
-                                    : IconButton(
-                                        icon: const Icon(
-                                          Icons.flag_outlined,
-                                          size: 20,
-                                        ),
-                                        onPressed: () => _reportComment(c),
+                              );
+                            }
+                            final items = visibleItems(
+                              snap.data!,
+                              authorUidOf: (c) => c.authorUid,
+                              idOf: (c) => c.id,
+                              blockedAuthors: blocked,
+                              reportedIds: reported,
+                            );
+                            if (items.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Center(child: Text('첫 댓글을 남겨보세요')),
+                              );
+                            }
+                            return Column(
+                              children: [
+                                for (final c in items)
+                                  ListTile(
+                                    title: Text(
+                                      c.authorName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                       ),
-                              ),
-                          ],
+                                    ),
+                                    subtitle: Text(c.text),
+                                    trailing: c.authorUid == _uid
+                                        ? IconButton(
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              size: 20,
+                                            ),
+                                            onPressed: () => _confirmDelete(c),
+                                          )
+                                        : PopupMenuButton<String>(
+                                            icon: const Icon(
+                                              Icons.more_vert,
+                                              size: 20,
+                                            ),
+                                            onSelected: (v) {
+                                              if (v == 'report') {
+                                                _reportComment(c);
+                                              }
+                                              if (v == 'block') {
+                                                _blockAuthor(c);
+                                              }
+                                            },
+                                            itemBuilder: (_) => const [
+                                              PopupMenuItem(
+                                                value: 'report',
+                                                child: Text('신고하기'),
+                                              ),
+                                              PopupMenuItem(
+                                                value: 'block',
+                                                child: Text('차단하기'),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                              ],
+                            );
+                          },
                         );
                       },
                     );
