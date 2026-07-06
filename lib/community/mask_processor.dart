@@ -61,6 +61,7 @@ Uint8List _composite(Uint8List bytes, List<MaskRegion> regions) {
     throw StateError('이미지 디코딩 실패');
   }
   var image = img.bakeOrientation(decoded);
+  image.exif = img.ExifData();
   final dim = fitDimensions(image.width, image.height, 1600);
   if (dim.width != image.width || dim.height != image.height) {
     image = img.copyResize(image, width: dim.width, height: dim.height);
