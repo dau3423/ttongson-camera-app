@@ -4,6 +4,7 @@ import '../post_repository.dart';
 import '../user_repository.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
+import 'report_sheet.dart';
 
 /// 게시물 상세 — 사진·캡션·좋아요 + 댓글 목록·입력. 피드 카드에서 진입.
 class PostDetailScreen extends StatefulWidget {
@@ -82,6 +83,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  Future<void> _reportComment(Comment c) async {
+    final reason = await showReportSheet(context);
+    if (reason == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.posts.reportComment(
+        postId: widget.post.id,
+        commentId: c.id,
+        uid: _uid,
+        reason: reason,
+      );
+      messenger.showSnackBar(const SnackBar(content: Text('신고되었습니다')));
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('신고에 실패했어요 (이미 신고했을 수 있어요)')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _input.dispose();
@@ -144,51 +164,65 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ],
                 ),
                 const Divider(),
-                StreamBuilder<List<Comment>>(
-                  stream: widget.posts.comments(post.id),
-                  builder: (context, snap) {
-                    if (snap.hasError) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: Text('댓글을 불러오지 못했어요')),
-                      );
-                    }
-                    if (!snap.hasData) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    final items = snap.data!;
-                    if (items.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: Text('첫 댓글을 남겨보세요')),
-                      );
-                    }
-                    return Column(
-                      children: [
-                        for (final c in items)
-                          ListTile(
-                            title: Text(
-                              c.authorName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                StreamBuilder<Set<String>>(
+                  stream: widget.posts.myReportedCommentIds(_uid),
+                  builder: (context, reportedSnap) {
+                    final reported = reportedSnap.data ?? <String>{};
+                    return StreamBuilder<List<Comment>>(
+                      stream: widget.posts.comments(post.id),
+                      builder: (context, snap) {
+                        if (snap.hasError) {
+                          return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(child: Text('댓글을 불러오지 못했어요')),
+                          );
+                        }
+                        if (!snap.hasData) {
+                          return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        final items = snap.data!
+                            .where((c) => !reported.contains(c.id))
+                            .toList();
+                        if (items.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(child: Text('첫 댓글을 남겨보세요')),
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (final c in items)
+                              ListTile(
+                                title: Text(
+                                  c.authorName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                subtitle: Text(c.text),
+                                trailing: c.authorUid == _uid
+                                    ? IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          size: 20,
+                                        ),
+                                        onPressed: () => _confirmDelete(c),
+                                      )
+                                    : IconButton(
+                                        icon: const Icon(
+                                          Icons.flag_outlined,
+                                          size: 20,
+                                        ),
+                                        onPressed: () => _reportComment(c),
+                                      ),
                               ),
-                            ),
-                            subtitle: Text(c.text),
-                            trailing: c.authorUid == _uid
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      size: 20,
-                                    ),
-                                    onPressed: () => _confirmDelete(c),
-                                  )
-                                : null,
-                          ),
-                      ],
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
