@@ -24,6 +24,9 @@ class _ModeSelectorState extends State<ModeSelector> {
   /// 마지막 이동 방향(1=다음/좌로 밀기, -1=이전/우로 밀기) — 슬라이드 방향용.
   int _dir = 1;
 
+  /// 한 번의 드래그 동안 누적된 수평 이동(px). 느린 드래그도 전환되게 한다.
+  double _drag = 0;
+
   /// 현재 기준 [offset]칸 떨어진 모드(순환).
   ShootingMode _at(int offset) {
     final n = _modes.length;
@@ -44,10 +47,18 @@ class _ModeSelectorState extends State<ModeSelector> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       // 좌로 밀면 다음, 우로 밀면 이전 모드가 가운데로.
+      // 빠른 플릭(속도) 또는 충분히 끈 거리(느린 드래그) 어느 쪽이든 전환한다.
+      onHorizontalDragStart: (_) => _drag = 0,
+      onHorizontalDragUpdate: (d) => _drag += d.delta.dx,
       onHorizontalDragEnd: (d) {
         final v = d.primaryVelocity ?? 0;
-        if (v < -80) _select(next, 1);
-        if (v > 80) _select(prev, -1);
+        const dist = _slotWidth / 2; // 슬롯 절반(48px) 이상 끌면 전환.
+        if (v < -80 || _drag <= -dist) {
+          _select(next, 1);
+        } else if (v > 80 || _drag >= dist) {
+          _select(prev, -1);
+        }
+        _drag = 0;
       },
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 260),

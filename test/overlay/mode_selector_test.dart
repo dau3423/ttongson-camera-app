@@ -50,4 +50,63 @@ void main() {
     await tester.tap(find.text('사물'));
     expect(picked, ShootingMode.object);
   });
+
+  testWidgets('느린 드래그(플릭 아님)로도 전환된다 — 좌로 끌면 다음 모드', (tester) async {
+    ShootingMode? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: ModeSelector(
+              current: ShootingMode.person,
+              onChanged: (m) => picked = m,
+            ),
+          ),
+        ),
+      ),
+    );
+    // 손가락을 천천히 왼쪽으로 끌다가(릴리스 속도 낮음) 뗀다.
+    final center = tester.getCenter(find.byType(ModeSelector));
+    final g = await tester.startGesture(center);
+    for (var i = 0; i < 8; i++) {
+      await g.moveBy(const Offset(-20, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await g.up();
+    await tester.pumpAndSettle();
+    expect(
+      picked,
+      ShootingMode.nature,
+      reason: '느린 좌드래그(총 -160px)도 person→nature 로 전환되어야 한다',
+    );
+  });
+
+  testWidgets('우로 끌면 이전 모드', (tester) async {
+    ShootingMode? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: ModeSelector(
+              current: ShootingMode.person,
+              onChanged: (m) => picked = m,
+            ),
+          ),
+        ),
+      ),
+    );
+    final center = tester.getCenter(find.byType(ModeSelector));
+    final g = await tester.startGesture(center);
+    for (var i = 0; i < 8; i++) {
+      await g.moveBy(const Offset(20, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await g.up();
+    await tester.pumpAndSettle();
+    expect(
+      picked,
+      ShootingMode.object,
+      reason: '느린 우드래그도 person→object(순환 이전)로 전환되어야 한다',
+    );
+  });
 }
