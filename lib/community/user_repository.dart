@@ -38,4 +38,14 @@ class UserRepository {
       return profile;
     });
   }
+
+  /// /users/{uid} 프로필을 조회한다. 없으면 null.
+  Future<UserProfile?> getProfile(String uid) async {
+    final snap = await _db.collection('users').doc(uid).get();
+    if (!snap.exists) return null;
+    final data = Map<String, dynamic>.from(snap.data()!);
+    final ts = data['createdAt'];
+    data['createdAt'] = ts is Timestamp ? ts.toDate() : null;
+    return UserProfile.fromData(uid, data);
+  }
 }
