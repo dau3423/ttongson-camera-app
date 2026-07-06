@@ -34,6 +34,12 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _decoded?.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     // 이미지 종횡비 확보
     final bytes = await widget.image.readAsBytes();
@@ -90,7 +96,6 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
     final h = (a.y - b.y).abs();
     // 너무 작은 드래그는 무시(오탭 방지)
     if (w < 0.02 || h < 0.02) {
-      setState(() {});
       return;
     }
     setState(() {
