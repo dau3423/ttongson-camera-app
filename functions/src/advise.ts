@@ -18,6 +18,7 @@ const RATE_WINDOW_MS = 60_000;
 
 export const advise = onCall(
   {
+    region: "asia-northeast3",
     secrets: [ANTHROPIC_API_KEY],
     enforceAppCheck: true,
     timeoutSeconds: 30,

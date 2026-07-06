@@ -13,7 +13,9 @@ export function kakaoUid(id: unknown): string {
   return `kakao:${id}`;
 }
 
-export const kakaoCustomToken = onCall({ enforceAppCheck: true }, async (request) => {
+export const kakaoCustomToken = onCall(
+  { region: "asia-northeast3", enforceAppCheck: true },
+  async (request) => {
   const accessToken = (request.data as { accessToken?: string })?.accessToken;
   if (typeof accessToken !== "string" || accessToken.length === 0) {
     throw new HttpsError("invalid-argument", "accessToken이 필요합니다");

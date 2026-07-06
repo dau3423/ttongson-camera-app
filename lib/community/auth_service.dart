@@ -76,9 +76,9 @@ class AuthService {
       if (e.code == 'CANCELED') return null; // 사용자 취소
       rethrow;
     }
-    final callable = FirebaseFunctions.instance.httpsCallable(
-      'kakaoCustomToken',
-    );
+    final callable = FirebaseFunctions.instanceFor(
+      region: 'asia-northeast3',
+    ).httpsCallable('kakaoCustomToken');
     final result = await callable.call<Map<String, dynamic>>({
       'accessToken': kakaoToken.accessToken,
     });

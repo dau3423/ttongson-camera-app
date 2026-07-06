@@ -15,7 +15,8 @@ class CloudAdviceException implements Exception {
 class CloudAdvisor {
   final FirebaseFunctions _functions;
   CloudAdvisor({FirebaseFunctions? functions})
-    : _functions = functions ?? FirebaseFunctions.instance;
+    : _functions =
+          functions ?? FirebaseFunctions.instanceFor(region: 'asia-northeast3');
 
   Future<CompositionAdvice> suggest(
     String jpegPath,
