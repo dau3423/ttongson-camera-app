@@ -122,7 +122,7 @@ class _AccountScreenState extends State<AccountScreen> {
           if (snap.hasError) {
             return const Center(child: Text('불러오지 못했어요'));
           }
-          if (!snap.hasData) {
+          if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           final p = snap.data;
