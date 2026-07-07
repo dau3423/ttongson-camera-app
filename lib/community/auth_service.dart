@@ -91,6 +91,27 @@ class AuthService {
     return user;
   }
 
+  /// 현재 로그인 사용자의 프로필(없으면 null).
+  Future<UserProfile?> myProfile() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Future.value(null);
+    return _users.getProfile(uid);
+  }
+
+  /// 소프트 탈퇴(현재 사용자).
+  Future<void> withdraw() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    await _users.withdraw(uid);
+  }
+
+  /// 재가입(현재 사용자, deleteDate 제거).
+  Future<void> rejoin() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    await _users.rejoin(uid);
+  }
+
   Future<void> signOut() async {
     await _google.signOut();
     await _auth.signOut();

@@ -28,7 +28,41 @@ class _SignInSheetState extends State<_SignInSheet> {
     setState(() => _busy = true);
     try {
       final user = await signIn();
-      if (mounted) Navigator.pop(context, user != null);
+      if (user == null) {
+        if (mounted) Navigator.pop(context, false);
+        return;
+      }
+      final profile = await widget.auth.myProfile();
+      if (!mounted) return;
+      if (profile?.isWithdrawn ?? false) {
+        final rejoin = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('탈퇴한 계정이에요'),
+            content: const Text('이 계정은 탈퇴 처리됐어요. 다시 가입할까요?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('재가입'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted) return;
+        if (rejoin == true) {
+          await widget.auth.rejoin();
+          if (mounted) Navigator.pop(context, true);
+        } else {
+          await widget.auth.signOut();
+          if (mounted) Navigator.pop(context, false);
+        }
+        return;
+      }
+      Navigator.pop(context, true);
     } catch (_) {
       if (mounted) {
         setState(() => _busy = false);

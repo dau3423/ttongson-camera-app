@@ -17,6 +17,12 @@ LoginType parseLoginType(String? s) {
   }
 }
 
+/// 닉네임 유효성: 트림 후 1~20자.
+bool isValidNickname(String nickname) {
+  final n = nickname.trim().length;
+  return n >= 1 && n <= 20;
+}
+
 /// 커뮤니티 사용자 프로필(/users/{uid}).
 class UserProfile {
   final String uid;
@@ -25,6 +31,7 @@ class UserProfile {
   final LoginType loginType;
   final DateTime? createdAt;
   final String? photoUrl;
+  final DateTime? deleteDate; // 설정되면 탈퇴(소프트) 상태
   const UserProfile({
     required this.uid,
     required this.nickname,
@@ -32,9 +39,13 @@ class UserProfile {
     this.userId,
     this.createdAt,
     this.photoUrl,
+    this.deleteDate,
   });
 
+  bool get isWithdrawn => deleteDate != null;
+
   /// 생성 저장용 맵. createdAt은 저장소가 serverTimestamp로 넣으므로 제외.
+  /// deleteDate는 탈퇴 시에만 설정하므로 생성 맵에 미포함.
   Map<String, dynamic> toCreateMap() => {
     'uid': uid,
     'userId': userId,
@@ -43,7 +54,7 @@ class UserProfile {
     'photoUrl': photoUrl,
   };
 
-  /// Firestore 데이터(createdAt은 이미 DateTime으로 변환된 상태)에서 복원.
+  /// Firestore 데이터(createdAt·deleteDate는 이미 DateTime으로 변환된 상태)에서 복원.
   factory UserProfile.fromData(String uid, Map<String, dynamic> data) {
     return UserProfile(
       uid: uid,
@@ -52,6 +63,7 @@ class UserProfile {
       loginType: parseLoginType(data['loginType'] as String?),
       createdAt: data['createdAt'] as DateTime?,
       photoUrl: data['photoUrl'] as String?,
+      deleteDate: data['deleteDate'] as DateTime?,
     );
   }
 }
