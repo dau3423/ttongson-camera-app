@@ -81,7 +81,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _logout() async {
     await widget.auth.signOut();
-    if (mounted) Navigator.pop(context);
+    if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   Future<void> _withdraw() async {
@@ -106,7 +106,7 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       await widget.auth.withdraw();
       await widget.auth.signOut();
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
     } catch (_) {
       messenger.showSnackBar(const SnackBar(content: Text('탈퇴에 실패했어요')));
     }
