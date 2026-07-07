@@ -8,6 +8,7 @@ import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import 'report_sheet.dart';
 import 'blocked_users_screen.dart';
+import 'account_screen.dart';
 
 /// 최신순 게시물 피드. 로그인 게이트 뒤에서 진입.
 class FeedScreen extends StatelessWidget {
@@ -29,6 +30,16 @@ class FeedScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('커뮤니티'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: '내 계정',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AccountScreen(auth: auth, users: users),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.block),
             tooltip: '차단 목록',
