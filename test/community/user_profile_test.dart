@@ -55,4 +55,27 @@ void main() {
     expect(p.createdAt, now);
     expect(p.photoUrl, isNull);
   });
+
+  test('fromData: deleteDate 복원 + isWithdrawn', () {
+    final active = UserProfile.fromData('u', {'nickname': 'n'});
+    expect(active.deleteDate, isNull);
+    expect(active.isWithdrawn, isFalse);
+
+    final now = DateTime(2026, 7, 7);
+    final gone = UserProfile.fromData('u', {
+      'nickname': 'n',
+      'deleteDate': now,
+    });
+    expect(gone.deleteDate, now);
+    expect(gone.isWithdrawn, isTrue);
+  });
+
+  test('isValidNickname: 트림 후 1~20자', () {
+    expect(isValidNickname(''), isFalse);
+    expect(isValidNickname('   '), isFalse);
+    expect(isValidNickname('a'), isTrue);
+    expect(isValidNickname('  가  '), isTrue);
+    expect(isValidNickname('a' * 20), isTrue);
+    expect(isValidNickname('a' * 21), isFalse);
+  });
 }
