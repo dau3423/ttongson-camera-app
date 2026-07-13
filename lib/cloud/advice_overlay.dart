@@ -1,5 +1,6 @@
 // lib/cloud/advice_overlay.dart
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import 'composition_advice.dart';
 
 /// 클라우드 구도 추천 카드(축소판) — headline + rationale만 표시.
@@ -13,12 +14,12 @@ class AdviceOverlay extends StatelessWidget {
     return Positioned(
       left: 16,
       right: 16,
-      bottom: 140,
+      bottom: 170,
       child: Material(
-        color: Colors.black87,
+        color: AppColors.scrimAdvice,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,7 +28,7 @@ class AdviceOverlay extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.auto_awesome,
-                    color: Colors.amberAccent,
+                    color: AppColors.star,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -36,8 +37,8 @@ class AdviceOverlay extends StatelessWidget {
                       advice.headline,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),

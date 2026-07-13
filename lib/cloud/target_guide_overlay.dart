@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/person_box.dart';
+import '../theme/app_colors.dart';
 import 'composition_advice.dart';
 import 'target_alignment.dart';
 
@@ -31,16 +32,18 @@ class _TargetGuidePainter extends CustomPainter {
   final AlignmentResult? alignment;
   _TargetGuidePainter(this.target, this.current, this.alignment);
 
-  static const _good = Color(0xEE69F0AE);
-  static const _warn = Color(0xEEFF5252);
-  static const _goodFill = Color(0x2669F0AE);
-  static const _warnFill = Color(0x26FF5252);
+  // 정렬 완료=그린, 미정렬=앰버(빨강은 수평계 전용).
+  static final _good = AppColors.ready.withValues(alpha: 0.93);
+  static final _pending = AppColors.accent.withValues(alpha: 0.93);
+  static final _goodFill = AppColors.ready.withValues(alpha: 0.15);
+  static final _pendingFill = AppColors.accent.withValues(alpha: 0.14);
+  static const _startDot = Color(0xEEFFFFFF);
 
   @override
   void paint(Canvas canvas, Size size) {
     final aligned = alignment?.aligned ?? false;
-    final line = aligned ? _good : _warn;
-    final fill = aligned ? _goodFill : _warnFill;
+    final line = aligned ? _good : _pending;
+    final fill = aligned ? _goodFill : _pendingFill;
 
     final rect = Rect.fromLTWH(
       target.x * size.width,
@@ -65,6 +68,8 @@ class _TargetGuidePainter extends CustomPainter {
         target.centerX * size.width,
         target.centerY * size.height,
       );
+      // 시작점 흰 점 → 목표로 향하는 앰버 화살표.
+      canvas.drawCircle(from, 5, Paint()..color = _startDot);
       _drawArrow(canvas, from, to, line);
     }
   }

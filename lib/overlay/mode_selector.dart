@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/shooting_mode.dart';
+import '../theme/app_colors.dart';
 
 /// 하단 촬영 모드 선택기. **선택된 모드는 항상 가운데**, 양옆에 이웃 모드.
 /// 좌우 드래그(스와이프)로 이동하며 **슬라이딩 애니메이션**으로 전환된다.
@@ -19,7 +20,9 @@ class ModeSelector extends StatefulWidget {
 
 class _ModeSelectorState extends State<ModeSelector> {
   static const _modes = ShootingMode.values;
-  static const _slotWidth = 96.0;
+  static const _slotWidth = 96.0; // 선택(중앙) 슬롯
+  static const _sideSlotWidth = 74.0; // 이웃 슬롯
+  static const _sideColor = Color(0x73FFFFFF); // 흰색 45%
 
   /// 마지막 이동 방향(1=다음/좌로 밀기, -1=이전/우로 밀기) — 슬라이드 방향용.
   int _dir = 1;
@@ -94,7 +97,7 @@ class _ModeSelectorState extends State<ModeSelector> {
   Widget _chevron(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Icon(icon, color: Colors.white54, size: 22),
+      child: Icon(icon, color: _sideColor, size: 22),
     );
   }
 
@@ -105,14 +108,14 @@ class _ModeSelectorState extends State<ModeSelector> {
         _modes.indexOf(m) > _modes.indexOf(widget.current) ? 1 : -1,
       ),
       child: SizedBox(
-        width: _slotWidth,
+        width: selected ? _slotWidth : _sideSlotWidth,
         child: Text(
           m.label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: selected ? Colors.amber : Colors.white54,
+            color: selected ? AppColors.accent : _sideColor,
             fontSize: selected ? 20 : 15,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
           ),
         ),
       ),

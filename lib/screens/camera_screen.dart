@@ -17,6 +17,7 @@ import '../camera/mode_store.dart';
 import '../camera/gallery_launcher.dart';
 import '../overlay/guide_overlay.dart';
 import '../overlay/mode_selector.dart';
+import '../theme/app_colors.dart';
 import '../community/auth_service.dart';
 import '../community/screens/feed_screen.dart';
 import '../community/screens/sign_in_sheet.dart';
@@ -335,6 +336,158 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
+  Future<void> _openCommunity() async {
+    if (!_auth.isSignedIn) {
+      final ok = await showSignInSheet(context, _auth);
+      if (!ok) return;
+    }
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => FeedScreen(auth: _auth)),
+    );
+  }
+
+  /// 44×44 히트영역의 상단 바 아이콘.
+  Widget _topIcon(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Icon(icon, color: Colors.white, size: 26),
+      ),
+    );
+  }
+
+  /// 현재 지시 1개를 담는 검은 pill.
+  Widget _stepPill(String message) {
+    return IgnorePointer(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+        decoration: BoxDecoration(
+          color: AppColors.scrimPill,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black38,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 정렬 완료 시 pill을 대체하는 초록 "찍으세요!" 배지.
+  Widget _readyBadge() {
+    return IgnorePointer(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+        decoration: BoxDecoration(
+          color: AppColors.readyBadge,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black38,
+              blurRadius: 10,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
+              '찍으세요!',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 하단 컨트롤 아이콘(정확한 히트영역 [box], 꺼짐 상태는 [dim]).
+  Widget _bottomIcon(
+    IconData icon,
+    VoidCallback onTap, {
+    required double box,
+    required double iconSize,
+    bool dim = false,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: box,
+        height: box,
+        child: Icon(
+          icon,
+          color: Colors.white.withValues(alpha: dim ? 0.4 : 1.0),
+          size: iconSize,
+        ),
+      ),
+    );
+  }
+
+  /// 셔터(72). 안쪽 링 포함, ready면 초록 발광.
+  Widget _shutter() {
+    final ready = _step.kind == GuideStepKind.ready;
+    final fill = ready ? AppColors.ready : Colors.white;
+    return GestureDetector(
+      onTap: _capture,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: fill,
+          shape: BoxShape.circle,
+          boxShadow: ready
+              ? [
+                  BoxShadow(
+                    color: AppColors.ready.withValues(alpha: 0.6),
+                    blurRadius: 22,
+                    spreadRadius: 5,
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: fill,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: ready ? const Color(0xFF0B2A18) : Colors.black,
+                width: 3,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_initError != null) {
@@ -405,7 +558,7 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
             if (targetBox != null)
               Positioned(
-                top: 100,
+                top: MediaQuery.of(context).padding.top + 54,
                 right: 12,
                 child: AdviceMinimap(
                   target: targetBox,
@@ -413,114 +566,38 @@ class _CameraScreenState extends State<CameraScreen> {
                   alignment: alignment,
                 ),
               ),
-            if (_step.kind != GuideStepKind.ready && _step.message.isNotEmpty)
-              Positioned(
-                top: 48,
-                left: 16,
-                right: 16,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 11,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xD9000000),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black38,
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      _step.message,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            if (_step.kind == GuideStepKind.ready)
-              Positioned(
-                top: 44,
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xF22E7D32),
-                        borderRadius: BorderRadius.circular(26),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black38,
-                            blurRadius: 10,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            '찍으세요!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            if (_camera.canSwitch)
-              Positioned(
-                top: 44,
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.cameraswitch,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onPressed: _switchCamera,
-                ),
-              ),
+            // 상단 영역: 세이프에어리어 안에 [커뮤니티 · 카메라전환] 바 + 단계 pill/완료 배지.
             Positioned(
-              top: 44,
-              left: 8,
-              child: IconButton(
-                icon: const Icon(Icons.people, color: Colors.white, size: 30),
-                onPressed: () async {
-                  if (!_auth.isSignedIn) {
-                    final ok = await showSignInSheet(context, _auth);
-                    if (!ok) return;
-                  }
-                  if (!context.mounted) return;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => FeedScreen(auth: _auth)),
-                  );
-                },
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 44,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _topIcon(Icons.people, _openCommunity),
+                            if (_camera.canSwitch)
+                              _topIcon(Icons.cameraswitch, _switchCamera)
+                            else
+                              const SizedBox(width: 44),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (_step.kind == GuideStepKind.ready)
+                        _readyBadge()
+                      else if (_step.message.isNotEmpty)
+                        _stepPill(_step.message),
+                    ],
+                  ),
+                ),
               ),
             ),
             Positioned(
@@ -531,72 +608,43 @@ class _CameraScreenState extends State<CameraScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ModeSelector(current: _mode, onChanged: _onModeChanged),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      // 좌측: 사진첩 바로가기
-                      Expanded(
-                        child: Center(
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.photo_library,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                            onPressed: _openGallery,
-                          ),
+                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // 좌측: 사진첩 바로가기(44 히트)
+                        _bottomIcon(
+                          Icons.photo_library,
+                          _openGallery,
+                          box: 44,
+                          iconSize: 28,
                         ),
-                      ),
-                      // 중앙: 촬영 버튼(고정). ready('찍으세요!')면 초록으로 발광.
-                      GestureDetector(
-                        onTap: _capture,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 76,
-                          height: 76,
-                          decoration: BoxDecoration(
-                            color: _step.kind == GuideStepKind.ready
-                                ? const Color(0xFF69F0AE)
-                                : Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: _step.kind == GuideStepKind.ready
-                                ? const [
-                                    BoxShadow(
-                                      color: Color(0xAA69F0AE),
-                                      blurRadius: 20,
-                                      spreadRadius: 4,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                        ),
-                      ),
-                      // 우측: AI 추천 + 격자 토글(격자를 맨 오른쪽)
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        // 중앙: 셔터(72, ready면 초록 발광)
+                        _shutter(),
+                        // 우측: AI 추천 + 격자 토글(40 히트)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.auto_awesome,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                              onPressed: _requestAdvice,
+                            _bottomIcon(
+                              Icons.auto_awesome,
+                              _requestAdvice,
+                              box: 40,
+                              iconSize: 26,
                             ),
-                            IconButton(
-                              icon: Icon(
-                                _showGrid ? Icons.grid_on : Icons.grid_off,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                              onPressed: () =>
-                                  setState(() => _showGrid = !_showGrid),
+                            const SizedBox(width: 10),
+                            _bottomIcon(
+                              _showGrid ? Icons.grid_on : Icons.grid_off,
+                              () => setState(() => _showGrid = !_showGrid),
+                              box: 40,
+                              iconSize: 26,
+                              dim: !_showGrid,
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -615,22 +663,26 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
             if (_camera.maxZoom > _camera.minZoom)
               Positioned(
-                bottom: 160,
+                bottom: 150,
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 4,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      color: AppColors.scrimZoom,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       '${_zoom.toStringAsFixed(1)}x',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
                     ),
                   ),
                 ),

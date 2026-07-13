@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../analysis/guide_metrics.dart';
 import '../analysis/guide_step.dart';
 import '../analysis/thirds.dart';
+import '../theme/app_colors.dart';
 
 class GuideOverlay extends StatelessWidget {
   final GuideMetrics metrics;
@@ -36,10 +37,10 @@ class GuidePainter extends CustomPainter {
     required this.showGrid,
   });
 
-  static const _good = Color(0xAA69F0AE); // 초록
-  static const _warn = Color(0xAAFF5252); // 빨강
-  static const _amber = Color(0xEEFFC107); // 목표 안내
-  static const _neutral = Color(0x88FFFFFF);
+  static final _good = AppColors.ready.withValues(alpha: 0.85);
+  static final _warn = AppColors.warn.withValues(alpha: 0.85);
+  static final _amber = AppColors.accent.withValues(alpha: 0.93);
+  static const _neutral = Color(0x66FFFFFF); // 격자 흰선 0.4
   static const _marker = Color(0xEEFFFFFF);
 
   @override
@@ -66,16 +67,34 @@ class GuidePainter extends CustomPainter {
 
   void _paintLevel(Canvas canvas, Size size) {
     final level = metrics.tilt.isLevel;
-    final p = Paint()
-      ..color = level ? _good : _warn
-      ..strokeWidth = 3;
+    final color = level ? _good : _warn;
     final cy = size.height / 2;
     final cx = size.width / 2;
     final rad = metrics.tilt.rollDegrees * math.pi / 180;
-    final half = size.width * 0.15;
+    // 길이 고정(스펙 120~150px), 화면 폭이 좁으면 폭에 맞춰 축소.
+    final half = math.min(65.0, size.width * 0.2);
     final dxr = half * math.cos(rad);
     final dyr = half * math.sin(rad);
-    canvas.drawLine(Offset(cx - dxr, cy - dyr), Offset(cx + dxr, cy + dyr), p);
+    final a = Offset(cx - dxr, cy - dyr);
+    final b = Offset(cx + dxr, cy + dyr);
+    // glow(발광) 먼저 깔고 그 위에 실선.
+    canvas.drawLine(
+      a,
+      b,
+      Paint()
+        ..color = color.withValues(alpha: 0.5)
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+    canvas.drawLine(
+      a,
+      b,
+      Paint()
+        ..color = color
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round,
+    );
   }
 
   void _paintPerson(Canvas canvas, Size size) {

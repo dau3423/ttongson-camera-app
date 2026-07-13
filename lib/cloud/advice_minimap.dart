@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/person_box.dart';
+import '../theme/app_colors.dart';
 import 'composition_advice.dart';
 import 'target_alignment.dart';
 
@@ -40,9 +41,10 @@ class _MinimapPainter extends CustomPainter {
   final AlignmentResult? alignment;
   _MinimapPainter(this.target, this.current, this.alignment);
 
-  static const _good = Color(0xEE69F0AE);
-  static const _warn = Color(0xEEFF5252);
-  static const _goodFill = Color(0x5569F0AE);
+  // 정렬 완료=그린, 미정렬=앰버. 현재 인물 박스는 회색.
+  static final _good = AppColors.ready.withValues(alpha: 0.93);
+  static final _pending = AppColors.accent.withValues(alpha: 0.93);
+  static final _goodFill = AppColors.ready.withValues(alpha: 0.33);
   static const _grey = Color(0xBBBBBBBB);
 
   @override
@@ -58,7 +60,7 @@ class _MinimapPainter extends CustomPainter {
     );
 
     final aligned = alignment?.aligned ?? false;
-    final line = aligned ? _good : _warn;
+    final line = aligned ? _good : _pending;
 
     // 목표 박스
     final t = Rect.fromLTWH(
