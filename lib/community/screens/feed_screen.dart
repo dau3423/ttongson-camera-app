@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
 import '../auth_service.dart';
 import '../moderation.dart';
 import '../models/post.dart';
+import 'confirm_dialog.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import 'report_sheet.dart';
 import 'blocked_users_screen.dart';
 import 'account_screen.dart';
 
-/// 최신순 게시물 피드. 로그인 게이트 뒤에서 진입.
-class FeedScreen extends StatelessWidget {
+const _text = Color(0xFFF4F1EA);
+const _muted = Color(0x80FFFFFF);
+
+/// 촬영 팁 피드. 로그인 게이트 뒤에서 진입. 인기/최신 정렬 탭.
+class FeedScreen extends StatefulWidget {
   final AuthService auth;
   final PostRepository posts;
   final UserRepository users;
@@ -24,19 +29,53 @@ class FeedScreen extends StatelessWidget {
        users = users ?? UserRepository();
 
   @override
+  State<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends State<FeedScreen> {
+  bool _popular = true; // true=인기, false=최신
+
+  List<Post> _sorted(List<Post> items) {
+    final list = [...items];
+    if (_popular) {
+      list.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+    } else {
+      list.sort((a, b) {
+        final ad = a.createdAt, bd = b.createdAt;
+        if (ad == null || bd == null) return 0;
+        return bd.compareTo(ad);
+      });
+    }
+    return list;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final uid = auth.currentUser?.uid ?? '';
+    final uid = widget.auth.currentUser?.uid ?? '';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('커뮤니티'),
+        titleSpacing: 20,
+        title: Row(
+          children: [
+            const Text(
+              '촬영 팁',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+            ),
+            const Spacer(),
+            _Tab('인기', _popular, () => setState(() => _popular = true)),
+            const SizedBox(width: 4),
+            _Tab('최신', !_popular, () => setState(() => _popular = false)),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline),
             tooltip: '내 계정',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => AccountScreen(auth: auth, users: users),
+                builder: (_) =>
+                    AccountScreen(auth: widget.auth, users: widget.users),
               ),
             ),
           ),
@@ -46,31 +85,35 @@ class FeedScreen extends StatelessWidget {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => BlockedUsersScreen(auth: auth, users: users),
+                builder: (_) =>
+                    BlockedUsersScreen(auth: widget.auth, users: widget.users),
               ),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.surfaceApp,
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => CreatePostScreen(auth: auth, posts: posts),
+            builder: (_) =>
+                CreatePostScreen(auth: widget.auth, posts: widget.posts),
           ),
         ),
         child: const Icon(Icons.add_a_photo),
       ),
       body: StreamBuilder<Set<String>>(
-        stream: users.blockedUids(uid),
+        stream: widget.users.blockedUids(uid),
         builder: (context, blockedSnap) {
           final blocked = blockedSnap.data ?? <String>{};
           return StreamBuilder<Set<String>>(
-            stream: posts.myReportedPostIds(uid),
+            stream: widget.posts.myReportedPostIds(uid),
             builder: (context, reportedSnap) {
               final reported = reportedSnap.data ?? <String>{};
               return StreamBuilder<List<Post>>(
-                stream: posts.feed(),
+                stream: widget.posts.feed(),
                 builder: (context, snap) {
                   if (snap.hasError) {
                     return const Center(child: Text('불러오지 못했어요'));
@@ -78,12 +121,14 @@ class FeedScreen extends StatelessWidget {
                   if (!snap.hasData) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  final items = visibleItems(
-                    snap.data!,
-                    authorUidOf: (p) => p.authorUid,
-                    idOf: (p) => p.id,
-                    blockedAuthors: blocked,
-                    reportedIds: reported,
+                  final items = _sorted(
+                    visibleItems(
+                      snap.data!,
+                      authorUidOf: (p) => p.authorUid,
+                      idOf: (p) => p.id,
+                      blockedAuthors: blocked,
+                      reportedIds: reported,
+                    ),
                   );
                   if (items.isEmpty) {
                     return const Center(
@@ -91,13 +136,14 @@ class FeedScreen extends StatelessWidget {
                     );
                   }
                   return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: items.length,
                     itemBuilder: (_, i) => _PostCard(
                       post: items[i],
-                      posts: posts,
-                      users: users,
+                      posts: widget.posts,
+                      users: widget.users,
                       uid: uid,
-                      auth: auth,
+                      auth: widget.auth,
                     ),
                   );
                 },
@@ -105,6 +151,36 @@ class FeedScreen extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+/// 인기/최신 정렬 탭 pill.
+class _Tab extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _Tab(this.label, this.selected, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: selected ? AppColors.surfaceApp : _muted,
+          ),
+        ),
       ),
     );
   }
@@ -139,21 +215,13 @@ class _PostCard extends StatelessWidget {
   }
 
   Future<void> _block(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        content: Text('${post.authorName} 님을 차단할까요? 이 사용자의 게시물과 댓글이 보이지 않아요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('차단'),
-          ),
-        ],
-      ),
+    final ok = await showAppConfirm(
+      context,
+      icon: Icons.block,
+      title: '${post.authorName} 님을 차단할까요?',
+      body: '이 사용자의 게시물과 댓글이 보이지 않아요.',
+      confirmLabel: '차단',
+      destructive: true,
     );
     if (ok != true || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -171,73 +239,126 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    final initial = post.authorName.isNotEmpty
+        ? post.authorName.characters.first
+        : '?';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+            padding: const EdgeInsets.fromLTRB(14, 12, 6, 8),
             child: Row(
               children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppColors.accent.withValues(alpha: 0.2),
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     post.authorName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: _text,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 if (uid.isNotEmpty && uid != post.authorUid)
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
+                    icon: const Icon(Icons.more_horiz, color: _muted),
+                    color: AppColors.surfaceCard,
                     onSelected: (v) {
                       if (v == 'report') _report(context);
                       if (v == 'block') _block(context);
                     },
                     itemBuilder: (_) => const [
                       PopupMenuItem(value: 'report', child: Text('신고하기')),
-                      PopupMenuItem(value: 'block', child: Text('차단하기')),
+                      PopupMenuItem(
+                        value: 'block',
+                        child: Text(
+                          '차단하기',
+                          style: TextStyle(color: AppColors.danger),
+                        ),
+                      ),
                     ],
                   ),
               ],
             ),
           ),
-          AspectRatio(
-            aspectRatio: 1,
-            child: Image.network(post.imageUrl, fit: BoxFit.cover),
-          ),
-          Padding(padding: const EdgeInsets.all(12), child: Text(post.caption)),
-          Row(
-            children: [
-              StreamBuilder<bool>(
-                stream: posts.likedByMe(postId: post.id, uid: uid),
-                builder: (_, s) {
-                  final liked = s.data ?? false;
-                  return IconButton(
-                    icon: Icon(
-                      liked ? Icons.favorite : Icons.favorite_border,
-                      color: liked ? Colors.red : null,
-                    ),
-                    onPressed: uid.isEmpty
-                        ? null
-                        : () => posts.toggleLike(postId: post.id, uid: uid),
-                  );
-                },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Image.network(post.imageUrl, fit: BoxFit.cover),
               ),
-              Text('${post.likeCount}'),
-              const SizedBox(width: 12),
-              IconButton(
-                icon: const Icon(Icons.mode_comment_outlined),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        PostDetailScreen(post: post, auth: auth, posts: posts),
+            ),
+          ),
+          if (post.caption.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+              child: Text(
+                post.caption,
+                style: const TextStyle(color: Color(0xE6F4F1EA), fontSize: 14),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Row(
+              children: [
+                StreamBuilder<bool>(
+                  stream: posts.likedByMe(postId: post.id, uid: uid),
+                  builder: (_, s) {
+                    final liked = s.data ?? false;
+                    return IconButton(
+                      icon: Icon(
+                        liked ? Icons.favorite : Icons.favorite_border,
+                        color: liked ? AppColors.danger : _muted,
+                      ),
+                      onPressed: uid.isEmpty
+                          ? null
+                          : () => posts.toggleLike(postId: post.id, uid: uid),
+                    );
+                  },
+                ),
+                Text('${post.likeCount}', style: const TextStyle(color: _text)),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.mode_comment_outlined, color: _muted),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PostDetailScreen(
+                        post: post,
+                        auth: auth,
+                        posts: posts,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              Text('${post.commentCount}'),
-            ],
+                Text(
+                  '${post.commentCount}',
+                  style: const TextStyle(color: _text),
+                ),
+              ],
+            ),
           ),
         ],
       ),

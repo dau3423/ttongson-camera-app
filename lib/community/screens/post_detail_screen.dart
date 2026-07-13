@@ -5,6 +5,7 @@ import '../user_repository.dart';
 import '../moderation.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
+import 'confirm_dialog.dart';
 import 'report_sheet.dart';
 
 /// 게시물 상세 — 사진·캡션·좋아요 + 댓글 목록·입력. 피드 카드에서 진입.
@@ -55,21 +56,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _confirmDelete(Comment c) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        content: const Text('이 댓글을 삭제할까요?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final ok = await showAppConfirm(
+      context,
+      icon: Icons.delete_outline,
+      title: '댓글을 삭제할까요?',
+      body: '삭제한 댓글은 되돌릴 수 없어요.',
+      confirmLabel: '삭제',
+      destructive: true,
     );
     if (ok != true) return;
     if (!mounted) return;
@@ -104,21 +97,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _blockAuthor(Comment c) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        content: Text('${c.authorName} 님을 차단할까요? 이 사용자의 게시물과 댓글이 보이지 않아요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('차단'),
-          ),
-        ],
-      ),
+    final ok = await showAppConfirm(
+      context,
+      icon: Icons.block,
+      title: '${c.authorName} 님을 차단할까요?',
+      body: '이 사용자의 게시물과 댓글이 보이지 않아요.',
+      confirmLabel: '차단',
+      destructive: true,
     );
     if (ok != true || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
