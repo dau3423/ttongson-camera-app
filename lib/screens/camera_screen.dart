@@ -230,11 +230,10 @@ class _CameraScreenState extends State<CameraScreen> {
     _triggerCaptureFeedback();
     try {
       final saved = await _camera.captureAndSave();
-      if (mounted) {
+      // 성공 토스트는 표시하지 않음(촬영 피드백 진동·플래시로 충분). 실패만 안내.
+      if (!saved && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(saved ? '사진첩에 저장했어요' : '저장 실패 — 사진첩 권한을 확인해 주세요'),
-          ),
+          const SnackBar(content: Text('저장 실패 — 사진첩 권한을 확인해 주세요')),
         );
       }
     } catch (e) {
@@ -611,37 +610,44 @@ class _CameraScreenState extends State<CameraScreen> {
                   const SizedBox(height: 14),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30),
+                    // 좌우 클러스터를 동일폭 Expanded로 감싸 셔터를 화면 가로 중앙에 고정.
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         // 좌측: 사진첩 바로가기(44 히트)
-                        _bottomIcon(
-                          Icons.photo_library,
-                          _openGallery,
-                          box: 44,
-                          iconSize: 28,
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: _bottomIcon(
+                              Icons.photo_library,
+                              _openGallery,
+                              box: 44,
+                              iconSize: 28,
+                            ),
+                          ),
                         ),
                         // 중앙: 셔터(72, ready면 초록 발광)
                         _shutter(),
                         // 우측: AI 추천 + 격자 토글(40 히트)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _bottomIcon(
-                              Icons.auto_awesome,
-                              _requestAdvice,
-                              box: 40,
-                              iconSize: 26,
-                            ),
-                            const SizedBox(width: 10),
-                            _bottomIcon(
-                              _showGrid ? Icons.grid_on : Icons.grid_off,
-                              () => setState(() => _showGrid = !_showGrid),
-                              box: 40,
-                              iconSize: 26,
-                              dim: !_showGrid,
-                            ),
-                          ],
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              _bottomIcon(
+                                Icons.auto_awesome,
+                                _requestAdvice,
+                                box: 40,
+                                iconSize: 26,
+                              ),
+                              const SizedBox(width: 10),
+                              _bottomIcon(
+                                _showGrid ? Icons.grid_on : Icons.grid_off,
+                                () => setState(() => _showGrid = !_showGrid),
+                                box: 40,
+                                iconSize: 26,
+                                dim: !_showGrid,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
