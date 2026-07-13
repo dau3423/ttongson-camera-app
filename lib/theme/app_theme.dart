@@ -16,6 +16,7 @@ ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    fontFamily: AppFonts.body,
     colorScheme: scheme,
     scaffoldBackgroundColor: AppColors.surfaceApp,
     canvasColor: AppColors.surfaceApp,

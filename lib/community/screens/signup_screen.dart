@@ -115,6 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const Text(
                     '가입하기',
                     style: TextStyle(
+                      fontFamily: AppFonts.display,
                       color: _text,
                       fontSize: 30,
                       fontWeight: FontWeight.w700,

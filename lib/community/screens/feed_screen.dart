@@ -59,7 +59,11 @@ class _FeedScreenState extends State<FeedScreen> {
           children: [
             const Text(
               '촬영 팁',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontFamily: AppFonts.display,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const Spacer(),
             _Tab('인기', _popular, () => setState(() => _popular = true)),
@@ -176,6 +180,7 @@ class _Tab extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
+            fontFamily: AppFonts.mono,
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: selected ? AppColors.surfaceApp : _muted,

@@ -679,9 +679,9 @@ class _CameraScreenState extends State<CameraScreen> {
                     child: Text(
                       '${_zoom.toStringAsFixed(1)}x',
                       style: const TextStyle(
+                        fontFamily: AppFonts.mono,
                         color: Colors.white,
                         fontSize: 13,
-                        fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
                   ),

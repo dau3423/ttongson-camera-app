@@ -35,10 +35,10 @@ class AuthLabel extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(
+          fontFamily: AppFonts.mono,
           color: AppColors.accent,
           fontSize: 11,
           letterSpacing: 1,
-          fontFeatures: [FontFeature.tabularFigures()],
         ),
       ),
     );

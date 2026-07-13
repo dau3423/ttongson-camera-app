@@ -154,6 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     '다시 오셨네요',
                     style: TextStyle(
+                      fontFamily: AppFonts.display,
                       color: _text,
                       fontSize: 30,
                       fontWeight: FontWeight.w700,

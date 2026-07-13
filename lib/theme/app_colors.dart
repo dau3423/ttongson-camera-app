@@ -28,3 +28,17 @@ class AppColors {
   // 별(조언 아이콘)
   static const star = Color(0xFFFFD54F);
 }
+
+/// 폰트 패밀리(pubspec 등록명과 일치).
+class AppFonts {
+  AppFonts._();
+
+  /// 한글 UI 본문·기본.
+  static const body = 'Pretendard';
+
+  /// 대형 워드마크·타이틀.
+  static const display = 'SpaceGrotesk';
+
+  /// 수치·라벨(고정폭).
+  static const mono = 'SpaceMono';
+}
