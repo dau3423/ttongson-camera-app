@@ -26,10 +26,12 @@ class UserRepository {
     return data;
   }
 
-  /// /users/{uid}가 없으면 랜덤 닉네임으로 생성, 있으면 기존 프로필을 반환한다.
+  /// /users/{uid}가 없으면 프로필을 생성, 있으면 기존 프로필을 반환한다.
+  /// [nickname]이 주어지면 그 값을(이메일 가입), 아니면 랜덤 닉네임을 쓴다.
   Future<UserProfile> ensureProfile({
     required User user,
     required LoginType loginType,
+    String? nickname,
   }) async {
     final ref = _db.collection('users').doc(user.uid);
     return _db.runTransaction<UserProfile>((tx) async {
@@ -40,7 +42,7 @@ class UserRepository {
       final profile = UserProfile(
         uid: user.uid,
         userId: user.email,
-        nickname: generateNickname(),
+        nickname: nickname ?? generateNickname(),
         loginType: loginType,
         photoUrl: user.photoURL,
       );

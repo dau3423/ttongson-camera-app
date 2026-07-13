@@ -7,6 +7,7 @@ import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'community/kakao_config.dart';
 import 'firebase_options.dart';
 import 'screens/camera_screen.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,10 +33,11 @@ class TtongsonApp extends StatelessWidget {
   const TtongsonApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: '똥손카메라',
       debugShowCheckedModeBanner: false,
-      home: CameraScreen(),
+      theme: buildAppTheme(),
+      home: const CameraScreen(),
     );
   }
 }

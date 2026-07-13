@@ -1,9 +1,9 @@
 // lib/community/models/user_profile.dart
 // 순수 Dart — Flutter/plugin import 금지.
 
-enum LoginType { google, apple, kakao }
+enum LoginType { google, apple, kakao, email }
 
-/// enum 이름이 곧 wire 문자열(google/apple/kakao).
+/// enum 이름이 곧 wire 문자열(google/apple/kakao/email).
 LoginType parseLoginType(String? s) {
   switch (s) {
     case 'google':
@@ -12,6 +12,8 @@ LoginType parseLoginType(String? s) {
       return LoginType.apple;
     case 'kakao':
       return LoginType.kakao;
+    case 'email':
+      return LoginType.email;
     default:
       return LoginType.google;
   }
@@ -22,6 +24,15 @@ bool isValidNickname(String nickname) {
   final n = nickname.trim().length;
   return n >= 1 && n <= 20;
 }
+
+/// 이메일 유효성: 공백 없는 `로컬@도메인.tld` 최소 형태.
+bool isValidEmail(String email) {
+  final e = email.trim();
+  return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(e);
+}
+
+/// 비밀번호 유효성: 8자 이상(Firebase 이메일 인증 최소치).
+bool isValidPassword(String password) => password.length >= 8;
 
 /// 커뮤니티 사용자 프로필(/users/{uid}).
 class UserProfile {

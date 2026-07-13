@@ -91,6 +91,44 @@ class AuthService {
     return user;
   }
 
+  /// 이메일/비밀번호 회원가입. 성공 시 프로필을 생성하고 User 반환.
+  Future<User?> signUpWithEmail({
+    required String email,
+    required String password,
+    required String nickname,
+  }) async {
+    final result = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = result.user;
+    if (user != null) {
+      await user.updateDisplayName(nickname);
+      await _users.ensureProfile(
+        user: user,
+        loginType: LoginType.email,
+        nickname: nickname,
+      );
+    }
+    return user;
+  }
+
+  /// 이메일/비밀번호 로그인. 프로필이 없으면 보강 생성.
+  Future<User?> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    final result = await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = result.user;
+    if (user != null) {
+      await _users.ensureProfile(user: user, loginType: LoginType.email);
+    }
+    return user;
+  }
+
   /// 현재 로그인 사용자의 프로필(없으면 null).
   Future<UserProfile?> myProfile() {
     final uid = _auth.currentUser?.uid;

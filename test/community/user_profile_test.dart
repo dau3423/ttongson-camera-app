@@ -6,8 +6,25 @@ void main() {
     expect(parseLoginType('google'), LoginType.google);
     expect(parseLoginType('apple'), LoginType.apple);
     expect(parseLoginType('kakao'), LoginType.kakao);
+    expect(parseLoginType('email'), LoginType.email);
     expect(parseLoginType(null), LoginType.google);
     expect(parseLoginType('xxx'), LoginType.google);
+  });
+
+  test('isValidEmail: @ 포함 + 로컬/도메인 존재', () {
+    expect(isValidEmail('you@example.com'), isTrue);
+    expect(isValidEmail('  a@b.co  '), isTrue); // 트림
+    expect(isValidEmail(''), isFalse);
+    expect(isValidEmail('noat.com'), isFalse);
+    expect(isValidEmail('@b.com'), isFalse);
+    expect(isValidEmail('a@'), isFalse);
+    expect(isValidEmail('a b@c.com'), isFalse); // 공백 불가
+  });
+
+  test('isValidPassword: 8자 이상', () {
+    expect(isValidPassword('1234567'), isFalse);
+    expect(isValidPassword('12345678'), isTrue);
+    expect(isValidPassword('a' * 8), isTrue);
   });
 
   test('toCreateMap: 필드 매핑, loginType은 소문자 이름, createdAt 제외', () {
