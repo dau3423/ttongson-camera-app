@@ -209,7 +209,11 @@ class _AccountScreenState extends State<AccountScreen> {
                     const SizedBox(height: 4),
                     Text(
                       p.userId ?? '${p.loginType.name} 로그인',
-                      style: const TextStyle(color: _muted, fontSize: 13),
+                      style: const TextStyle(
+                        fontFamily: AppFonts.mono,
+                        color: _muted,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
