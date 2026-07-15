@@ -514,7 +514,10 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
-  /// 배경 알파 마스크를 프리뷰 박스에 맞춰, 배경만 블러 처리하는 오버레이.
+  /// 배경만 흐린 프리뷰 오버레이. 맨 아래 '선명한' CameraPreview 위에,
+  /// '블러 처리된 CameraPreview 사본'을 배경 알파 마스크로 잘라 덮는다.
+  /// (BackdropFilter는 ShaderMask의 saveLayer 안에서 뒤 화면을 못 읽어 무효 →
+  ///  ImageFiltered로 자식(프리뷰 사본) 자체를 블러한다.)
   /// 마스크는 세운 좌표계라 정규화 오버레이와 동일하게 프리뷰 박스에 스케일 매핑된다.
   Widget _buildPortraitBlur() {
     final mask = _maskImage!;
@@ -531,11 +534,13 @@ class _CameraScreenState extends State<CameraScreen>
         ]);
         return ui.ImageShader(mask, ui.TileMode.clamp, ui.TileMode.clamp, m);
       },
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: const SizedBox.expand(),
+      child: ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(
+          sigmaX: 12,
+          sigmaY: 12,
+          tileMode: TileMode.decal,
         ),
+        child: CameraPreview(_camera.controller),
       ),
     );
   }
