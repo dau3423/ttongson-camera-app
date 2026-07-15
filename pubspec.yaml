@@ -52,6 +52,7 @@ dependencies:
   sign_in_with_apple: ^6.1.0
   shared_preferences: ^2.5.5
   google_mlkit_object_detection: ^0.15.1
+  google_mlkit_selfie_segmentation: ^0.10.1
   url_launcher: ^6.3.1
   android_intent_plus: ^5.3.0
 dev_dependencies:

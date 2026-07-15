@@ -126,10 +126,21 @@ class CameraService {
   /// 프리뷰가 센서 전체 프레임을 그대로(contain) 보여주므로, 저장 사진도
   /// 크롭 없이 그대로 저장하면 프리뷰와 일치한다(WYSIWYG).
   Future<bool> captureAndSave() async {
-    final wasStreaming = _streaming;
-    if (wasStreaming) await stopStream();
+    final path = await capturePhoto();
+    return saveToGallery(path);
+  }
+
+  /// 사진을 촬영해 임시 파일 경로를 반환(갤러리 저장 안 함). 후처리(배경흐림 등)용.
+  /// 스트림은 중단하며, 재개는 호출측 책임.
+  Future<String> capturePhoto() async {
+    if (_streaming) await stopStream();
     final file = await controller.takePicture();
-    final saved = await GallerySaver.saveImage(file.path);
+    return file.path;
+  }
+
+  /// 주어진 경로의 이미지를 사진첩에 저장. 성공 여부 반환.
+  Future<bool> saveToGallery(String path) async {
+    final saved = await GallerySaver.saveImage(path);
     return saved ?? false;
   }
 

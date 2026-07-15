@@ -1,5 +1,8 @@
 // lib/screens/camera_screen.dart
 import 'dart:async';
+import 'dart:io' show File;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +18,8 @@ import '../models/shooting_mode.dart';
 import '../analysis/object_detector.dart';
 import '../camera/mode_store.dart';
 import '../camera/gallery_launcher.dart';
+import '../camera/person_segmenter.dart';
+import '../camera/portrait_blur.dart';
 import '../overlay/guide_overlay.dart';
 import '../overlay/mode_selector.dart';
 import '../theme/app_colors.dart';
@@ -67,6 +72,12 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
   bool _processing = false;
   bool _flash = false; // 촬영 순간 화면 번쩍임
   String? _initError;
+
+  // 인물 배경흐림(포트레이트).
+  bool _portrait = false;
+  final PersonSegmenter _segmenter = PersonSegmenter();
+  ui.Image? _maskImage; // 프리뷰용 배경 알파 마스크(세운 좌표계)
+  bool _segmenting = false;
 
   GuideStep _step = const GuideStep(kind: GuideStepKind.level, message: '');
   GuideStepKind? _prevStepKind;
@@ -143,11 +154,67 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
           _step = step;
         });
       }
+      // 인물 모드 + 포트레이트 ON일 때만 배경 마스크를 갱신.
+      if (_portrait && mode == ShootingMode.person) {
+        await _updateMask(image);
+      }
     } catch (_) {
       // 프레임 단위 실패는 무시(다음 프레임 계속)
     } finally {
       _processing = false;
     }
+  }
+
+  /// 세그멘테이션 마스크 → 프리뷰용 배경 알파 ui.Image로 변환해 갱신.
+  Future<void> _updateMask(CameraImage image) async {
+    if (_segmenting) return;
+    _segmenting = true;
+    try {
+      final mask = await _segmenter.process(image, _camera.sensorOrientation);
+      if (mask == null) {
+        if (mounted && _maskImage != null) {
+          setState(() {
+            _maskImage?.dispose();
+            _maskImage = null;
+          });
+        }
+        return;
+      }
+      // RGBA(검정 + 배경 알파)로 채운 이미지 생성.
+      final rgba = Uint8List(mask.width * mask.height * 4);
+      for (var i = 0; i < mask.bgAlpha.length; i++) {
+        rgba[i * 4 + 3] = mask.bgAlpha[i];
+      }
+      final img = await _decodeRgba(rgba, mask.width, mask.height);
+      if (!mounted || !_portrait) {
+        img.dispose();
+        return;
+      }
+      setState(() {
+        _maskImage?.dispose();
+        _maskImage = img;
+      });
+    } finally {
+      _segmenting = false;
+    }
+  }
+
+  Future<ui.Image> _decodeRgba(Uint8List rgba, int w, int h) {
+    final c = Completer<ui.Image>();
+    ui.decodeImageFromPixels(rgba, w, h, ui.PixelFormat.rgba8888, c.complete);
+    return c.future;
+  }
+
+  void _clearMask() {
+    _maskImage?.dispose();
+    _maskImage = null;
+  }
+
+  void _togglePortrait() {
+    setState(() {
+      _portrait = !_portrait;
+      if (!_portrait) _clearMask();
+    });
   }
 
   Future<void> _onModeChanged(ShootingMode mode) async {
@@ -161,6 +228,8 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
       );
       _prevStepKind = null;
       _step = const GuideStep(kind: GuideStepKind.level, message: '');
+      // 인물 모드가 아니면 배경흐림 마스크 제거(사물/자연은 미지원).
+      if (mode != ShootingMode.person) _clearMask();
     });
     await _modeStore.save(mode);
   }
@@ -249,7 +318,18 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
   Future<void> _capture() async {
     _triggerCaptureFeedback();
     try {
-      final saved = await _camera.captureAndSave();
+      final bool saved;
+      if (_portrait && _mode == ShootingMode.person) {
+        // 촬영 → 세그멘테이션 배경흐림 적용 → 저장.
+        final path = await _camera.capturePhoto();
+        final blurred = await applyPortraitBlur(
+          File(path),
+          nowMicros: DateTime.now().microsecondsSinceEpoch,
+        );
+        saved = await _camera.saveToGallery(blurred.path);
+      } else {
+        saved = await _camera.captureAndSave();
+      }
       // 성공 토스트는 표시하지 않음(촬영 피드백 진동·플래시로 충분). 실패만 안내.
       if (!saved && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -366,6 +446,8 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
     _camera.dispose();
     _faceDetector.dispose();
     _objectDetector.dispose();
+    _segmenter.dispose();
+    _maskImage?.dispose();
     super.dispose();
   }
 
@@ -396,6 +478,32 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => FeedScreen(auth: _auth)),
+    );
+  }
+
+  /// 배경 알파 마스크를 프리뷰 박스에 맞춰, 배경만 블러 처리하는 오버레이.
+  /// 마스크는 세운 좌표계라 정규화 오버레이와 동일하게 프리뷰 박스에 스케일 매핑된다.
+  Widget _buildPortraitBlur() {
+    final mask = _maskImage!;
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (rect) {
+        final sx = rect.width / mask.width;
+        final sy = rect.height / mask.height;
+        final m = Float64List.fromList([
+          sx, 0, 0, 0, //
+          0, sy, 0, 0, //
+          0, 0, 1, 0, //
+          0, 0, 0, 1, //
+        ]);
+        return ui.ImageShader(mask, ui.TileMode.clamp, ui.TileMode.clamp, m);
+      },
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: const SizedBox.expand(),
+        ),
+      ),
     );
   }
 
@@ -593,6 +701,11 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
                 fit: StackFit.expand,
                 children: [
                   CameraPreview(_camera.controller),
+                  // 인물 배경흐림: 배경 알파 마스크로 프리뷰 배경만 흐리게(인물은 선명).
+                  if (_portrait && _maskImage != null)
+                    Positioned.fill(
+                      child: IgnorePointer(child: _buildPortraitBlur()),
+                    ),
                   GuideOverlay(
                     metrics: _metrics,
                     step: _step,
@@ -667,15 +780,28 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
                     // 좌우 클러스터를 동일폭 Expanded로 감싸 셔터를 화면 가로 중앙에 고정.
                     child: Row(
                       children: [
-                        // 좌측: 사진첩 바로가기(44 히트)
+                        // 좌측: 사진첩 바로가기 + (인물 모드) 배경흐림 토글
                         Expanded(
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: _bottomIcon(
-                              Icons.photo_library,
-                              _openGallery,
-                              box: 44,
-                              iconSize: 28,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _bottomIcon(
+                                  Icons.photo_library,
+                                  _openGallery,
+                                  box: 44,
+                                  iconSize: 28,
+                                ),
+                                if (_mode == ShootingMode.person)
+                                  _bottomIcon(
+                                    _portrait ? Icons.blur_on : Icons.blur_off,
+                                    _togglePortrait,
+                                    box: 40,
+                                    iconSize: 26,
+                                    dim: !_portrait,
+                                  ),
+                              ],
                             ),
                           ),
                         ),
