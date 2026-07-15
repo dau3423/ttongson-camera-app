@@ -99,6 +99,21 @@ class CameraService {
     await controller.stopImageStream();
   }
 
+  /// 프리뷰 정지(화면에 보이지 않을 때 호출해 발열·전력을 줄인다). 안전/가역.
+  Future<void> pausePreview() async {
+    final c = _controller;
+    if (c != null && c.value.isInitialized && !c.value.isPreviewPaused) {
+      await c.pausePreview();
+    }
+  }
+
+  Future<void> resumePreview() async {
+    final c = _controller;
+    if (c != null && c.value.isInitialized && c.value.isPreviewPaused) {
+      await c.resumePreview();
+    }
+  }
+
   /// 촬영 후 사진첩(갤러리)에 저장한다. 저장 성공 여부를 반환.
   /// 프리뷰가 센서 전체 프레임을 그대로(contain) 보여주므로, 저장 사진도
   /// 크롭 없이 그대로 저장하면 프리뷰와 일치한다(WYSIWYG).

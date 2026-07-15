@@ -37,6 +37,8 @@ class TtongsonApp extends StatelessWidget {
       title: '똥손카메라',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
+      // 카메라 화면이 최상위인지 감지해 스트림을 일시중단/재개(발열 감소)한다.
+      navigatorObservers: [routeObserver],
       home: const CameraScreen(),
     );
   }

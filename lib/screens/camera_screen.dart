@@ -30,13 +30,18 @@ import '../cloud/target_alignment.dart';
 import '../cloud/target_guide_overlay.dart';
 import '../cloud/advice_minimap.dart';
 
+/// 카메라 화면 위로 다른 화면(피드·로그인 등)이 뜨고 닫히는 걸 감지하는 옵서버.
+/// main.dart의 MaterialApp.navigatorObservers에 등록한다.
+final RouteObserver<PageRoute<dynamic>> routeObserver =
+    RouteObserver<PageRoute<dynamic>>();
+
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
   @override
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
+class _CameraScreenState extends State<CameraScreen> with RouteAware {
   final _camera = CameraService();
   late final PersonDetector _faceDetector;
   late final PersonDetector _objectDetector;
@@ -311,7 +316,39 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) routeObserver.subscribe(this, route);
+  }
+
+  /// 이 화면 위로 다른 화면이 push됨 → 프레임 분석·프리뷰 중단(발열·배터리 절감).
+  @override
+  void didPushNext() {
+    _pauseCamera();
+  }
+
+  /// 위 화면이 닫혀 다시 최상위가 됨 → 재개.
+  @override
+  void didPopNext() {
+    _resumeCamera();
+  }
+
+  Future<void> _pauseCamera() async {
+    await _camera.stopStream();
+    await _camera.pausePreview();
+  }
+
+  Future<void> _resumeCamera() async {
+    if (!mounted || !_ready) return;
+    await _camera.resumePreview();
+    _prevStepKind = null; // 복귀 직후 오발 진동 방지
+    _camera.startStream(_onFrame);
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _accelSub?.cancel();
     _camera.dispose();
     _faceDetector.dispose();
