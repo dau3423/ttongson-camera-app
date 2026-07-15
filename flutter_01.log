@@ -1,0 +1,56 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d R3CR201JGLE --no-hot
+
+## exception
+
+String: failed to connect to http://127.0.0.1:50566/Kf2DnQHYStc=/ HttpException: Connection closed before full header was received, uri = http://127.0.0.1:50566/Kf2DnQHYStc=/ws
+
+```
+```
+
+## flutter doctor
+
+```
+[✓] Flutter (Channel stable, 3.44.2, on macOS 15.7.4 24G517 darwin-x64, locale ko-KR) [380ms]
+    • Flutter version 3.44.2 on channel stable at /Users/soonbok/flutter
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision c9a6c48423 (3주 전), 2026-06-10 15:52:41 -0700
+    • Engine revision 77e2e94772
+    • Dart version 3.12.2
+    • DevTools version 2.57.0
+    • Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, no-enable-swift-package-manager, omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+
+[!] Android toolchain - develop for Android devices (Android SDK version 36.0.0) [3.9s]
+    • Android SDK at /Users/soonbok/Library/Android/sdk
+    • Emulator version 36.3.10.0 (build_id 14472402) (CL:N/A)
+    • Platform android-36, build-tools 36.0.0
+    • Java binary at: /Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java
+      This is the JDK bundled with the latest Android Studio installation on this machine.
+      To manually set the JDK path, use: `flutter config --jdk-dir="path/to/jdk"`.
+    • Java version OpenJDK Runtime Environment (build 21.0.8+-14196175-b1038.72)
+    ! Some Android licenses not accepted. To resolve this, run: flutter doctor --android-licenses
+
+[✓] Xcode - develop for iOS and macOS (Xcode 26.2) [3.9s]
+    • Xcode at /Applications/Xcode.app/Contents/Developer
+    • Build 17C52
+    • CocoaPods version 1.16.2
+
+[✓] Chrome - develop for the web [5ms]
+    • Chrome at /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+
+[✓] Connected device (3 available) [7.3s]
+    • SM G991N (mobile) • R3CR201JGLE • android-arm64  • Android 15 (API 35)
+    • macOS (desktop)   • macos       • darwin-x64     • macOS 15.7.4 24G517 darwin-x64
+    • Chrome (web)      • chrome      • web-javascript • Google Chrome 149.0.7827.201
+    ! Error: Browsing on the local area network for 헬로카봇. Ensure the device is unlocked and attached with a cable or associated with the same local area network as this Mac.
+      The device must be opted into Developer Mode to connect wirelessly. (code -27)
+
+[✓] Network resources [1,229ms]
+    • All expected network resources are available.
+
+! Doctor found issues in 1 category.
+```
