@@ -11,7 +11,6 @@ import 'like_button.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import 'report_sheet.dart';
-import 'blocked_users_screen.dart';
 import 'account_screen.dart';
 
 const _text = Color(0xFFF4F1EA);
@@ -87,17 +86,6 @@ class _FeedScreenState extends State<FeedScreen> {
               MaterialPageRoute(
                 builder: (_) =>
                     AccountScreen(auth: widget.auth, users: widget.users),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.block),
-            tooltip: '차단 목록',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    BlockedUsersScreen(auth: widget.auth, users: widget.users),
               ),
             ),
           ),

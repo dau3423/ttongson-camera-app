@@ -5,6 +5,7 @@ import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../user_repository.dart';
 import '../models/user_profile.dart';
+import 'blocked_users_screen.dart';
 import 'confirm_dialog.dart';
 
 const _text = Color(0xFFF4F1EA);
@@ -232,6 +233,19 @@ class _AccountScreenState extends State<AccountScreen> {
                 trailing: Text(
                   p.loginType.name,
                   style: const TextStyle(color: _muted),
+                ),
+              ),
+              _tile(
+                icon: Icons.block,
+                label: '차단한 사용자',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlockedUsersScreen(
+                      auth: widget.auth,
+                      users: widget.users,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
