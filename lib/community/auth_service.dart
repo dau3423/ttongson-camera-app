@@ -136,6 +136,30 @@ class AuthService {
     return _users.getProfile(uid);
   }
 
+  /// 로그인돼 있는데 프로필 문서가 없으면(로그인 시 생성 실패/누락) 지금 생성해
+  /// 반환한다. 이미 있으면 기존 프로필을 그대로 반환. 미로그인은 null.
+  Future<UserProfile?> ensureMyProfile() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return _users.ensureProfile(user: user, loginType: _inferLoginType(user));
+  }
+
+  /// Firebase provider 정보로 로그인 종류를 추정(프로필 최초 생성 시에만 사용).
+  /// 카카오는 커스텀 토큰이라 providerData가 비어 기본값으로 떨어진다.
+  LoginType _inferLoginType(User user) {
+    for (final p in user.providerData) {
+      switch (p.providerId) {
+        case 'google.com':
+          return LoginType.google;
+        case 'apple.com':
+          return LoginType.apple;
+        case 'password':
+          return LoginType.email;
+      }
+    }
+    return LoginType.kakao;
+  }
+
   /// 소프트 탈퇴(현재 사용자).
   Future<void> withdraw() async {
     final uid = _auth.currentUser?.uid;

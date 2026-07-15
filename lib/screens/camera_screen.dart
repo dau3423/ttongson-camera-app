@@ -166,6 +166,8 @@ class _CameraScreenState extends State<CameraScreen> {
     _prevStepKind = kind;
     if (prev == null || kind == prev) return;
     if (_stepOrder.indexOf(kind) <= _stepOrder.indexOf(prev)) return;
+    // 카메라 화면이 최상위가 아니면(피드·로그인 등이 위에 떠 있음) 피드백 억제.
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
     if (kind == GuideStepKind.ready) {
       HapticFeedback.heavyImpact();
       SystemSound.play(SystemSoundType.alert);

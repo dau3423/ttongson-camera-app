@@ -25,9 +25,22 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _busy = false;
   String get _uid => widget.auth.currentUser?.uid ?? '';
 
+  @override
+  void initState() {
+    super.initState();
+    // 로그인했는데 프로필 문서가 없으면(로그인 시 생성 누락) 진입 시 생성.
+    // watchProfile 스트림이 생성 즉시 반영한다. 실패는 조용히 무시(화면은 계속 동작).
+    widget.auth.ensureMyProfile().catchError((_) => null);
+  }
+
   Future<void> _changePhoto() async {
     if (_busy) return;
-    final x = await ImagePicker().pickImage(source: ImageSource.gallery);
+    // 픽업 단계에서 축소·JPEG 근접 형식으로 받아 디코딩 실패(HEIC 등) 여지를 줄인다.
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 90,
+    );
     if (x == null || !mounted) return;
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
@@ -37,38 +50,22 @@ class _AccountScreenState extends State<AccountScreen> {
         image: File(x.path),
       );
       await widget.users.updateProfile(uid: _uid, photoUrl: url);
-    } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('사진 변경에 실패했어요')));
+    } catch (e, st) {
+      // 원인(권한/디코딩 등)을 파악할 수 있게 실제 에러를 노출한다.
+      debugPrint('프로필 사진 변경 실패: $e\n$st');
+      messenger.showSnackBar(SnackBar(content: Text('사진 변경 실패: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _editNickname(String current) async {
-    final controller = TextEditingController(text: current);
+    // 컨트롤러는 다이얼로그가 자기 State.dispose에서 정리한다(닫힘 애니메이션 중
+    // dispose로 인한 'used after disposed' 방지).
     final result = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('닉네임 편집'),
-        content: TextField(
-          controller: controller,
-          maxLength: 20,
-          autofocus: true,
-          decoration: const InputDecoration(counterText: ''),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('저장'),
-          ),
-        ],
-      ),
+      builder: (_) => _NicknameEditDialog(initial: current),
     );
-    controller.dispose();
     if (result == null || !mounted) return;
     final trimmed = result.trim();
     if (!isValidNickname(trimmed)) {
@@ -292,6 +289,52 @@ class _AccountScreenState extends State<AccountScreen> {
               ? null
               : const Icon(Icons.chevron_right, color: _muted)),
       onTap: onTap,
+    );
+  }
+}
+
+/// 닉네임 편집 다이얼로그. 컨트롤러를 자기 생명주기에서 정리해
+/// 닫힘 애니메이션 도중 dispose 경합을 피한다. 저장 시 입력 텍스트를 pop.
+class _NicknameEditDialog extends StatefulWidget {
+  final String initial;
+  const _NicknameEditDialog({required this.initial});
+
+  @override
+  State<_NicknameEditDialog> createState() => _NicknameEditDialogState();
+}
+
+class _NicknameEditDialogState extends State<_NicknameEditDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initial,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('닉네임 편집'),
+      content: TextField(
+        controller: _controller,
+        maxLength: 20,
+        autofocus: true,
+        decoration: const InputDecoration(counterText: ''),
+        onSubmitted: (v) => Navigator.pop(context, v),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text('저장'),
+        ),
+      ],
     );
   }
 }

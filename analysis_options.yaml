@@ -16,6 +16,9 @@ analyzer:
     - build/**
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    # 디자인 참고 자료(빌드 대상 아님). ref/ 안은 일부 파일만 복사돼 있어
+    # 상대 import가 '없음'으로 뜨므로 분석에서 제외한다.
+    - "design_handoff_camera_redesign/**"
 
 linter:
   # The lint rules applied to this project can be customized in the
