@@ -70,11 +70,19 @@ class CameraService {
         ? CameraLensDirection.front
         : CameraLensDirection.back;
     if (!_cameras.any((c) => c.lensDirection == target)) return false;
+    final previous = _lens;
     final wasStreaming = _streaming;
     await stopStream();
     await _controller?.dispose();
     _controller = null;
-    await _open(target);
+    try {
+      await _open(target);
+    } catch (e) {
+      // 대상 렌즈 열기 실패 시 원래 렌즈로 복구해 컨트롤러를 유효하게 유지.
+      await _open(previous);
+      if (wasStreaming) startStream(onFrame);
+      rethrow;
+    }
     if (wasStreaming) startStream(onFrame);
     return true;
   }

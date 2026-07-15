@@ -194,11 +194,24 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
   }
 
   Future<void> _switchCamera() async {
+    // 전환 중에는 프리뷰를 먼저 트리에서 제거(스피너로 교체)한다.
+    // 그렇지 않으면 옛 컨트롤러를 dispose하는 순간 아직 남아 있는 CameraPreview가
+    // disposed 컨트롤러에서 buildPreview()를 호출해 예외가 난다.
+    setState(() => _ready = false);
+    // 위 setState로 예약된 프레임이 실제로 그려질 때까지 기다린 뒤 컨트롤러를 교체.
+    await WidgetsBinding.instance.endOfFrame;
     try {
       await _camera.switchCamera(_onFrame);
-      if (mounted) setState(() => _zoom = _camera.currentZoom);
-    } catch (e) {
       if (mounted) {
+        setState(() {
+          _zoom = _camera.currentZoom;
+          _ready = true;
+        });
+      }
+    } catch (e) {
+      // switchCamera는 실패 시 원래 렌즈로 복구하므로 프리뷰를 다시 켠다.
+      if (mounted) {
+        setState(() => _ready = true);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('카메라 전환에 실패했어요')));
