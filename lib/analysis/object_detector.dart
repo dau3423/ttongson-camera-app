@@ -7,12 +7,16 @@ import 'person_detector.dart';
 import 'box_normalize.dart';
 
 /// ML Kit Object Detection 기반 사물 감지. 가장 큰 사물 박스 하나를 정규화 PersonBox로 반환.
+///
+/// stream 모드는 "가장 두드러진 중앙 물체가 안정될 때까지" 박스를 잘 내보내지 않아
+/// 사물 인식이 잘 안 되는 원인이 된다. 프레임을 이미 스로틀(_processing)하므로
+/// 프레임마다 전체 검출을 하는 single 모드가 인식률이 더 좋다.
 class MlKitObjectDetector implements PersonDetector {
   final ObjectDetector _detector = ObjectDetector(
     options: ObjectDetectorOptions(
       classifyObjects: false,
       multipleObjects: true,
-      mode: DetectionMode.stream,
+      mode: DetectionMode.single,
     ),
   );
 

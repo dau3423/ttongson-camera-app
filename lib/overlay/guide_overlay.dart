@@ -11,17 +11,27 @@ class GuideOverlay extends StatelessWidget {
   final GuideMetrics metrics;
   final GuideStep step;
   final bool showGrid;
+
+  /// 사물/자연 모드처럼 얼굴 랜드마크가 없을 때, 감지된 피사체 박스를
+  /// 은은하게 상시 표시해 "인식되고 있음"을 알린다.
+  final bool showSubjectBox;
   const GuideOverlay({
     super.key,
     required this.metrics,
     required this.step,
     this.showGrid = true,
+    this.showSubjectBox = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: GuidePainter(metrics: metrics, step: step, showGrid: showGrid),
+      painter: GuidePainter(
+        metrics: metrics,
+        step: step,
+        showGrid: showGrid,
+        showSubjectBox: showSubjectBox,
+      ),
       size: Size.infinite,
     );
   }
@@ -31,10 +41,12 @@ class GuidePainter extends CustomPainter {
   final GuideMetrics metrics;
   final GuideStep step;
   final bool showGrid;
+  final bool showSubjectBox;
   GuidePainter({
     required this.metrics,
     required this.step,
     required this.showGrid,
+    this.showSubjectBox = false,
   });
 
   static final _good = AppColors.ready.withValues(alpha: 0.85);
@@ -100,21 +112,27 @@ class GuidePainter extends CustomPainter {
   void _paintPerson(Canvas canvas, Size size) {
     final person = metrics.person;
     if (person == null) return;
-    // 단순화: 평소엔 피사체 박스를 숨겨 화면을 비운다.
-    // '잘림' 경고일 때만 빨간 박스로 무엇이 잘렸는지 보여준다.
-    if (step.kind != GuideStepKind.crop) return;
-    final p = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = _warn;
-    canvas.drawRect(
-      Rect.fromLTWH(
-        person.left * size.width,
-        person.top * size.height,
-        person.width * size.width,
-        person.height * size.height,
-      ),
-      p,
+    // '잘림' 경고일 때는 빨간 박스로 무엇이 잘렸는지 보여준다.
+    // 그 외엔 평소 화면을 비우되(인물 모드), 사물/자연 모드는 감지 피드백을 위해
+    // 은은한 흰 박스를 상시 표시한다.
+    final isCrop = step.kind == GuideStepKind.crop;
+    if (!isCrop && !showSubjectBox) return;
+    final rect = Rect.fromLTWH(
+      person.left * size.width,
+      person.top * size.height,
+      person.width * size.width,
+      person.height * size.height,
+    );
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
+    if (!isCrop) {
+      canvas.drawRRect(rrect, Paint()..color = const Color(0x14FFFFFF));
+    }
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = isCrop ? _warn : _neutral,
     );
   }
 
@@ -154,5 +172,8 @@ class GuidePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant GuidePainter old) =>
-      old.metrics != metrics || old.step != step || old.showGrid != showGrid;
+      old.metrics != metrics ||
+      old.step != step ||
+      old.showGrid != showGrid ||
+      old.showSubjectBox != showSubjectBox;
 }

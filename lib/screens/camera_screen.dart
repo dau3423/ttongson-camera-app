@@ -584,6 +584,8 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
                     metrics: _metrics,
                     step: _step,
                     showGrid: _showGrid,
+                    // 얼굴이 없는 사물/자연 모드는 감지된 피사체 박스를 상시 표시.
+                    showSubjectBox: _mode != ShootingMode.person,
                   ),
                   if (targetBox != null)
                     TargetGuideOverlay(
