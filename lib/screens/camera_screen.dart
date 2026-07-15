@@ -75,9 +75,13 @@ class _CameraScreenState extends State<CameraScreen>
   String? _initError;
 
   // 발열 저감: 분석(ML 추론)을 매 프레임이 아니라 최소 간격으로만 수행.
-  // 구도 가이드는 초당 6~7회면 충분하고, ML 추론 부하를 크게 줄인다.
-  static const _minAnalysisGap = Duration(milliseconds: 140);
+  // 구도 가이드는 초당 ~5회면 충분하고, ML 추론 부하를 크게 줄인다.
+  static const _minAnalysisGap = Duration(milliseconds: 200);
   DateTime _lastAnalysis = DateTime.fromMillisecondsSinceEpoch(0);
+
+  // 포트레이트 세그멘테이션은 검출보다 더 드물게 갱신(추가 부하 저감).
+  static const _minSegGap = Duration(milliseconds: 400);
+  DateTime _lastSeg = DateTime.fromMillisecondsSinceEpoch(0);
 
   // 인물 배경흐림(포트레이트).
   bool _portrait = false;
@@ -165,8 +169,11 @@ class _CameraScreenState extends State<CameraScreen>
           _step = step;
         });
       }
-      // 인물 모드 + 포트레이트 ON일 때만 배경 마스크를 갱신.
-      if (_portrait && mode == ShootingMode.person) {
+      // 인물 모드 + 포트레이트 ON일 때만, 그리고 검출보다 드물게 마스크를 갱신.
+      if (_portrait &&
+          mode == ShootingMode.person &&
+          now.difference(_lastSeg) >= _minSegGap) {
+        _lastSeg = now;
         await _updateMask(image);
       }
     } catch (_) {
