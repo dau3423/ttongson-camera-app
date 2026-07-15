@@ -46,7 +46,8 @@ class CameraScreen extends StatefulWidget {
   State<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> with RouteAware {
+class _CameraScreenState extends State<CameraScreen>
+    with RouteAware, WidgetsBindingObserver {
   final _camera = CameraService();
   late final PersonDetector _faceDetector;
   late final PersonDetector _objectDetector;
@@ -73,6 +74,11 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
   bool _flash = false; // 촬영 순간 화면 번쩍임
   String? _initError;
 
+  // 발열 저감: 분석(ML 추론)을 매 프레임이 아니라 최소 간격으로만 수행.
+  // 구도 가이드는 초당 6~7회면 충분하고, ML 추론 부하를 크게 줄인다.
+  static const _minAnalysisGap = Duration(milliseconds: 140);
+  DateTime _lastAnalysis = DateTime.fromMillisecondsSinceEpoch(0);
+
   // 인물 배경흐림(포트레이트).
   bool _portrait = false;
   final PersonSegmenter _segmenter = PersonSegmenter();
@@ -98,6 +104,7 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _faceDetector = MlKitPersonDetector();
     _objectDetector = MlKitObjectDetector();
     _engine = AnalysisEngine(null);
@@ -123,7 +130,11 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
   }
 
   Future<void> _onFrame(CameraImage image) async {
-    if (_processing) return; // 스로틀: 재진입 방지
+    if (_processing) return; // 재진입 방지
+    // 프레임레이트 스로틀(발열 저감): 최소 간격 이내면 이 프레임은 건너뛴다.
+    final now = DateTime.now();
+    if (now.difference(_lastAnalysis) < _minAnalysisGap) return;
+    _lastAnalysis = now;
     _processing = true;
     try {
       final mode = _mode;
@@ -415,6 +426,20 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
     if (route is PageRoute) routeObserver.subscribe(this, route);
   }
 
+  /// 앱이 백그라운드로 가면 카메라를 정지(발열·배터리 절감), 복귀 시 재개.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_ready) return;
+    if (state == AppLifecycleState.resumed) {
+      // 카메라 화면이 최상위일 때만 재개(피드 등이 위에 있으면 정지 유지).
+      if (ModalRoute.of(context)?.isCurrent ?? true) _resumeCamera();
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _pauseCamera();
+    }
+  }
+
   /// 이 화면 위로 다른 화면이 push됨 → 프레임 분석·프리뷰 중단(발열·배터리 절감).
   @override
   void didPushNext() {
@@ -441,6 +466,7 @@ class _CameraScreenState extends State<CameraScreen> with RouteAware {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     routeObserver.unsubscribe(this);
     _accelSub?.cancel();
     _camera.dispose();
