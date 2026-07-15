@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/shooting_mode.dart';
 import '../../theme/app_colors.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
@@ -6,6 +7,7 @@ import '../auth_service.dart';
 import '../moderation.dart';
 import '../models/post.dart';
 import 'confirm_dialog.dart';
+import 'like_button.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import 'report_sheet.dart';
@@ -34,9 +36,14 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   bool _popular = true; // true=인기, false=최신
+  ShootingMode? _filter; // null=전체
 
   List<Post> _sorted(List<Post> items) {
-    final list = [...items];
+    // 모드 필터(선택 시 해당 모드만; 과거 mode 없는 글은 전체에서만 노출).
+    final filtered = _filter == null
+        ? items
+        : items.where((p) => p.mode == _filter).toList();
+    final list = [...filtered];
     if (_popular) {
       list.sort((a, b) => b.likeCount.compareTo(a.likeCount));
     } else {
@@ -95,6 +102,25 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              children: [
+                _FilterChip('전체', _filter == null, () {
+                  setState(() => _filter = null);
+                }),
+                for (final m in ShootingMode.values)
+                  _FilterChip(m.label, _filter == m, () {
+                    setState(() => _filter = m);
+                  }),
+              ],
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.accent,
@@ -185,6 +211,68 @@ class _Tab extends StatelessWidget {
             fontWeight: FontWeight.w700,
             color: selected ? AppColors.surfaceApp : _muted,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 촬영모드 필터 칩(전체/인물/자연/사물).
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _FilterChip(this.label, this.selected, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+              color: selected ? AppColors.accent : const Color(0x33FFFFFF),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? AppColors.surfaceApp : _text,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 게시물 촬영모드 태그(앰버 아웃라인 pill).
+class _ModeTag extends StatelessWidget {
+  final ShootingMode mode;
+  const _ModeTag(this.mode);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.accent),
+      ),
+      child: Text(
+        mode.label,
+        style: const TextStyle(
+          color: AppColors.accent,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -284,6 +372,10 @@ class _PostCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (post.mode != null) ...[
+                  _ModeTag(post.mode!),
+                  const SizedBox(width: 4),
+                ],
                 if (uid.isNotEmpty && uid != post.authorUid)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_horiz, color: _muted),
@@ -328,22 +420,13 @@ class _PostCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             child: Row(
               children: [
-                StreamBuilder<bool>(
-                  stream: posts.likedByMe(postId: post.id, uid: uid),
-                  builder: (_, s) {
-                    final liked = s.data ?? false;
-                    return IconButton(
-                      icon: Icon(
-                        liked ? Icons.favorite : Icons.favorite_border,
-                        color: liked ? AppColors.danger : _muted,
-                      ),
-                      onPressed: uid.isEmpty
-                          ? null
-                          : () => posts.toggleLike(postId: post.id, uid: uid),
-                    );
-                  },
+                LikeButton(
+                  posts: posts,
+                  postId: post.id,
+                  uid: uid,
+                  likeCount: post.likeCount,
+                  mutedColor: _muted,
                 ),
-                Text('${post.likeCount}', style: const TextStyle(color: _text)),
                 const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.mode_comment_outlined, color: _muted),

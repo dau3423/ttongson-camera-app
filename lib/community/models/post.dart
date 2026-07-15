@@ -1,5 +1,6 @@
 // lib/community/models/post.dart
 // 순수 Dart — Flutter/plugin import 금지.
+import '../../models/shooting_mode.dart';
 
 class Post {
   final String id;
@@ -7,6 +8,7 @@ class Post {
   final String authorName;
   final String imageUrl;
   final String caption;
+  final ShootingMode? mode; // 촬영 모드(인물/자연/사물). 과거 글은 null.
   final DateTime? createdAt;
   final int likeCount;
   final int commentCount;
@@ -16,6 +18,7 @@ class Post {
     required this.authorName,
     required this.imageUrl,
     required this.caption,
+    this.mode,
     this.createdAt,
     this.likeCount = 0,
     this.commentCount = 0,
@@ -27,6 +30,7 @@ class Post {
     'authorName': authorName,
     'imageUrl': imageUrl,
     'caption': caption,
+    'mode': mode?.wire,
     'likeCount': 0,
     'commentCount': 0,
     'reportCount': 0,
@@ -39,6 +43,7 @@ class Post {
     authorName: (data['authorName'] as String?) ?? '',
     imageUrl: (data['imageUrl'] as String?) ?? '',
     caption: (data['caption'] as String?) ?? '',
+    mode: ShootingModeWire.fromWire(data['mode'] as String?),
     createdAt: data['createdAt'] as DateTime?,
     likeCount: (data['likeCount'] as int?) ?? 0,
     commentCount: (data['commentCount'] as int?) ?? 0,

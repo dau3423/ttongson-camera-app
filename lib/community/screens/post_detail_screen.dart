@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
@@ -6,6 +7,7 @@ import '../moderation.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 import 'confirm_dialog.dart';
+import 'like_button.dart';
 import 'report_sheet.dart';
 
 /// 게시물 상세 — 사진·캡션·좋아요 + 댓글 목록·입력. 피드 카드에서 진입.
@@ -36,11 +38,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (text.isEmpty || _uid.isEmpty || _sending) return;
     setState(() => _sending = true);
     try {
-      final profile = await _users.getProfile(_uid);
+      // 프로필이 없으면 생성해서 닉네임·사진을 확보(익명 방지).
+      final profile = await widget.auth.ensureMyProfile();
       await widget.posts.addComment(
         postId: widget.post.id,
         uid: _uid,
         authorName: profile?.nickname ?? '익명',
+        authorPhotoUrl: profile?.photoUrl,
         text: text,
       );
       if (mounted) _input.clear();
@@ -156,28 +160,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Row(
                   children: [
                     const SizedBox(width: 4),
-                    StreamBuilder<bool>(
-                      stream: widget.posts.likedByMe(
-                        postId: post.id,
-                        uid: _uid,
-                      ),
-                      builder: (_, s) {
-                        final liked = s.data ?? false;
-                        return IconButton(
-                          icon: Icon(
-                            liked ? Icons.favorite : Icons.favorite_border,
-                            color: liked ? Colors.red : null,
-                          ),
-                          onPressed: _uid.isEmpty
-                              ? null
-                              : () => widget.posts.toggleLike(
-                                  postId: post.id,
-                                  uid: _uid,
-                                ),
-                        );
-                      },
+                    LikeButton(
+                      posts: widget.posts,
+                      postId: post.id,
+                      uid: _uid,
+                      likeCount: post.likeCount,
                     ),
-                    Text('${post.likeCount}'),
                   ],
                 ),
                 const Divider(),
@@ -223,6 +211,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               children: [
                                 for (final c in items)
                                   ListTile(
+                                    leading: _CommentAvatar(
+                                      name: c.authorName,
+                                      photoUrl: c.authorPhotoUrl,
+                                    ),
                                     title: Text(
                                       c.authorName,
                                       style: const TextStyle(
@@ -306,6 +298,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 댓글 작성자 아바타. 사진이 있으면 사진, 없으면 닉네임 이니셜.
+class _CommentAvatar extends StatelessWidget {
+  final String name;
+  final String? photoUrl;
+  const _CommentAvatar({required this.name, this.photoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
+    final initial = name.isNotEmpty ? name.characters.first : '?';
+    return CircleAvatar(
+      radius: 16,
+      backgroundColor: AppColors.accent.withValues(alpha: 0.2),
+      backgroundImage: hasPhoto ? NetworkImage(photoUrl!) : null,
+      child: hasPhoto
+          ? null
+          : Text(
+              initial,
+              style: const TextStyle(
+                color: AppColors.accent,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
     );
   }
 }

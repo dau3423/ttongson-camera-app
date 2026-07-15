@@ -5,6 +5,7 @@ class Comment {
   final String id;
   final String authorUid;
   final String authorName;
+  final String? authorPhotoUrl;
   final String text;
   final DateTime? createdAt;
   const Comment({
@@ -12,6 +13,7 @@ class Comment {
     required this.authorUid,
     required this.authorName,
     required this.text,
+    this.authorPhotoUrl,
     this.createdAt,
   });
 
@@ -20,6 +22,7 @@ class Comment {
   Map<String, dynamic> toCreateMap() => {
     'authorUid': authorUid,
     'authorName': authorName,
+    'authorPhotoUrl': authorPhotoUrl,
     'text': text,
     'reportCount': 0,
     'hidden': false,
@@ -29,6 +32,7 @@ class Comment {
     id: id,
     authorUid: (data['authorUid'] as String?) ?? '',
     authorName: (data['authorName'] as String?) ?? '',
+    authorPhotoUrl: data['authorPhotoUrl'] as String?,
     text: (data['text'] as String?) ?? '',
     createdAt: data['createdAt'] as DateTime?,
   );

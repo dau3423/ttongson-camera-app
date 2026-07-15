@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../models/shooting_mode.dart';
 import 'models/post.dart';
 import 'models/comment.dart';
 
@@ -19,6 +20,7 @@ class PostRepository {
     required String authorName,
     required File image,
     required String caption,
+    ShootingMode? mode,
   }) async {
     final ref = _db.collection('posts').doc();
     final postId = ref.id;
@@ -34,6 +36,7 @@ class PostRepository {
       authorName: authorName,
       imageUrl: imageUrl,
       caption: caption,
+      mode: mode,
     );
     await ref.set({
       ...post.toCreateMap(imageUrl: imageUrl),
@@ -58,14 +61,18 @@ class PostRepository {
   }
 
   /// 좋아요 토글(문서 생성/삭제). likeCount는 함수가 관리.
-  Future<void> toggleLike({required String postId, required String uid}) async {
+  /// [liked]는 현재(토글 전) 상태 — get() 왕복 없이 바로 반영해 지연을 없앤다.
+  Future<void> toggleLike({
+    required String postId,
+    required String uid,
+    required bool liked,
+  }) async {
     final ref = _db
         .collection('posts')
         .doc(postId)
         .collection('likes')
         .doc(uid);
-    final snap = await ref.get();
-    if (snap.exists) {
+    if (liked) {
       await ref.delete();
     } else {
       await ref.set({'createdAt': FieldValue.serverTimestamp()});
@@ -88,11 +95,13 @@ class PostRepository {
     required String uid,
     required String authorName,
     required String text,
+    String? authorPhotoUrl,
   }) async {
     final comment = Comment(
       id: '',
       authorUid: uid,
       authorName: authorName,
+      authorPhotoUrl: authorPhotoUrl,
       text: text,
     );
     await _db.collection('posts').doc(postId).collection('comments').add({

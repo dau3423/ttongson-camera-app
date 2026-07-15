@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../models/shooting_mode.dart';
+import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../post_repository.dart';
-import '../user_repository.dart';
 import 'mask_editor_screen.dart';
 
 /// 사진 선택 → 가림 편집 → 캡션 → 업로드.
@@ -17,8 +18,8 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final _caption = TextEditingController();
-  final _users = UserRepository();
   File? _image;
+  ShootingMode _mode = ShootingMode.person;
   bool _uploading = false;
 
   Future<void> _pick() async {
@@ -38,12 +39,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (image == null || uid == null || _uploading) return;
     setState(() => _uploading = true);
     try {
-      final profile = await _users.getProfile(uid);
+      final profile = await widget.auth.ensureMyProfile();
       await widget.posts.createPost(
         uid: uid,
         authorName: profile?.nickname ?? '익명',
         image: image,
         caption: _caption.text.trim(),
+        mode: _mode,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -99,6 +101,27 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     : null,
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          const Text('촬영 모드', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final m in ShootingMode.values)
+                ChoiceChip(
+                  label: Text(m.label),
+                  selected: _mode == m,
+                  onSelected: (_) => setState(() => _mode = m),
+                  selectedColor: AppColors.accent,
+                  labelStyle: TextStyle(
+                    color: _mode == m
+                        ? AppColors.surfaceApp
+                        : const Color(0xB3F4F1EA),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           TextField(
