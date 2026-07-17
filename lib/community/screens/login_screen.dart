@@ -220,6 +220,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? null
                             : () => _run(widget.auth.signInWithKakao),
                       ),
+                      const SizedBox(width: 10),
+                      AuthOutlineButton(
+                        label: 'Google',
+                        onTap: _busy
+                            ? null
+                            : () => _run(widget.auth.signInWithGoogle),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 32),
