@@ -1,0 +1,8 @@
+# 릴리스 서명용 템플릿. 이 파일을 복사해 android/key.properties 로 만들고 값을 채운다.
+#   cp android/key.properties.example android/key.properties
+# key.properties 와 *.jks 는 .gitignore 되어 커밋되지 않는다. 절대 공유 금지.
+storePassword=키스토어_비밀번호
+keyPassword=키_비밀번호
+keyAlias=upload
+# 키스토어 파일 경로. keytool 로 만든 위치를 절대경로로 지정하는 것이 안전하다.
+storeFile=/Users/soonbok/upload-keystore.jks
