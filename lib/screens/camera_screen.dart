@@ -34,6 +34,11 @@ import '../cloud/device_id.dart';
 import '../cloud/target_alignment.dart';
 import '../cloud/target_guide_overlay.dart';
 import '../cloud/advice_minimap.dart';
+import '../poses/pose.dart';
+import '../poses/pose_catalog.dart';
+import '../poses/pose_advisor.dart';
+import '../overlay/pose_overlay.dart';
+import '../poses/pose_picker.dart';
 import 'capture_result_screen.dart';
 
 /// 카메라 화면 위로 다른 화면(피드·로그인 등)이 뜨고 닫히는 걸 감지하는 옵서버.
@@ -63,6 +68,10 @@ class _CameraScreenState extends State<CameraScreen>
   final DeviceId _deviceId = DeviceId();
   CompositionAdvice? _advice;
   bool _adviceLoading = false;
+
+  List<Pose> _poses = const [];
+  String? _poseAsset; // 선택된 포즈 실루엣 asset (null=꺼짐)
+  final _poseAdvisor = PoseAdvisor();
 
   SensorSample _sensor = const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0);
   GuideMetrics _metrics = GuideMetrics(
@@ -119,6 +128,9 @@ class _CameraScreenState extends State<CameraScreen>
       _sensor = SensorSample(accelX: -e.x, accelY: e.y, accelZ: -e.z);
     });
     _init();
+    PoseCatalog.load().then((p) {
+      if (mounted) setState(() => _poses = p);
+    });
   }
 
   Future<void> _init() async {
@@ -431,6 +443,74 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } finally {
       if (mounted) setState(() => _adviceLoading = false);
+      if (mounted) _camera.startStream(_onFrame);
+    }
+  }
+
+  void _openPosePicker() {
+    if (_poses.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('포즈를 불러오지 못했어요')));
+      return;
+    }
+    showPosePicker(
+      context,
+      poses: _poses,
+      onSelect: (p) => setState(() => _poseAsset = p?.asset),
+      onAiRecommend: _recommendPose,
+    );
+  }
+
+  Future<void> _recommendPose() async {
+    if (!_auth.isSignedIn) {
+      final ok = await showSignInSheet(context, _auth);
+      if (!ok) return;
+    }
+    if (!await _consent.hasConsented()) {
+      if (!mounted) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('AI 추천 안내'),
+          content: const Text('추천 시 현재 화면 1장을 분석 서버로 전송합니다. 이미지는 저장하지 않습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('동의'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+      await _consent.setConsented();
+    }
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final deviceId = await _deviceId.get();
+      final framePath = await _camera.captureFrameForAdvice();
+      final suggestion = await _poseAdvisor.suggest(
+        jpegPath: framePath,
+        candidates: _poses,
+        deviceId: deviceId,
+      );
+      final match = _poses.where((p) => p.id == suggestion.poseId);
+      if (match.isNotEmpty && mounted) {
+        setState(() => _poseAsset = match.first.asset);
+        if (suggestion.reason.isNotEmpty) {
+          messenger.showSnackBar(SnackBar(content: Text(suggestion.reason)));
+        }
+      }
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('추천을 못 받았어요. 다시 시도해 주세요.')),
+      );
+    } finally {
       if (mounted) _camera.startStream(_onFrame);
     }
   }
@@ -848,6 +928,13 @@ class _CameraScreenState extends State<CameraScreen>
                                     iconSize: 26,
                                     dim: !_portrait,
                                   ),
+                                _bottomIcon(
+                                  Icons.accessibility_new,
+                                  _openPosePicker,
+                                  box: 40,
+                                  iconSize: 26,
+                                  dim: _poseAsset == null,
+                                ),
                               ],
                             ),
                           ),
@@ -882,6 +969,7 @@ class _CameraScreenState extends State<CameraScreen>
                 ],
               ),
             ),
+            if (_poseAsset != null) PoseOverlay(asset: _poseAsset!),
             if (_advice != null)
               AdviceOverlay(
                 advice: _advice!,
