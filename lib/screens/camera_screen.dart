@@ -34,6 +34,7 @@ import '../cloud/device_id.dart';
 import '../cloud/target_alignment.dart';
 import '../cloud/target_guide_overlay.dart';
 import '../cloud/advice_minimap.dart';
+import 'capture_result_screen.dart';
 
 /// 카메라 화면 위로 다른 화면(피드·로그인 등)이 뜨고 닫히는 걸 감지하는 옵서버.
 /// main.dart의 MaterialApp.navigatorObservers에 등록한다.
@@ -336,22 +337,30 @@ class _CameraScreenState extends State<CameraScreen>
   Future<void> _capture() async {
     _triggerCaptureFeedback();
     try {
-      final bool saved;
+      final String shotPath;
       if (_portrait && _mode == ShootingMode.person) {
-        // 촬영 → 세그멘테이션 배경흐림 적용 → 저장.
         final path = await _camera.capturePhoto();
         final blurred = await applyPortraitBlur(
           File(path),
           nowMicros: DateTime.now().microsecondsSinceEpoch,
         );
-        saved = await _camera.saveToGallery(blurred.path);
+        shotPath = blurred.path;
       } else {
-        saved = await _camera.captureAndSave();
+        shotPath = await _camera.capturePhoto();
       }
-      // 성공 토스트는 표시하지 않음(촬영 피드백 진동·플래시로 충분). 실패만 안내.
+      final saved = await _camera.saveToGallery(shotPath);
       if (!saved && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('저장 실패 — 사진첩 권한을 확인해 주세요')),
+        );
+      }
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                CaptureResultScreen(original: File(shotPath), auth: _auth),
+          ),
         );
       }
     } catch (e) {
