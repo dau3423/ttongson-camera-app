@@ -20,7 +20,10 @@ export async function visionJson(params: {
   const client = new OpenAI({ apiKey: params.apiKey });
   const response = await client.chat.completions.create({
     model: OPENAI_MODEL,
-    max_completion_tokens: 1024,
+    // GPT-5는 추론 모델 — 추론 토큰이 max_completion_tokens에 포함된다.
+    // 추론을 낮추고(작은 JSON 출력엔 충분) 상한을 넉넉히 줘 빈 응답을 막는다.
+    reasoning_effort: "low",
+    max_completion_tokens: 4096,
     response_format: {
       type: "json_schema",
       json_schema: {
@@ -47,6 +50,11 @@ export async function visionJson(params: {
   });
   const text = response.choices[0]?.message?.content;
   if (!text) {
+    // 진단: 빈 응답 원인(길이 초과·거부 등)을 로그로 남긴다.
+    console.error("visionJson empty content", {
+      finishReason: response.choices[0]?.finish_reason,
+      usage: response.usage,
+    });
     throw new Error("모델 응답이 비어 있습니다");
   }
   return text;
