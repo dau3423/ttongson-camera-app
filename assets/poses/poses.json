@@ -1,0 +1,194 @@
+[
+  {
+    "id": "selfie_01",
+    "category": "selfie",
+    "label": "턱 괴기",
+    "asset": "assets/poses/selfie_01.png"
+  },
+  {
+    "id": "selfie_02",
+    "category": "selfie",
+    "label": "폰 들기",
+    "asset": "assets/poses/selfie_02.png"
+  },
+  {
+    "id": "selfie_03",
+    "category": "selfie",
+    "label": "브이",
+    "asset": "assets/poses/selfie_03.png"
+  },
+  {
+    "id": "selfie_04",
+    "category": "selfie",
+    "label": "머리 넘기기",
+    "asset": "assets/poses/selfie_04.png"
+  },
+  {
+    "id": "selfie_05",
+    "category": "selfie",
+    "label": "손 하트",
+    "asset": "assets/poses/selfie_05.png"
+  },
+  {
+    "id": "selfie_06",
+    "category": "selfie",
+    "label": "볼 감싸기",
+    "asset": "assets/poses/selfie_06.png"
+  },
+  {
+    "id": "selfie_07",
+    "category": "selfie",
+    "label": "어깨 너머",
+    "asset": "assets/poses/selfie_07.png"
+  },
+  {
+    "id": "selfie_08",
+    "category": "selfie",
+    "label": "팔짱",
+    "asset": "assets/poses/selfie_08.png"
+  },
+  {
+    "id": "fullbody_01",
+    "category": "fullbody",
+    "label": "허리 손",
+    "asset": "assets/poses/fullbody_01.png"
+  },
+  {
+    "id": "fullbody_02",
+    "category": "fullbody",
+    "label": "걷기",
+    "asset": "assets/poses/fullbody_02.png"
+  },
+  {
+    "id": "fullbody_03",
+    "category": "fullbody",
+    "label": "기대기",
+    "asset": "assets/poses/fullbody_03.png"
+  },
+  {
+    "id": "fullbody_04",
+    "category": "fullbody",
+    "label": "뒤돌아보기",
+    "asset": "assets/poses/fullbody_04.png"
+  },
+  {
+    "id": "fullbody_05",
+    "category": "fullbody",
+    "label": "양손 주머니",
+    "asset": "assets/poses/fullbody_05.png"
+  },
+  {
+    "id": "fullbody_06",
+    "category": "fullbody",
+    "label": "점프",
+    "asset": "assets/poses/fullbody_06.png"
+  },
+  {
+    "id": "fullbody_07",
+    "category": "fullbody",
+    "label": "쪼그려 앉기",
+    "asset": "assets/poses/fullbody_07.png"
+  },
+  {
+    "id": "fullbody_08",
+    "category": "fullbody",
+    "label": "한 발 앞",
+    "asset": "assets/poses/fullbody_08.png"
+  },
+  {
+    "id": "couple_01",
+    "category": "couple",
+    "label": "어깨동무",
+    "asset": "assets/poses/couple_01.png"
+  },
+  {
+    "id": "couple_02",
+    "category": "couple",
+    "label": "마주보기",
+    "asset": "assets/poses/couple_02.png"
+  },
+  {
+    "id": "couple_03",
+    "category": "couple",
+    "label": "백허그",
+    "asset": "assets/poses/couple_03.png"
+  },
+  {
+    "id": "couple_04",
+    "category": "couple",
+    "label": "손잡고 걷기",
+    "asset": "assets/poses/couple_04.png"
+  },
+  {
+    "id": "couple_05",
+    "category": "couple",
+    "label": "이마 맞대기",
+    "asset": "assets/poses/couple_05.png"
+  },
+  {
+    "id": "couple_06",
+    "category": "couple",
+    "label": "업기",
+    "asset": "assets/poses/couple_06.png"
+  },
+  {
+    "id": "couple_07",
+    "category": "couple",
+    "label": "나란히 앉기",
+    "asset": "assets/poses/couple_07.png"
+  },
+  {
+    "id": "couple_08",
+    "category": "couple",
+    "label": "손 하트",
+    "asset": "assets/poses/couple_08.png"
+  },
+  {
+    "id": "friends_01",
+    "category": "friends",
+    "label": "나란히",
+    "asset": "assets/poses/friends_01.png"
+  },
+  {
+    "id": "friends_02",
+    "category": "friends",
+    "label": "점프",
+    "asset": "assets/poses/friends_02.png"
+  },
+  {
+    "id": "friends_03",
+    "category": "friends",
+    "label": "하이파이브",
+    "asset": "assets/poses/friends_03.png"
+  },
+  {
+    "id": "friends_04",
+    "category": "friends",
+    "label": "어깨 기대기",
+    "asset": "assets/poses/friends_04.png"
+  },
+  {
+    "id": "friends_05",
+    "category": "friends",
+    "label": "등 맞대기",
+    "asset": "assets/poses/friends_05.png"
+  },
+  {
+    "id": "friends_06",
+    "category": "friends",
+    "label": "둥글게",
+    "asset": "assets/poses/friends_06.png"
+  },
+  {
+    "id": "friends_07",
+    "category": "friends",
+    "label": "걷기",
+    "asset": "assets/poses/friends_07.png"
+  },
+  {
+    "id": "friends_08",
+    "category": "friends",
+    "label": "단체 브이",
+    "asset": "assets/poses/friends_08.png"
+  }
+]

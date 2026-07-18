@@ -87,6 +87,10 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # 포즈 실루엣 에셋(평면 구조). poses.json + 각 포즈 PNG.
+  assets:
+    - assets/poses/
+
   # 디자인 핸드오프 폰트(모두 무료):
   #   Pretendard(OFL) · Space Grotesk(OFL) · Space Mono(Apache-2.0)
   fonts:
