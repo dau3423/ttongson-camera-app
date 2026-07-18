@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ttongson_camera/analysis/mood_adjust.dart';
 import 'package:ttongson_camera/cloud/mood_advisor.dart';
 
 void main() {
