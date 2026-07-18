@@ -5,7 +5,6 @@ import '../community/screens/sign_in_sheet.dart';
 import '../cloud/advice_consent.dart';
 import '../cloud/device_id.dart';
 import '../cloud/mood_advisor.dart';
-import '../analysis/mood_adjust.dart';
 import '../camera/camera_service.dart';
 import '../edit/mood.dart';
 import '../edit/mood_processor.dart';
@@ -33,7 +32,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
 
   Mood? _selected; // null = 원본
   File _preview = File(''); // 표시용(초기엔 원본)
-  MoodParams _finalParams = MoodParams.identity;
   bool _working = false;
   int _reqSeq = 0; // 늦게 도착한 이전 요청 무시용
 
@@ -47,6 +45,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     if (!widget.auth.isSignedIn) {
       final ok = await showSignInSheet(context, widget.auth);
       if (!ok) return false;
+      if (!mounted) return false;
     }
     if (await _consent.hasConsented()) return true;
     if (!mounted) return false;
@@ -78,7 +77,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     if (mood == null) {
       setState(() {
         _preview = widget.original;
-        _finalParams = MoodParams.identity;
       });
       return;
     }
@@ -94,7 +92,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
       setState(() {
         _selected = null;
         _preview = widget.original;
-        _finalParams = MoodParams.identity;
         _working = false;
       });
       ScaffoldMessenger.of(
@@ -105,7 +102,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     if (!mounted || seq != _reqSeq) return;
     setState(() {
       _preview = file;
-      _finalParams = params;
     });
 
     // 2) AI 갱신(동의 시). 실패/거부 시 프리셋 유지.
@@ -121,7 +117,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         if (!mounted || seq != _reqSeq) return;
         setState(() {
           _preview = file;
-          _finalParams = params;
         });
       } catch (_) {
         // 프리셋 결과 유지(조용히 폴백)
@@ -139,8 +134,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         );
         return;
       }
-      final edited = await applyMood(widget.original, _finalParams);
-      final ok = await _camera.saveToGallery(edited.path);
+      final ok = await _camera.saveToGallery(_preview.path);
       messenger.showSnackBar(
         SnackBar(content: Text(ok ? '보정본을 저장했어요' : '저장 실패 — 권한을 확인해 주세요')),
       );
