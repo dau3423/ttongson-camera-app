@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="520" viewBox="0 0 300 520">
+  <rect width="300" height="520" fill="#1c2026"/>
+  <g stroke="#ffffff" stroke-opacity="0.08" stroke-width="1">
+    <line x1="100" y1="0" x2="100" y2="520"/>
+    <line x1="200" y1="0" x2="200" y2="520"/>
+    <line x1="0" y1="173" x2="300" y2="173"/>
+    <line x1="0" y1="346" x2="300" y2="346"/>
+  </g>
+  <!-- 셀카 포즈: 상반신 크게, 한 팔 위로(폰 드는 자세), 살짝 기울임 -->
+  <g fill="none" stroke="#FFC107" stroke-opacity="0.9" stroke-width="8"
+     stroke-linecap="round" stroke-linejoin="round">
+    <!-- 머리(살짝 기울임) -->
+    <circle cx="140" cy="150" r="46" fill="#FFC107" fill-opacity="0.18" stroke-width="7"/>
+    <!-- 목·척추 -->
+    <line x1="146" y1="196" x2="150" y2="360"/>
+    <!-- 어깨 -->
+    <line x1="104" y1="230" x2="196" y2="228"/>
+    <!-- 오른팔 위로(셀카 팔) -->
+    <polyline points="196,228 224,168 214,120"/>
+    <!-- 왼팔 자연스럽게 -->
+    <polyline points="104,230 86,300 96,356"/>
+    <!-- 골반(하단은 프레임 밖 느낌) -->
+    <line x1="128" y1="360" x2="172" y2="360"/>
+  </g>
+  <g fill="#FFFFFF" fill-opacity="0.9">
+    <circle cx="104" cy="230" r="4.5"/><circle cx="196" cy="228" r="4.5"/>
+    <circle cx="224" cy="168" r="4.5"/>
+  </g>
+  <text x="150" y="504" fill="#FFC107" font-family="sans-serif" font-size="13"
+        text-anchor="middle" opacity="0.85">셀카 · 스켈레톤 가이드</text>
+</svg>

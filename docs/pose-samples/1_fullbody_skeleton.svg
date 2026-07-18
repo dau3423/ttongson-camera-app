@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="520" viewBox="0 0 300 520">
+  <!-- 카메라 프리뷰를 흉내낸 어두운 배경 -->
+  <rect width="300" height="520" fill="#1c2026"/>
+  <!-- 3분할 격자(참고) -->
+  <g stroke="#ffffff" stroke-opacity="0.08" stroke-width="1">
+    <line x1="100" y1="0" x2="100" y2="520"/>
+    <line x1="200" y1="0" x2="200" y2="520"/>
+    <line x1="0" y1="173" x2="300" y2="173"/>
+    <line x1="0" y1="346" x2="300" y2="346"/>
+  </g>
+  <!-- 포즈 가이드: 선형 스켈레톤 (앰버, 반투명) -->
+  <g fill="none" stroke="#FFC107" stroke-opacity="0.9" stroke-width="7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <!-- 머리 -->
+    <circle cx="150" cy="72" r="30" fill="#FFC107" fill-opacity="0.18" stroke-width="6"/>
+    <!-- 척추 -->
+    <line x1="150" y1="102" x2="150" y2="250"/>
+    <!-- 어깨 -->
+    <line x1="116" y1="126" x2="184" y2="126"/>
+    <!-- 왼팔(자연스럽게 내림) -->
+    <polyline points="116,126 102,186 98,244"/>
+    <!-- 오른팔(허리에 손) -->
+    <polyline points="184,126 208,180 172,238"/>
+    <!-- 골반 -->
+    <line x1="126" y1="250" x2="174" y2="250"/>
+    <!-- 왼다리 -->
+    <polyline points="126,250 120,368 124,480"/>
+    <!-- 오른다리 -->
+    <polyline points="174,250 182,368 178,480"/>
+    <!-- 발 -->
+    <line x1="124" y1="480" x2="108" y2="484"/>
+    <line x1="178" y1="480" x2="194" y2="484"/>
+  </g>
+  <!-- 관절 포인트 -->
+  <g fill="#FFFFFF" fill-opacity="0.9">
+    <circle cx="116" cy="126" r="4"/><circle cx="184" cy="126" r="4"/>
+    <circle cx="126" cy="250" r="4"/><circle cx="174" cy="250" r="4"/>
+    <circle cx="120" cy="368" r="4"/><circle cx="182" cy="368" r="4"/>
+  </g>
+  <text x="150" y="512" fill="#FFC107" font-family="sans-serif" font-size="13"
+        text-anchor="middle" opacity="0.85">전신 · 스켈레톤 가이드</text>
+</svg>
