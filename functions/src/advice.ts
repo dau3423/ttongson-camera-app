@@ -46,7 +46,8 @@ export function parseAdvice(text: string): CompositionAdvice {
   if (typeof raw.headline !== "string" || typeof raw.rationale !== "string") {
     throw new Error("headline/rationale 누락");
   }
-  // targetBox는 선택: 있으면 검증(틀리면 throw), 없으면 생략.
-  const targetBox = raw.targetBox === undefined ? undefined : parseTargetBox(raw.targetBox);
+  // targetBox는 선택: 있으면 검증(틀리면 throw), 없거나 null(strict 스키마)이면 생략.
+  const targetBox =
+    raw.targetBox == null ? undefined : parseTargetBox(raw.targetBox);
   return { headline: raw.headline, targetBox, rationale: raw.rationale };
 }

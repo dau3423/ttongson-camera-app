@@ -21,6 +21,35 @@ export const COMPOSITION_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+// OpenAI Structured Outputs(strict)용 스키마. strict는 모든 프로퍼티가 required여야 하므로
+// targetBox를 required로 두되 null 허용(자연 모드 등 박스 없음)으로 표현한다.
+// 클라이언트/서버 파서는 null·누락을 모두 "박스 없음"으로 처리한다.
+export const COMPOSITION_OUTPUT_SCHEMA = {
+  type: "object",
+  properties: {
+    headline: { type: "string" },
+    targetBox: {
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            x: { type: "number" },
+            y: { type: "number" },
+            width: { type: "number" },
+            height: { type: "number" },
+          },
+          required: ["x", "y", "width", "height"],
+          additionalProperties: false,
+        },
+        { type: "null" },
+      ],
+    },
+    rationale: { type: "string" },
+  },
+  required: ["headline", "targetBox", "rationale"],
+  additionalProperties: false,
+} as const;
+
 const _BASE =
   "당신은 사진을 잘 못 찍는 초보자를 돕는 촬영 코치입니다. 반드시 한국어로 답합니다. " +
   "headline은 한 줄 핵심 조언, rationale은 한 문장 이유입니다. " +

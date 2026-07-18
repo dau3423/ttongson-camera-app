@@ -3,7 +3,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import Anthropic from "@anthropic-ai/sdk";
+import { visionJson } from "./openai.js";
 import { requireAuthUid } from "./auth_guard.js";
 import { windowStart, overLimit } from "./ratelimit.js";
 import {
@@ -12,7 +12,7 @@ import {
 
 if (getApps().length === 0) initializeApp();
 
-const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
+const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const RATE_MAX = 30;
@@ -21,7 +21,7 @@ const RATE_WINDOW_MS = 60_000;
 export const enhance = onCall(
   {
     region: "asia-northeast3",
-    secrets: [ANTHROPIC_API_KEY],
+    secrets: [OPENAI_API_KEY],
     enforceAppCheck: true,
     timeoutSeconds: 30,
     memory: "512MiB",
@@ -61,29 +61,15 @@ export const enhance = onCall(
     }
 
     try {
-      const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 512,
+      const text = await visionJson({
+        apiKey: OPENAI_API_KEY.value(),
         system: buildMoodSystem(mood),
-        output_config: {
-          format: { type: "json_schema", schema: MOOD_SCHEMA as { [key: string]: unknown } },
-        },
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: "image/jpeg", data: data.imageBase64 } },
-              { type: "text", text: buildMoodUser(mood) },
-            ],
-          },
-        ],
+        userText: buildMoodUser(mood),
+        imageBase64: data.imageBase64,
+        schemaName: "mood_params",
+        schema: MOOD_SCHEMA as { [key: string]: unknown },
       });
-      const textBlock = response.content.find((b) => b.type === "text");
-      if (!textBlock || textBlock.type !== "text") {
-        throw new Error("모델 응답에 텍스트 블록이 없습니다");
-      }
-      return parseMoodParams(textBlock.text);
+      return parseMoodParams(text);
     } catch (err) {
       console.error("enhance failed", err);
       throw new HttpsError("internal", "보정값 생성에 실패했습니다");

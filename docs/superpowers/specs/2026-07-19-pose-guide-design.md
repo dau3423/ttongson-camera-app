@@ -58,8 +58,9 @@
 
 ## 6. AI 장면 맞춤 추천 (OpenAI)
 
-- **변경점**: 이 기능의 추천 AI는 **OpenAI**를 쓴다(이미지 생성과 동일 제공자로 통일).
-  기존 `advise`·`enhance`(무드 보정)는 Claude 그대로 유지 — 이번 변경은 새 포즈 기능에 한정.
+- **변경점**: 모든 AI 추천을 **OpenAI GPT-5 mini**로 통일했다(이미지 생성과 동일 제공자).
+  기존 `advise`(구도)·`enhance`(무드)도 Claude→OpenAI로 마이그레이션 완료(`feat/openai-migration`,
+  서버만 변경·클라이언트 계약 불변). 포즈 추천도 같은 `visionJson`(GPT-5 mini) 헬퍼를 재사용한다.
 - 서버 콜러블 `suggestPose`:
   - 입력: `imageBase64`, `mediaType`, `deviceId`, `candidates:[{id,label,category}]`.
     후보는 **전체 카탈로그(32개)**를 보낸다 — AI가 장면(인원수·구도)에 맞는 카테고리까지
@@ -121,11 +122,11 @@
 
 ## 12. 범위 밖 (YAGNI / 후속)
 
-- **AI 제공자 통일(후속 마이그레이션)**: `advise`(구도)·`enhance`(무드)를 Claude→OpenAI로 옮겨
-  전체 AI를 OpenAI 한 제공자로 통일한다. 클라이언트 계약은 불변이라 **서버 함수 내부만** 변경
-  (Anthropic SDK→OpenAI, `ANTHROPIC_API_KEY`→`OPENAI_API_KEY` 단일화, 프롬프트 GPT-5 미세조정,
-  재배포, 개인정보 방침 정리). 출시·검증된 코드라 **별도 spec/plan으로 신중히 재검증**한다.
-  본 포즈 기능(포즈 추천만 OpenAI) 완료 후 진행.
+- ~~**AI 제공자 통일(후속 마이그레이션)**~~ → **완료**(`feat/openai-migration`):
+  `advise`·`enhance`를 Claude→OpenAI GPT-5 mini로 옮겨 전체 AI를 OpenAI로 통일.
+  서버만 변경(공통 `openai.ts`의 `visionJson`, `ANTHROPIC_API_KEY`→`OPENAI_API_KEY`),
+  클라이언트 계약 불변, 서버 43개 테스트 통과. **남은 일**: `OPENAI_API_KEY` 시크릿 설정 + 함수 재배포,
+  개인정보 처리방침의 "Anthropic"→"OpenAI" 갱신·재배포.
 - 포즈 정렬 판정(ML Kit pose로 "맞췄는지" 피드백) — 이번엔 시각 가이드만.
 - 100+ 확장(에셋 추가 생성으로 대응), 진짜 사진 실루엣 팩 교체.
 - 오버레이 좌우 반전·크기 조절·불투명도 슬라이더(고정값으로 시작).
