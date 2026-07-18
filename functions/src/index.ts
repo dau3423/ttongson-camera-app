@@ -4,3 +4,4 @@ export { kakaoCustomToken } from "./kakao.js";
 export { onLikeWrite } from "./likes.js";
 export { onCommentWrite } from "./comments.js";
 export { onPostReportWrite, onCommentReportWrite } from "./reports.js";
+export { suggestPose } from "./suggest_pose.js";
