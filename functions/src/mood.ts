@@ -49,6 +49,9 @@ export function parseMoodParams(text: string): {
   temperature: number; tint: number; grayscale: boolean;
 } {
   const raw = JSON.parse(text);
+  if (raw === null || typeof raw !== "object") {
+    throw new Error("보정값 JSON 형식 오류");
+  }
   const c = (v: unknown): number =>
     typeof v === "number" ? Math.max(-1, Math.min(1, v)) : 0;
   return {

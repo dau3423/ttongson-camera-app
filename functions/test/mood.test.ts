@@ -34,4 +34,7 @@ describe("parseMoodParams", () => {
   it("JSON이 아니면 throw", () => {
     expect(() => parseMoodParams("not json")).toThrow();
   });
+  it("JSON 스칼라(null 등)면 throw", () => {
+    expect(() => parseMoodParams("null")).toThrow();
+  });
 });
