@@ -48,7 +48,7 @@ export const describe = onCall(
 
     const now = Date.now();
     const win = windowStart(now, RATE_WINDOW_MS);
-    const ref = getFirestore().collection("rate_limits").doc(`${deviceId}_${win}`);
+    const ref = getFirestore().collection("rate_limits").doc(`describe_${deviceId}_${win}`);
     const count = await getFirestore().runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       const current = (snap.exists ? (snap.data()?.count as number) : 0) ?? 0;

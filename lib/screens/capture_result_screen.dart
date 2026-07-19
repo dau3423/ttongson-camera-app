@@ -36,6 +36,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   final _describe = DescribeAdvisor();
   final _nameController = TextEditingController();
   bool _naming = false;
+  bool _saving = false; // 저장 중 재진입(더블탭) 방지
 
   Mood? _selected; // null = 원본
   File _preview = File(''); // 표시용(초기엔 원본)
@@ -163,19 +164,23 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return; // 재진입(더블탭) 방지
+    setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final name = sanitizeFilename(_nameController.text);
+    // 파일명 충돌(같은 이름·빈 이름 photo.jpg) 방지용 고유 접미. 이름은 검색 가능한 접두로 유지.
+    final tail = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
     try {
       final originalNamed = await saveAsNamed(
         src: widget.original,
-        filename: name,
+        filename: '${name}_$tail',
       );
       final okOriginal = await _camera.saveToGallery(originalNamed.path);
       var okEdited = true;
       if (_selected != null) {
         final editedNamed = await saveAsNamed(
           src: _preview,
-          filename: '${name}_보정',
+          filename: '${name}_보정_$tail',
         );
         okEdited = await _camera.saveToGallery(editedNamed.path);
       }
@@ -188,6 +193,8 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
       );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -198,7 +205,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         title: const Text('오늘의 무드'),
         actions: [
           TextButton(
-            onPressed: _working ? null : _save,
+            onPressed: (_working || _saving) ? null : _save,
             child: const Text('저장'),
           ),
         ],

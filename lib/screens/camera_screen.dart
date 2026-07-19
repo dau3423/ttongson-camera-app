@@ -259,8 +259,11 @@ class _CameraScreenState extends State<CameraScreen>
       );
       _prevStepKind = null;
       _step = const GuideStep(kind: GuideStepKind.level, message: '');
-      // 인물 모드가 아니면 배경흐림 마스크 제거(사물/자연은 미지원).
-      if (mode != ShootingMode.person) _clearMask();
+      // 인물 모드가 아니면 배경흐림 마스크·포즈 오버레이 제거(사물/자연은 미지원).
+      if (mode != ShootingMode.person) {
+        _clearMask();
+        _poseAsset = null;
+      }
     });
     await _modeStore.save(mode);
   }
@@ -914,7 +917,9 @@ class _CameraScreenState extends State<CameraScreen>
                                   box: 44,
                                   iconSize: 28,
                                 ),
-                                if (_mode == ShootingMode.person)
+                                // 배경흐림·포즈는 인물 모드 전용. 겹치지 않게 간격을 둔다.
+                                if (_mode == ShootingMode.person) ...[
+                                  const SizedBox(width: 8),
                                   _bottomIcon(
                                     _portrait ? Icons.blur_on : Icons.blur_off,
                                     _togglePortrait,
@@ -922,13 +927,15 @@ class _CameraScreenState extends State<CameraScreen>
                                     iconSize: 26,
                                     dim: !_portrait,
                                   ),
-                                _bottomIcon(
-                                  Icons.accessibility_new,
-                                  _openPosePicker,
-                                  box: 40,
-                                  iconSize: 26,
-                                  dim: _poseAsset == null,
-                                ),
+                                  const SizedBox(width: 8),
+                                  _bottomIcon(
+                                    Icons.accessibility_new,
+                                    _openPosePicker,
+                                    box: 40,
+                                    iconSize: 26,
+                                    dim: _poseAsset == null,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
