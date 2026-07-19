@@ -12,7 +12,8 @@ import '../analysis/photo_naming.dart';
 import '../cloud/describe_advisor.dart';
 import '../edit/named_saver.dart';
 
-/// 촬영 직후 무드 보정 화면. 원본은 이미 갤러리에 저장됨.
+/// 촬영 직후 결과 화면 — AI 이름 자동 생성 + 무드 보정.
+/// 저장은 이 화면 [저장]에서 이름을 파일명으로 붙여 수행(셔터 즉시저장 없음).
 /// 무드 탭 → 프리셋 즉시 미리보기 → AI 값 도착 시 갱신(무드별 캐시).
 class CaptureResultScreen extends StatefulWidget {
   final File original;
