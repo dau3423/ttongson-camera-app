@@ -22,3 +22,6 @@ functions/node_modules/
 devtools_options.yaml
 macos/Podfile
 **/xcshareddata/swiftpm/
+
+# Python 캐시(도구 스크립트)
+__pycache__/
