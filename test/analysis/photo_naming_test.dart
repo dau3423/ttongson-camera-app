@@ -19,16 +19,4 @@ void main() {
       expect(sanitizeFilename(long).length, 40);
     });
   });
-
-  group('formatExifDescription', () {
-    test('이름과 태그를 합침', () {
-      expect(formatExifDescription('노을 커피', ['커피', '노을']), '노을 커피 · 커피, 노을');
-    });
-    test('태그 없으면 이름만', () {
-      expect(formatExifDescription('노을 커피', const []), '노을 커피');
-    });
-    test('이름 비면 태그만', () {
-      expect(formatExifDescription('', ['커피', '노을']), '커피, 노을');
-    });
-  });
 }

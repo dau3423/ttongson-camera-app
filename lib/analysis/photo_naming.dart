@@ -1,5 +1,5 @@
 // lib/analysis/photo_naming.dart
-// 순수 Dart — 파일명 안전화와 EXIF 설명 문자열 조립.
+// 순수 Dart — AI 이름을 파일시스템 안전 파일명으로 변환.
 
 /// 파일시스템 안전 파일명(확장자 제외). 금지문자 제거, 공백→_, 최대 40자, 빈값이면 fallback.
 String sanitizeFilename(String name, {String fallback = 'photo'}) {
@@ -10,13 +10,4 @@ String sanitizeFilename(String name, {String fallback = 'photo'}) {
   if (s.isEmpty) return fallback;
   if (s.length > 40) s = s.substring(0, 40);
   return s;
-}
-
-/// EXIF ImageDescription용 문자열. 이름과 태그를 사람이 읽기 좋게 합친다.
-String formatExifDescription(String name, List<String> tags) {
-  final n = name.trim();
-  final t = tags.where((e) => e.trim().isNotEmpty).join(', ');
-  if (n.isEmpty) return t;
-  if (t.isEmpty) return n;
-  return '$n · $t';
 }
