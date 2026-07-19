@@ -12,7 +12,7 @@
 
 - `lib/analysis/photo_naming.dart`는 **순수 Dart**(Flutter/plugin/`image` import 금지).
 - `name`: 짧고 재밌는 한국어 제목(AI는 ≤20자 지향); 파일명 sanitize는 금지문자 제거·공백→`_`·최대 **40자**·빈값이면 `photo` 폴백. `tags`: 3–5개, 파서에서 최대 5개로 제한.
-- EXIF: `image` 패키지로 **ImageDescription**에 이름·태그 문자열 기록. 파일명 = sanitize된 이름(`{name}.jpg`, 보정본 `{name}_보정.jpg`).
+- 저장: 파일명 = sanitize된 이름(`{name}.jpg`, 보정본 `{name}_보정.jpg`). **태그·EXIF 미사용**(image ^4.9.1이 한글 EXIF를 못 담음 — 이름만 파일명으로). 서버는 `{name, tags}`를 반환하지만 클라이언트는 **name만** 사용.
 - AI 호출은 **OpenAI GPT-5 mini**를 `visionJson`으로. **App Check·레이트리밋·auth·consent** 재사용.
 - **저장 일원화**: 셔터(`camera_screen._capture`)의 `saveToGallery` 제거 → 결과 화면 [저장]에서 원본(및 보정본) 저장.
 - 실패·오프라인·미동의·빈이름 → 이름·태그 없이/기본 파일명으로 저장(사진 유실 없음).
@@ -489,104 +489,76 @@ git commit -m "feat: 클라이언트 describe 어드바이저(호출·파싱)"
 
 ---
 
-### Task 5: EXIF 태거 (image 패키지)
+### Task 5: 이름 파일로 저장 (named_saver)
+
+> 설계 변경: `image` ^4.9.1의 EXIF ASCII 기록기가 한글(비-ASCII)을 8비트로 잘라 EXIF에 한글을 담을 수 없다(검증됨). 따라서 **EXIF·태그를 사용하지 않고 AI 이름을 파일명으로만** 남긴다. 이 태스크는 src 파일을 `{이름}.jpg`로 복사한다.
 
 **Files:**
-- Create: `lib/edit/exif_tagger.dart`
-- Test: `test/edit/exif_tagger_test.dart`
+- Create: `lib/edit/named_saver.dart`
+- Test: `test/edit/named_saver_test.dart`
 
 **Interfaces:**
-- Consumes: 없음(순수 이미지 처리).
+- Consumes: 없음.
 - Produces:
-  - `img.Image writeDescription(img.Image src, String description)` — ImageDescription EXIF 기록, 같은 이미지 반환.
-  - `Future<File> saveTaggedJpeg({required File src, required String filename, required String description})` — 디코드→방향 반영→EXIF 기록→JPEG 인코드해 `{filename}.jpg` 임시 파일로 저장.
+  - `Future<File> saveAsNamed({required File src, required String filename, Directory? dir})` — src를 `{filename}.jpg`로 복사해 반환. `dir` 미지정 시 임시 디렉터리(테스트는 dir 주입).
 
 - [ ] **Step 1: 실패 테스트 작성**
 
-`test/edit/exif_tagger_test.dart`:
+`test/edit/named_saver_test.dart`:
 
 ```dart
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image/image.dart' as img;
-import 'package:ttongson_camera/edit/exif_tagger.dart';
+import 'package:ttongson_camera/edit/named_saver.dart';
 
 void main() {
-  test('writeDescription: EXIF ImageDescription을 기록', () {
-    final src = img.Image(width: 2, height: 2);
-    final out = writeDescription(src, '노을 커피 · 커피, 노을');
-    final desc = out.exif.imageIfd['ImageDescription']?.toString();
-    expect(desc, '노을 커피 · 커피, 노을');
-  });
-
-  test('writeDescription: 인코드·디코드 후에도 설명 유지', () {
-    final src = img.Image(width: 4, height: 4);
-    final tagged = writeDescription(src, '테스트설명');
-    final bytes = img.encodeJpg(tagged);
-    final decoded = img.decodeJpg(bytes)!;
-    expect(decoded.exif.imageIfd['ImageDescription']?.toString(), '테스트설명');
+  test('src를 {filename}.jpg로 복사하고 내용을 보존', () async {
+    final tmp = await Directory.systemTemp.createTemp('named_saver');
+    final src = File('${tmp.path}/orig.jpg')..writeAsBytesSync([1, 2, 3]);
+    final out = await saveAsNamed(src: src, filename: '노을커피', dir: tmp);
+    expect(out.path.endsWith('/노을커피.jpg'), isTrue);
+    expect(out.readAsBytesSync(), [1, 2, 3]);
   });
 }
 ```
 
 - [ ] **Step 2: 테스트 실패 확인**
 
-Run: `export PATH="$PATH:/Users/soonbok/flutter/bin" && flutter test test/edit/exif_tagger_test.dart`
-Expected: FAIL (`exif_tagger.dart` 없음).
+Run: `export PATH="$PATH:/Users/soonbok/flutter/bin" && flutter test test/edit/named_saver_test.dart`
+Expected: FAIL (`named_saver.dart` 없음).
 
-- [ ] **Step 3: 구현 (`lib/edit/mood_processor.dart` 패턴 참고)**
+- [ ] **Step 3: 구현**
 
-`lib/edit/exif_tagger.dart`:
+`lib/edit/named_saver.dart`:
 
 ```dart
-// lib/edit/exif_tagger.dart
+// lib/edit/named_saver.dart
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:typed_data';
-
-import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
-/// EXIF ImageDescription에 설명을 기록하고 같은 이미지를 반환.
-img.Image writeDescription(img.Image src, String description) {
-  src.exif.imageIfd['ImageDescription'] = description;
-  return src;
-}
-
-/// src를 디코드→방향 반영→EXIF 기록→JPEG로 인코드해 `{filename}.jpg` 임시 파일로 저장.
-Future<File> saveTaggedJpeg({
+/// src 파일을 `{filename}.jpg` 임시 파일로 복사해 반환한다.
+/// 갤러리 저장기가 파일명을 파일 basename에서 가져오므로, AI 이름을 파일명으로 남기는 용도.
+Future<File> saveAsNamed({
   required File src,
   required String filename,
-  required String description,
+  Directory? dir,
 }) async {
-  final bytes = await src.readAsBytes();
-  final jpeg = await Isolate.run(() => _process(bytes, description));
-  final dir = await getTemporaryDirectory();
-  final out = File('${dir.path}/$filename.jpg');
-  await out.writeAsBytes(jpeg);
-  return out;
-}
-
-Uint8List _process(Uint8List bytes, String description) {
-  final decoded = img.decodeImage(bytes);
-  if (decoded == null) {
-    throw StateError('이미지 디코딩 실패');
-  }
-  final baked = img.bakeOrientation(decoded);
-  writeDescription(baked, description);
-  return img.encodeJpg(baked, quality: 90);
+  final d = dir ?? await getTemporaryDirectory();
+  final out = File('${d.path}/$filename.jpg');
+  return src.copy(out.path);
 }
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
 
-Run: `export PATH="$PATH:/Users/soonbok/flutter/bin" && flutter test test/edit/exif_tagger_test.dart`
+Run: `export PATH="$PATH:/Users/soonbok/flutter/bin" && flutter test test/edit/named_saver_test.dart`
 Expected: PASS.
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add lib/edit/exif_tagger.dart test/edit/exif_tagger_test.dart
-git commit -m "feat: EXIF 태거 — ImageDescription 기록·이름 파일로 저장"
+git add lib/edit/named_saver.dart test/edit/named_saver_test.dart
+git commit -m "feat: named_saver — AI 이름을 파일명으로 복사 저장"
 ```
 
 ---
@@ -598,9 +570,9 @@ git commit -m "feat: EXIF 태거 — ImageDescription 기록·이름 파일로 �
 - Modify: `lib/screens/camera_screen.dart`
 
 **Interfaces:**
-- Consumes: `sanitizeFilename`/`formatExifDescription`(Task 1), `DescribeAdvisor`/`PhotoDescription`(Task 4), `saveTaggedJpeg`(Task 5), 기존 `_ensureConsent`·`_deviceId`·`_camera`·`applyMood`.
+- Consumes: `sanitizeFilename`(Task 1), `DescribeAdvisor`/`PhotoDescription`(Task 4, name만 사용), `saveAsNamed`(Task 5), 기존 `_ensureConsent`·`_deviceId`·`_camera`·`applyMood`.
 
-> UI/플러그인 통합이라 단위 테스트 대신 **기기 수동 검증**.
+> UI/플러그인 통합이라 단위 테스트 대신 **기기 수동 검증**. 태그·EXIF는 사용하지 않는다(이름만).
 
 - [ ] **Step 1: 셔터의 즉시 저장 제거**
 
@@ -624,16 +596,16 @@ git commit -m "feat: EXIF 태거 — ImageDescription 기록·이름 파일로 �
 
 (이제 `shotPath`는 저장 없이 `CaptureResultScreen(original: File(shotPath), auth: _auth)`로 전달된다. 저장은 결과 화면이 담당.)
 
-- [ ] **Step 2: 결과 화면 — 자동 생성 + 이름 필드·태그 칩**
+- [ ] **Step 2: 결과 화면 — 자동 이름 생성 + 이름 필드**
 
-`lib/screens/capture_result_screen.dart` 를 수정한다.
+`lib/screens/capture_result_screen.dart` 를 수정한다. (태그·EXIF 없음 — 이름만)
 
 (a) 상단 import에 추가:
 
 ```dart
 import '../analysis/photo_naming.dart';
 import '../cloud/describe_advisor.dart';
-import '../edit/exif_tagger.dart';
+import '../edit/named_saver.dart';
 ```
 
 (b) State 필드 추가(`_camera` 아래):
@@ -641,20 +613,19 @@ import '../edit/exif_tagger.dart';
 ```dart
   final _describe = DescribeAdvisor();
   final _nameController = TextEditingController();
-  List<String> _tags = const [];
   bool _naming = false;
 ```
 
 (c) `initState()` 에서 자동 생성 호출(기존 `_preview = widget.original;` 다음 줄):
 
 ```dart
-    _generateNameTags();
+    _generateName();
 ```
 
-(d) 이름·태그 생성 메서드 추가(`_save` 위):
+(d) 이름 생성 메서드 추가(`_save` 위). 서버는 name·tags를 주지만 name만 쓴다:
 
 ```dart
-  Future<void> _generateNameTags() async {
+  Future<void> _generateName() async {
     if (!await _ensureConsent()) return;
     if (!mounted) return;
     setState(() => _naming = true);
@@ -667,7 +638,6 @@ import '../edit/exif_tagger.dart';
       if (!mounted) return;
       setState(() {
         if (_nameController.text.isEmpty) _nameController.text = desc.name;
-        _tags = desc.tags;
       });
     } catch (_) {
       // 이름 없이 진행(폴백)
@@ -687,46 +657,32 @@ import '../edit/exif_tagger.dart';
   }
 ```
 
-(f) `build`의 무드 칩 `SizedBox(height: 92, ...)` **위**에 이름 필드 + 태그 칩을 삽입:
+(f) `build`의 무드 칩 `SizedBox(height: 92, ...)` **위**에 이름 필드를 삽입:
 
 ```dart
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _nameController,
-                    maxLength: 40,
-                    decoration: InputDecoration(
-                      hintText: 'AI가 이름을 지어줘요',
-                      counterText: '',
-                      suffixIcon: _naming
-                          ? const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(
-                                width: 16, height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_tags.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Wrap(
-                spacing: 6,
-                children: [for (final t in _tags) Chip(label: Text('#$t'))],
+            child: TextField(
+              controller: _nameController,
+              maxLength: 40,
+              decoration: InputDecoration(
+                hintText: 'AI가 이름을 지어줘요',
+                counterText: '',
+                suffixIcon: _naming
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : null,
               ),
             ),
+          ),
 ```
 
-- [ ] **Step 3: 결과 화면 — 저장 반영(원본·보정본에 이름·태그)**
+- [ ] **Step 3: 결과 화면 — 저장 반영(원본·보정본에 이름)**
 
 `_save()` 를 아래로 교체(원본 항상 저장, 무드 선택 시 보정본도 저장):
 
@@ -734,22 +690,13 @@ import '../edit/exif_tagger.dart';
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
     final name = sanitizeFilename(_nameController.text);
-    final desc = formatExifDescription(_nameController.text, _tags);
     try {
-      final originalTagged = await saveTaggedJpeg(
-        src: widget.original,
-        filename: name,
-        description: desc,
-      );
-      final okOriginal = await _camera.saveToGallery(originalTagged.path);
+      final originalNamed = await saveAsNamed(src: widget.original, filename: name);
+      final okOriginal = await _camera.saveToGallery(originalNamed.path);
       var okEdited = true;
       if (_selected != null) {
-        final editedTagged = await saveTaggedJpeg(
-          src: _preview,
-          filename: '${name}_보정',
-          description: desc,
-        );
-        okEdited = await _camera.saveToGallery(editedTagged.path);
+        final editedNamed = await saveAsNamed(src: _preview, filename: '${name}_보정');
+        okEdited = await _camera.saveToGallery(editedNamed.path);
       }
       messenger.showSnackBar(
         SnackBar(
@@ -775,9 +722,9 @@ Expected: `No issues found!` (경고 있으면 수정).
 
 Run: `export PATH="$PATH:/Users/soonbok/flutter/bin" && flutter run`
 확인:
-1. 촬영 → 결과 화면 진입 시 (동의 후) 이름이 자동 생성돼 필드에 표시, 태그 칩 표시.
+1. 촬영 → 결과 화면 진입 시 (동의 후) 이름이 자동 생성돼 필드에 표시.
 2. 이름 수정 가능. [저장] → 갤러리에 `{이름}.jpg` 저장(무드 선택 시 `{이름}_보정.jpg`도).
-3. 갤러리 앱에서 파일명이 이름으로 보임(EXIF 설명에 이름·태그 포함).
+3. 갤러리 앱에서 파일명이 이름으로 보임.
 4. 셔터만 누르고 결과 화면을 벗어나면 저장 안 됨(저장은 [저장] 버튼에서만).
 5. 비행기모드/미동의 → 이름 없이도 [저장]되면 기본 파일명(`photo.jpg`)으로 저장.
 
@@ -785,7 +732,7 @@ Run: `export PATH="$PATH:/Users/soonbok/flutter/bin" && flutter run`
 
 ```bash
 git add lib/screens/capture_result_screen.dart lib/screens/camera_screen.dart
-git commit -m "feat: 결과 화면 AI 이름·태그 자동 생성·저장 반영, 셔터 즉시저장 제거"
+git commit -m "feat: 결과 화면 AI 이름 자동 생성·저장 반영, 셔터 즉시저장 제거"
 ```
 
 ---
