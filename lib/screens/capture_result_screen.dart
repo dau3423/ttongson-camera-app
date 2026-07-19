@@ -8,6 +8,9 @@ import '../cloud/mood_advisor.dart';
 import '../camera/camera_service.dart';
 import '../edit/mood.dart';
 import '../edit/mood_processor.dart';
+import '../analysis/photo_naming.dart';
+import '../cloud/describe_advisor.dart';
+import '../edit/named_saver.dart';
 
 /// 촬영 직후 무드 보정 화면. 원본은 이미 갤러리에 저장됨.
 /// 무드 탭 → 프리셋 즉시 미리보기 → AI 값 도착 시 갱신(무드별 캐시).
@@ -29,6 +32,9 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   final _deviceId = DeviceId();
   final _consent = AdviceConsentStore();
   final _camera = CameraService();
+  final _describe = DescribeAdvisor();
+  final _nameController = TextEditingController();
+  bool _naming = false;
 
   Mood? _selected; // null = 원본
   File _preview = File(''); // 표시용(초기엔 원본)
@@ -39,6 +45,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   void initState() {
     super.initState();
     _preview = widget.original;
+    _generateName();
   }
 
   Future<bool> _ensureConsent() async {
@@ -125,18 +132,56 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     if (mounted && seq == _reqSeq) setState(() => _working = false);
   }
 
+  Future<void> _generateName() async {
+    if (!await _ensureConsent()) return;
+    if (!mounted) return;
+    setState(() => _naming = true);
+    try {
+      final deviceId = await _deviceId.get();
+      final desc = await _describe.describe(
+        jpegPath: widget.original.path,
+        deviceId: deviceId,
+      );
+      if (!mounted) return;
+      setState(() {
+        if (_nameController.text.isEmpty) _nameController.text = desc.name;
+      });
+    } catch (_) {
+      // 이름 없이 진행(폴백)
+    } finally {
+      if (mounted) setState(() => _naming = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
+    final name = sanitizeFilename(_nameController.text);
     try {
-      if (_selected == null) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('원본은 이미 저장되어 있어요')),
+      final originalNamed = await saveAsNamed(
+        src: widget.original,
+        filename: name,
+      );
+      final okOriginal = await _camera.saveToGallery(originalNamed.path);
+      var okEdited = true;
+      if (_selected != null) {
+        final editedNamed = await saveAsNamed(
+          src: _preview,
+          filename: '${name}_보정',
         );
-        return;
+        okEdited = await _camera.saveToGallery(editedNamed.path);
       }
-      final ok = await _camera.saveToGallery(_preview.path);
       messenger.showSnackBar(
-        SnackBar(content: Text(ok ? '보정본을 저장했어요' : '저장 실패 — 권한을 확인해 주세요')),
+        SnackBar(
+          content: Text(
+            (okOriginal && okEdited) ? '저장했어요' : '저장 실패 — 권한을 확인해 주세요',
+          ),
+        ),
       );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('저장 실패: $e')));
@@ -168,6 +213,27 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
                 ),
                 if (_working) const CircularProgressIndicator(),
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: TextField(
+              controller: _nameController,
+              maxLength: 40,
+              decoration: InputDecoration(
+                hintText: 'AI가 이름을 지어줘요',
+                counterText: '',
+                suffixIcon: _naming
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : null,
+              ),
             ),
           ),
           SizedBox(

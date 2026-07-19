@@ -360,12 +360,6 @@ class _CameraScreenState extends State<CameraScreen>
       } else {
         shotPath = await _camera.capturePhoto();
       }
-      final saved = await _camera.saveToGallery(shotPath);
-      if (!saved && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('저장 실패 — 사진첩 권한을 확인해 주세요')),
-        );
-      }
       if (mounted) {
         await Navigator.push(
           context,
