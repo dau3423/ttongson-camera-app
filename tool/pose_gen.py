@@ -13,9 +13,18 @@
 import os
 import sys
 import io
+import ssl
 import json
 import base64
 import urllib.request
+
+# macOS python.org Python은 시스템 인증서를 안 써서 SSL 검증이 실패한다.
+# certifi가 있으면 그 CA 번들을 쓰고, 없으면 기본 컨텍스트로 폴백.
+try:
+    import certifi
+    _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    _SSL_CTX = ssl.create_default_context()
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = os.path.join(ROOT, "tool", "pose_manifest.json")
@@ -61,7 +70,7 @@ def gen_image(api_key, prompt_pose, out_path):
         }).encode(),
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
     )
-    resp = json.load(urllib.request.urlopen(req))
+    resp = json.load(urllib.request.urlopen(req, timeout=120, context=_SSL_CTX))
     png = base64.b64decode(resp["data"][0]["b64_json"])
     # 번들 용량을 위해 512x768(2:3)로 축소. 투명(RGBA) 유지.
     from PIL import Image
@@ -78,8 +87,13 @@ def main():
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             sys.exit("이미지 생성에는 OPENAI_API_KEY가 필요합니다.")
-        for e in entries:
-            gen_image(api_key, e["promptPose"], os.path.join(OUT_DIR, f"{e['id']}.png"))
+        for i, e in enumerate(entries, 1):
+            out = os.path.join(OUT_DIR, f"{e['id']}.png")
+            if os.path.exists(out):
+                print(f"[{i}/{len(entries)}] skip (이미 있음)", e["id"])
+                continue
+            print(f"[{i}/{len(entries)}] generating", e["id"])
+            gen_image(api_key, e["promptPose"], out)
 
 
 if __name__ == "__main__":
