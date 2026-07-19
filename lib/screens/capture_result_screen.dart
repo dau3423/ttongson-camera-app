@@ -134,7 +134,9 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   }
 
   Future<void> _generateName() async {
-    if (!await _ensureConsent()) return;
+    // 진입 시 팝업을 띄우지 않는다 — 이미 로그인+동의된 경우에만 조용히 생성.
+    if (!widget.auth.isSignedIn) return;
+    if (!await _consent.hasConsented()) return;
     if (!mounted) return;
     setState(() => _naming = true);
     try {
