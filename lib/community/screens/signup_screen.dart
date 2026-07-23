@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../models/user_profile.dart';
+import '../theme/community_theme.dart';
 import 'auth_widgets.dart';
-
-const _text = Color(0xFFF4F1EA);
-const _muted = Color(0x80F4F1EA);
 
 /// 이메일 회원가입 화면. 가입 성공 시 pop(true).
 class SignupScreen extends StatefulWidget {
@@ -102,110 +100,111 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent),
-      extendBodyBehindAppBar: true,
-      body: AuthBackground(
-        child: Stack(
-          children: [
-            SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(30, 40, 30, 40),
-                children: [
-                  const Text(
-                    '가입하기',
-                    style: TextStyle(
-                      fontFamily: AppFonts.display,
-                      color: _text,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '30초면 충분해요',
-                    style: TextStyle(color: _muted, fontSize: 14),
-                  ),
-                  const SizedBox(height: 30),
-                  const AuthLabel('닉네임'),
-                  AuthField(controller: _nick, hint: '똥손탈출러'),
-                  const SizedBox(height: 16),
-                  const AuthLabel('이메일'),
-                  AuthField(
-                    controller: _email,
-                    hint: 'you@example.com',
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  const AuthLabel('비밀번호'),
-                  AuthField(controller: _pw, hint: '8자 이상', obscure: true),
-                  const SizedBox(height: 20),
-                  _AgreeRow(
-                    checked: _agree,
-                    onTap: () => setState(() => _agree = !_agree),
-                  ),
-                  if (_err != null) ...[
-                    const SizedBox(height: 10),
+    final p = CommunityTheme.paletteOf(context);
+    return Theme(
+      data: CommunityTheme.themeOf(context),
+      child: Scaffold(
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        extendBodyBehindAppBar: true,
+        body: AuthBackground(
+          child: Stack(
+            children: [
+              SafeArea(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(30, 40, 30, 40),
+                  children: [
                     Text(
-                      _err!,
-                      style: const TextStyle(
-                        color: Color(0xFFFF6B6B),
-                        fontSize: 12.5,
+                      '가입하기',
+                      style: TextStyle(
+                        fontFamily: AppFonts.display,
+                        color: p.text,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 14),
-                  AmberButton(
-                    label: '가입하고 시작하기',
-                    onTap: _busy ? null : _signup,
-                  ),
-                  const SizedBox(height: 22),
-                  Center(
-                    child: GestureDetector(
-                      onTap: _busy ? null : () => Navigator.pop(context),
-                      child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            color: Color(0x8CF4F1EA),
-                            fontSize: 14,
-                          ),
-                          children: [
-                            TextSpan(text: '이미 계정이 있으신가요? '),
-                            TextSpan(
-                              text: '로그인',
-                              style: TextStyle(
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.w600,
+                    const SizedBox(height: 8),
+                    Text(
+                      '30초면 충분해요',
+                      style: TextStyle(color: p.textMuted, fontSize: 14),
+                    ),
+                    const SizedBox(height: 30),
+                    const AuthLabel('닉네임'),
+                    AuthField(controller: _nick, hint: '똥손탈출러'),
+                    const SizedBox(height: 16),
+                    const AuthLabel('이메일'),
+                    AuthField(
+                      controller: _email,
+                      hint: 'you@example.com',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    const AuthLabel('비밀번호'),
+                    AuthField(controller: _pw, hint: '8자 이상', obscure: true),
+                    const SizedBox(height: 20),
+                    _AgreeRow(
+                      checked: _agree,
+                      onTap: () => setState(() => _agree = !_agree),
+                    ),
+                    if (_err != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _err!,
+                        style: const TextStyle(
+                          color: Color(0xFFFF6B6B),
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    AmberButton(
+                      label: '가입하고 시작하기',
+                      onTap: _busy ? null : _signup,
+                    ),
+                    const SizedBox(height: 22),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _busy ? null : () => Navigator.pop(context),
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: p.textMuted, fontSize: 14),
+                            children: const [
+                              TextSpan(text: '이미 계정이 있으신가요? '),
+                              TextSpan(
+                                text: '로그인',
+                                style: TextStyle(
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              if (_busy)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Color(0x66000000),
+                    child: Center(child: CircularProgressIndicator()),
                   ),
-                ],
-              ),
-            ),
-            if (_busy)
-              const Positioned.fill(
-                child: ColoredBox(
-                  color: Color(0x66000000),
-                  child: Center(child: CircularProgressIndicator()),
                 ),
-              ),
-            if (_done)
-              Positioned.fill(
-                child: AuthSuccessOverlay(
-                  circleColor: AppColors.ready,
-                  emoji: '🎉',
-                  title: '가입 완료!',
-                  subtitle: '이제 촬영을 시작해볼까요?',
-                  cta: '촬영하러 가기',
-                  onCta: () => Navigator.pop(context, true),
+              if (_done)
+                Positioned.fill(
+                  child: AuthSuccessOverlay(
+                    circleColor: AppColors.ready,
+                    emoji: '🎉',
+                    title: '가입 완료!',
+                    subtitle: '이제 촬영을 시작해볼까요?',
+                    cta: '촬영하러 가기',
+                    onCta: () => Navigator.pop(context, true),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -219,6 +218,7 @@ class _AgreeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -232,7 +232,7 @@ class _AgreeRow extends StatelessWidget {
               color: checked ? AppColors.accent : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: checked ? AppColors.accent : const Color(0x4DFFFFFF),
+                color: checked ? AppColors.accent : p.border,
                 width: 1.5,
               ),
             ),
@@ -241,10 +241,13 @@ class _AgreeRow extends StatelessWidget {
                 : null,
           ),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
               '이용약관 및 개인정보 처리방침에 동의합니다',
-              style: TextStyle(color: Color(0xB3F4F1EA), fontSize: 13),
+              style: TextStyle(
+                color: p.text.withValues(alpha: 0.7),
+                fontSize: 13,
+              ),
             ),
           ),
         ],

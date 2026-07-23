@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../models/user_profile.dart';
+import '../theme/community_theme.dart';
 import 'auth_widgets.dart';
 import 'signup_screen.dart';
-
-const _text = Color(0xFFF4F1EA);
-const _muted = Color(0x80F4F1EA);
 
 /// 이메일/소셜 로그인 화면. 로그인 성공 시 pop(true).
 class LoginScreen extends StatefulWidget {
@@ -143,138 +141,142 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AuthBackground(
-        child: Stack(
-          children: [
-            SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(30, 56, 30, 40),
-                children: [
-                  const Text(
-                    '다시 오셨네요',
-                    style: TextStyle(
-                      fontFamily: AppFonts.display,
-                      color: _text,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '똥손도 프로처럼 · 로그인하고 이어서 찍기',
-                    style: TextStyle(color: _muted, fontSize: 14),
-                  ),
-                  const SizedBox(height: 36),
-                  const AuthLabel('이메일'),
-                  AuthField(
-                    controller: _email,
-                    hint: 'you@example.com',
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 18),
-                  const AuthLabel('비밀번호'),
-                  AuthField(
-                    controller: _pw,
-                    hint: '••••••••',
-                    obscure: !_showPw,
-                    trailing: IconButton(
-                      icon: Icon(
-                        _showPw ? Icons.visibility : Icons.visibility_off,
-                        color: _muted,
-                        size: 20,
-                      ),
-                      onPressed: () => setState(() => _showPw = !_showPw),
-                    ),
-                  ),
-                  if (_err != null) ...[
-                    const SizedBox(height: 10),
+    final p = CommunityTheme.paletteOf(context);
+    return Theme(
+      data: CommunityTheme.themeOf(context),
+      child: Scaffold(
+        body: AuthBackground(
+          child: Stack(
+            children: [
+              SafeArea(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(30, 56, 30, 40),
+                  children: [
                     Text(
-                      _err!,
-                      style: const TextStyle(
-                        color: Color(0xFFFF6B6B),
-                        fontSize: 12.5,
+                      '다시 오셨네요',
+                      style: TextStyle(
+                        fontFamily: AppFonts.display,
+                        color: p.text,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '똥손도 프로처럼 · 로그인하고 이어서 찍기',
+                      style: TextStyle(color: p.textMuted, fontSize: 14),
+                    ),
+                    const SizedBox(height: 36),
+                    const AuthLabel('이메일'),
+                    AuthField(
+                      controller: _email,
+                      hint: 'you@example.com',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 18),
+                    const AuthLabel('비밀번호'),
+                    AuthField(
+                      controller: _pw,
+                      hint: '••••••••',
+                      obscure: !_showPw,
+                      trailing: IconButton(
+                        icon: Icon(
+                          _showPw ? Icons.visibility : Icons.visibility_off,
+                          color: p.textMuted,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _showPw = !_showPw),
+                      ),
+                    ),
+                    if (_err != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _err!,
+                        style: const TextStyle(
+                          color: Color(0xFFFF6B6B),
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    AmberButton(
+                      label: '로그인',
+                      onTap: _busy ? null : _emailLogin,
+                    ),
+                    const SizedBox(height: 26),
+                    _OrDivider(),
+                    const SizedBox(height: 26),
+                    Row(
+                      children: [
+                        if (Platform.isIOS) ...[
+                          AuthOutlineButton(
+                            label: 'Apple',
+                            onTap: _busy
+                                ? null
+                                : () => _run(widget.auth.signInWithApple),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        AuthOutlineButton(
+                          label: '카카오',
+                          onTap: _busy
+                              ? null
+                              : () => _run(widget.auth.signInWithKakao),
+                        ),
+                        const SizedBox(width: 10),
+                        AuthOutlineButton(
+                          label: 'Google',
+                          onTap: _busy
+                              ? null
+                              : () => _run(widget.auth.signInWithGoogle),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _busy ? null : _goSignup,
+                        child: RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: p.textMuted, fontSize: 14),
+                            children: [
+                              const TextSpan(text: '아직 계정이 없으신가요? '),
+                              const TextSpan(
+                                text: '회원가입',
+                                style: TextStyle(
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 24),
-                  AmberButton(label: '로그인', onTap: _busy ? null : _emailLogin),
-                  const SizedBox(height: 26),
-                  const _OrDivider(),
-                  const SizedBox(height: 26),
-                  Row(
-                    children: [
-                      if (Platform.isIOS) ...[
-                        AuthOutlineButton(
-                          label: 'Apple',
-                          onTap: _busy
-                              ? null
-                              : () => _run(widget.auth.signInWithApple),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      AuthOutlineButton(
-                        label: '카카오',
-                        onTap: _busy
-                            ? null
-                            : () => _run(widget.auth.signInWithKakao),
-                      ),
-                      const SizedBox(width: 10),
-                      AuthOutlineButton(
-                        label: 'Google',
-                        onTap: _busy
-                            ? null
-                            : () => _run(widget.auth.signInWithGoogle),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  Center(
-                    child: GestureDetector(
-                      onTap: _busy ? null : _goSignup,
-                      child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            color: Color(0x8CF4F1EA),
-                            fontSize: 14,
-                          ),
-                          children: [
-                            TextSpan(text: '아직 계정이 없으신가요? '),
-                            TextSpan(
-                              text: '회원가입',
-                              style: TextStyle(
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_busy)
-              const Positioned.fill(
-                child: ColoredBox(
-                  color: Color(0x66000000),
-                  child: Center(child: CircularProgressIndicator()),
                 ),
               ),
-            if (_done)
-              Positioned.fill(
-                child: AuthSuccessOverlay(
-                  circleColor: AppColors.accent,
-                  emoji: '📷',
-                  title: '환영합니다!',
-                  subtitle: '이제 촬영을 시작해볼까요?',
-                  cta: '촬영하러 가기',
-                  onCta: () => Navigator.pop(context, true),
+              if (_busy)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Color(0x66000000),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
                 ),
-              ),
-          ],
+              if (_done)
+                Positioned.fill(
+                  child: AuthSuccessOverlay(
+                    circleColor: AppColors.accent,
+                    emoji: '📷',
+                    title: '환영합니다!',
+                    subtitle: '이제 촬영을 시작해볼까요?',
+                    cta: '촬영하러 가기',
+                    onCta: () => Navigator.pop(context, true),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -282,20 +284,17 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _OrDivider extends StatelessWidget {
-  const _OrDivider();
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return Row(
-      children: const [
-        Expanded(child: Divider(color: Color(0x1AFFFFFF))),
+      children: [
+        Expanded(child: Divider(color: p.divider)),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            '또는',
-            style: TextStyle(color: Color(0x66F4F1EA), fontSize: 12),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text('또는', style: TextStyle(color: p.textMuted, fontSize: 12)),
         ),
-        Expanded(child: Divider(color: Color(0x1AFFFFFF))),
+        Expanded(child: Divider(color: p.divider)),
       ],
     );
   }
