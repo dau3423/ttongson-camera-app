@@ -15,7 +15,7 @@ class AuthBackground extends StatelessWidget {
         gradient: RadialGradient(
           center: Alignment.topCenter,
           radius: 1.1,
-          colors: [const Color(0xFF1C2026), p.surface],
+          colors: [p.surfaceCard, p.surface],
         ),
       ),
       child: child,
@@ -170,7 +170,6 @@ class AuthSuccessOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = CommunityTheme.paletteOf(context);
     return ColoredBox(
       color: const Color(0xF50B0C0E),
       child: Center(
@@ -192,8 +191,8 @@ class AuthSuccessOverlay extends StatelessWidget {
               const SizedBox(height: 22),
               Text(
                 title,
-                style: TextStyle(
-                  color: p.text,
+                style: const TextStyle(
+                  color: Color(0xFFF4F1EA),
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
@@ -202,7 +201,7 @@ class AuthSuccessOverlay extends StatelessWidget {
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: p.textMuted, fontSize: 14),
+                style: const TextStyle(color: Color(0x8CF4F1EA), fontSize: 14),
               ),
               const SizedBox(height: 28),
               ElevatedButton(
