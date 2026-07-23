@@ -40,7 +40,8 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
 
   Mood? _selected; // null = 원본
   File _preview = File(''); // 표시용(초기엔 원본)
-  bool _working = false;
+  bool _working = false; // 로컬 프리셋 처리(짧음) — 전체 스피너
+  bool _enhancing = false; // AI 서버 개선(왕복) — 비차단 소형 인디케이터
   int _reqSeq = 0; // 늦게 도착한 이전 요청 무시용
 
   @override
@@ -85,16 +86,20 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
 
     if (mood == null) {
       // 원본 선택은 진행 중이던 필터 로딩을 취소한다(seq 증가로 이전 요청은
-      // 무시됨). 이 분기가 _working을 내리지 않으면 스피너가 무한히 남는다.
+      // 무시됨). 이 분기가 플래그를 내리지 않으면 인디케이터가 남는다.
       setState(() {
         _preview = widget.original;
         _working = false;
+        _enhancing = false;
       });
       return;
     }
 
     // 1) 프리셋 즉시 미리보기 (디코드 실패 등은 스킵+안내 — 스펙 §8)
-    setState(() => _working = true);
+    setState(() {
+      _working = true;
+      _enhancing = false;
+    });
     var params = mood.preset;
     File file;
     try {
@@ -105,6 +110,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         _selected = null;
         _preview = widget.original;
         _working = false;
+        _enhancing = false;
       });
       ScaffoldMessenger.of(
         context,
@@ -112,12 +118,18 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
       return;
     }
     if (!mounted || seq != _reqSeq) return;
+    // 프리셋 결과를 즉시 보여주고 '전체 스피너'는 바로 내린다. AI 개선은 서버
+    // 왕복이 필요하므로 여기서 블로킹하지 않고 비차단 인디케이터로만 알린다
+    // (스피너가 네트워크 대기까지 물고 있어 "왜 이리 오래 걸리지" 오해를 유발했음).
     setState(() {
       _preview = file;
+      _working = false;
     });
 
     // 2) AI 갱신(동의 시). 실패/거부 시 프리셋 유지.
     if (await _ensureConsent()) {
+      if (!mounted || seq != _reqSeq) return;
+      setState(() => _enhancing = true);
       try {
         final deviceId = await _deviceId.get();
         params = await _advisor.enhance(
@@ -134,7 +146,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         // 프리셋 결과 유지(조용히 폴백)
       }
     }
-    if (mounted && seq == _reqSeq) setState(() => _working = false);
+    if (mounted && seq == _reqSeq) setState(() => _enhancing = false);
   }
 
   Future<void> _generateName() async {
@@ -229,6 +241,49 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
                     key: ValueKey(_preview.path),
                   ),
                   if (_working) const CircularProgressIndicator(),
+                  // AI 개선은 프리셋을 이미 보여준 상태에서 백그라운드로 진행 —
+                  // 화면을 막지 않는 소형 안내만 띄운다.
+                  if (_enhancing)
+                    const Positioned(
+                      top: 12,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'AI로 더 다듬는 중…',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
