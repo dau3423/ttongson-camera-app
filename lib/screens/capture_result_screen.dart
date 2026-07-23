@@ -181,7 +181,9 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   Future<void> _save() async {
     if (_saving) return; // 재진입(더블탭) 방지
     setState(() => _saving = true);
+    // 메신저는 앱 최상위(MaterialApp) 소유라 이 화면을 pop해도 스낵바가 유지된다.
     final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     final name = sanitizeFilename(_nameController.text);
     // 파일명 충돌(같은 이름·빈 이름 photo.jpg) 방지용 고유 접미. 이름은 검색 가능한 접두로 유지.
     final tail = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
@@ -199,13 +201,15 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         );
         okEdited = await _camera.saveToGallery(editedNamed.path);
       }
+      final ok = okOriginal && okEdited;
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            (okOriginal && okEdited) ? '저장했어요' : '저장 실패 — 권한을 확인해 주세요',
-          ),
-        ),
+        SnackBar(content: Text(ok ? '저장했어요' : '저장 실패 — 권한을 확인해 주세요')),
       );
+      // 저장 성공 시 결과 화면을 닫고 카메라로 복귀. 실패면 재시도할 수 있게 유지.
+      if (ok) {
+        navigator.pop();
+        return;
+      }
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('저장 실패: $e')));
     } finally {
