@@ -900,43 +900,51 @@ class _CameraScreenState extends State<CameraScreen>
                   ModeSelector(current: _mode, onChanged: _onModeChanged),
                   const SizedBox(height: 14),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     // 좌우 클러스터를 동일폭 Expanded로 감싸 셔터를 화면 가로 중앙에 고정.
+                    // 인물 모드에서 좌측 아이콘이 3개로 늘어 좁은 화면(360px)에선
+                    // Expanded 폭을 넘길 수 있어 FittedBox(scaleDown)로 넘침을 막는다.
                     child: Row(
                       children: [
                         // 좌측: 사진첩 바로가기 + (인물 모드) 배경흐림 토글
                         Expanded(
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _bottomIcon(
-                                  Icons.photo_library,
-                                  _openGallery,
-                                  box: 44,
-                                  iconSize: 28,
-                                ),
-                                // 배경흐림·포즈는 인물 모드 전용. 겹치지 않게 간격을 둔다.
-                                if (_mode == ShootingMode.person) ...[
-                                  const SizedBox(width: 8),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                                   _bottomIcon(
-                                    _portrait ? Icons.blur_on : Icons.blur_off,
-                                    _togglePortrait,
-                                    box: 40,
-                                    iconSize: 26,
-                                    dim: !_portrait,
+                                    Icons.photo_library,
+                                    _openGallery,
+                                    box: 44,
+                                    iconSize: 28,
                                   ),
-                                  const SizedBox(width: 8),
-                                  _bottomIcon(
-                                    Icons.accessibility_new,
-                                    _openPosePicker,
-                                    box: 40,
-                                    iconSize: 26,
-                                    dim: _poseAsset == null,
-                                  ),
+                                  // 배경흐림·포즈는 인물 모드 전용. 겹치지 않게 간격을 둔다.
+                                  if (_mode == ShootingMode.person) ...[
+                                    const SizedBox(width: 8),
+                                    _bottomIcon(
+                                      _portrait
+                                          ? Icons.blur_on
+                                          : Icons.blur_off,
+                                      _togglePortrait,
+                                      box: 40,
+                                      iconSize: 26,
+                                      dim: !_portrait,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _bottomIcon(
+                                      Icons.accessibility_new,
+                                      _openPosePicker,
+                                      box: 40,
+                                      iconSize: 26,
+                                      dim: _poseAsset == null,
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -944,24 +952,32 @@ class _CameraScreenState extends State<CameraScreen>
                         _shutter(),
                         // 우측: AI 추천 + 격자 토글(40 히트)
                         Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              _bottomIcon(
-                                Icons.auto_awesome,
-                                _requestAdvice,
-                                box: 40,
-                                iconSize: 26,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _bottomIcon(
+                                    Icons.auto_awesome,
+                                    _requestAdvice,
+                                    box: 40,
+                                    iconSize: 26,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  _bottomIcon(
+                                    _showGrid ? Icons.grid_on : Icons.grid_off,
+                                    () =>
+                                        setState(() => _showGrid = !_showGrid),
+                                    box: 40,
+                                    iconSize: 26,
+                                    dim: !_showGrid,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 10),
-                              _bottomIcon(
-                                _showGrid ? Icons.grid_on : Icons.grid_off,
-                                () => setState(() => _showGrid = !_showGrid),
-                                box: 40,
-                                iconSize: 26,
-                                dim: !_showGrid,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
