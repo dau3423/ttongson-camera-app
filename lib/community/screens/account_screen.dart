@@ -5,11 +5,10 @@ import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../user_repository.dart';
 import '../models/user_profile.dart';
+import '../theme/community_theme.dart';
+import '../theme/community_theme_controller.dart';
 import 'blocked_users_screen.dart';
 import 'confirm_dialog.dart';
-
-const _text = Color(0xFFF4F1EA);
-const _muted = Color(0x80F4F1EA);
 
 /// 내 프로필 — 프로필 편집(닉네임·사진), 로그아웃, 회원 탈퇴.
 class AccountScreen extends StatefulWidget {
@@ -117,173 +116,242 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('내 프로필')),
-      body: StreamBuilder<UserProfile?>(
-        stream: widget.users.watchProfile(_uid),
-        builder: (context, snap) {
-          if (snap.hasError) {
-            return const Center(child: Text('불러오지 못했어요'));
-          }
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final p = snap.data;
-          if (p == null) {
-            return const Center(child: Text('프로필이 없어요'));
-          }
-          final hasPhoto = p.photoUrl != null && p.photoUrl!.isNotEmpty;
-          final initial = p.nickname.isNotEmpty
-              ? p.nickname.characters.first
-              : '?';
-          return ListView(
-            padding: EdgeInsets.zero,
+  static String _themeModeLabel(CommunityThemeMode m) {
+    switch (m) {
+      case CommunityThemeMode.system:
+        return '시스템 설정';
+      case CommunityThemeMode.light:
+        return '라이트';
+      case CommunityThemeMode.dark:
+        return '다크';
+    }
+  }
+
+  Future<void> _pickThemeMode() async {
+    final controller = CommunityTheme.controllerOf(context);
+    final selected = await showModalBottomSheet<CommunityThemeMode>(
+      context: context,
+      builder: (sheetContext) {
+        final current = controller.mode;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // 앰버 커버 + 겹치는 원형 아바타
-              SizedBox(
-                height: 150,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      height: 104,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFFFC107), Color(0xFFFFA000)],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 24,
-                      bottom: 0,
-                      child: GestureDetector(
-                        onTap: _busy ? null : _changePhoto,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.surfaceApp,
-                              width: 4,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 44,
-                            backgroundColor: AppColors.surfaceCard,
-                            backgroundImage: hasPhoto
-                                ? NetworkImage(p.photoUrl!)
-                                : null,
-                            child: hasPhoto
-                                ? null
-                                : Text(
-                                    initial,
-                                    style: const TextStyle(
-                                      color: AppColors.accent,
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '화면 테마',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+              RadioGroup<CommunityThemeMode>(
+                groupValue: current,
+                onChanged: (v) => Navigator.pop(sheetContext, v),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      p.nickname,
-                      style: const TextStyle(
-                        color: _text,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                    for (final m in CommunityThemeMode.values)
+                      RadioListTile<CommunityThemeMode>(
+                        value: m,
+                        title: Text(_themeModeLabel(m)),
+                        activeColor: AppColors.accent,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      p.userId ?? '${p.loginType.name} 로그인',
-                      style: const TextStyle(
-                        fontFamily: AppFonts.mono,
-                        color: _muted,
-                        fontSize: 13,
-                      ),
-                    ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              _tile(
-                icon: Icons.edit_outlined,
-                label: '닉네임 편집',
-                onTap: () => _editNickname(p.nickname),
-              ),
-              _tile(
-                icon: Icons.image_outlined,
-                label: '프로필 사진 변경',
-                onTap: _busy ? null : _changePhoto,
-              ),
-              _tile(
-                icon: Icons.badge_outlined,
-                label: '로그인 방식',
-                trailing: Text(
-                  p.loginType.name,
-                  style: const TextStyle(color: _muted),
-                ),
-              ),
-              _tile(
-                icon: Icons.block,
-                label: '차단한 사용자',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlockedUsersScreen(
-                      auth: widget.auth,
-                      users: widget.users,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: OutlinedButton(
-                  onPressed: _logout,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    side: BorderSide(
-                      color: AppColors.error.withValues(alpha: 0.4),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    minimumSize: const Size.fromHeight(0),
-                  ),
-                  child: const Text(
-                    '로그아웃',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
                 ),
               ),
               const SizedBox(height: 8),
-              Center(
-                child: TextButton(
-                  onPressed: _withdraw,
-                  child: const Text(
-                    '회원 탈퇴',
-                    style: TextStyle(color: _muted, fontSize: 13),
+            ],
+          ),
+        );
+      },
+    );
+    if (selected != null) await controller.setMode(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
+    return Theme(
+      data: CommunityTheme.themeOf(context),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('내 프로필')),
+        body: StreamBuilder<UserProfile?>(
+          stream: widget.users.watchProfile(_uid),
+          builder: (context, snap) {
+            if (snap.hasError) {
+              return const Center(child: Text('불러오지 못했어요'));
+            }
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final profile = snap.data;
+            if (profile == null) {
+              return const Center(child: Text('프로필이 없어요'));
+            }
+            final hasPhoto =
+                profile.photoUrl != null && profile.photoUrl!.isNotEmpty;
+            final initial = profile.nickname.isNotEmpty
+                ? profile.nickname.characters.first
+                : '?';
+            return ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // 앰버 커버 + 겹치는 원형 아바타
+                SizedBox(
+                  height: 150,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        height: 104,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFFFC107), Color(0xFFFFA000)],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 24,
+                        bottom: 0,
+                        child: GestureDetector(
+                          onTap: _busy ? null : _changePhoto,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: p.surface, width: 4),
+                            ),
+                            child: CircleAvatar(
+                              radius: 44,
+                              backgroundColor: p.surfaceCard,
+                              backgroundImage: hasPhoto
+                                  ? NetworkImage(profile.photoUrl!)
+                                  : null,
+                              child: hasPhoto
+                                  ? null
+                                  : Text(
+                                      initial,
+                                      style: const TextStyle(
+                                        color: AppColors.accent,
+                                        fontSize: 34,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          );
-        },
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profile.nickname,
+                        style: TextStyle(
+                          color: p.text,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        profile.userId ?? '${profile.loginType.name} 로그인',
+                        style: TextStyle(
+                          fontFamily: AppFonts.mono,
+                          color: p.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _tile(
+                  icon: Icons.edit_outlined,
+                  label: '닉네임 편집',
+                  onTap: () => _editNickname(profile.nickname),
+                ),
+                _tile(
+                  icon: Icons.image_outlined,
+                  label: '프로필 사진 변경',
+                  onTap: _busy ? null : _changePhoto,
+                ),
+                _tile(
+                  icon: Icons.badge_outlined,
+                  label: '로그인 방식',
+                  trailing: Text(
+                    profile.loginType.name,
+                    style: TextStyle(color: p.textMuted),
+                  ),
+                ),
+                _tile(
+                  icon: Icons.block,
+                  label: '차단한 사용자',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlockedUsersScreen(
+                        auth: widget.auth,
+                        users: widget.users,
+                      ),
+                    ),
+                  ),
+                ),
+                _tile(
+                  icon: Icons.brightness_6_outlined,
+                  label: '화면 테마',
+                  trailing: Text(
+                    _themeModeLabel(CommunityTheme.controllerOf(context).mode),
+                    style: TextStyle(color: p.textMuted),
+                  ),
+                  onTap: _pickThemeMode,
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: OutlinedButton(
+                    onPressed: _logout,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      side: BorderSide(
+                        color: AppColors.error.withValues(alpha: 0.4),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: const Size.fromHeight(0),
+                    ),
+                    child: const Text(
+                      '로그아웃',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton(
+                    onPressed: _withdraw,
+                    child: Text(
+                      '회원 탈퇴',
+                      style: TextStyle(color: p.textMuted, fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -294,14 +362,15 @@ class _AccountScreenState extends State<AccountScreen> {
     VoidCallback? onTap,
     Widget? trailing,
   }) {
+    final p = CommunityTheme.paletteOf(context);
     return ListTile(
-      leading: Icon(icon, color: _muted),
-      title: Text(label, style: const TextStyle(color: _text)),
+      leading: Icon(icon, color: p.textMuted),
+      title: Text(label, style: TextStyle(color: p.text)),
       trailing:
           trailing ??
           (onTap == null
               ? null
-              : const Icon(Icons.chevron_right, color: _muted)),
+              : Icon(Icons.chevron_right, color: p.textMuted)),
       onTap: onTap,
     );
   }
