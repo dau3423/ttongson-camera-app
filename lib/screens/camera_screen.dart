@@ -68,6 +68,7 @@ class _CameraScreenState extends State<CameraScreen>
   final DeviceId _deviceId = DeviceId();
   CompositionAdvice? _advice;
   bool _adviceLoading = false;
+  bool _poseLoading = false; // AI 포즈 추천 네트워크 대기 표시
 
   List<Pose> _poses = const [];
   String? _poseAsset; // 선택된 포즈 실루엣 asset (null=꺼짐)
@@ -488,6 +489,8 @@ class _CameraScreenState extends State<CameraScreen>
     }
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
+    // 시트가 닫힌 뒤 네트워크 대기 동안 아무 반응이 없어 보이지 않도록 로딩 표시.
+    setState(() => _poseLoading = true);
     try {
       final deviceId = await _deviceId.get();
       final framePath = await _camera.captureFrameForAdvice();
@@ -508,7 +511,10 @@ class _CameraScreenState extends State<CameraScreen>
         const SnackBar(content: Text('추천을 못 받았어요. 다시 시도해 주세요.')),
       );
     } finally {
-      if (mounted) _camera.startStream(_onFrame);
+      if (mounted) {
+        _camera.startStream(_onFrame);
+        setState(() => _poseLoading = false);
+      }
     }
   }
 
@@ -992,7 +998,7 @@ class _CameraScreenState extends State<CameraScreen>
                 advice: _advice!,
                 onClose: () => setState(() => _advice = null),
               ),
-            if (_adviceLoading)
+            if (_adviceLoading || _poseLoading)
               const Positioned.fill(
                 child: ColoredBox(
                   color: Colors.black38,
