@@ -101,6 +101,10 @@ class _PoseRow extends StatelessWidget {
                       child: Image.asset(
                         p.asset,
                         fit: BoxFit.contain,
+                        // 실루엣 에셋은 투명 배경 위 '순수 검정' 채움이라 어두운
+                        // 카드 배경에선 안 보인다. 밝은 색으로 틴트(알파·윤곽 유지).
+                        color: const Color(0xFFF4F1EA),
+                        colorBlendMode: BlendMode.srcIn,
                         errorBuilder: (context, error, stackTrace) =>
                             const Icon(
                               Icons.accessibility_new,
