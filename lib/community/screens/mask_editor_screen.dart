@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../masking.dart';
 import '../mask_processor.dart';
 import '../models/mask_region.dart';
+import '../theme/community_theme.dart';
 
 /// 업로드 전 가림 편집. 얼굴 자동 모자이크(기본 ON, 토글) + 수동 박스.
 /// 완료 시 처리된 JPEG File을 반환, 취소 시 null.
@@ -105,11 +106,14 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
   }
 
   void _onTap(Offset local, FitRect fit) {
-    final p = normFromWidget(local.dx, local.dy, fit);
+    final pt = normFromWidget(local.dx, local.dy, fit);
     int? hit;
     for (var i = _regions.length - 1; i >= 0; i--) {
       final r = _regions[i];
-      if (p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom) {
+      if (pt.x >= r.left &&
+          pt.x <= r.right &&
+          pt.y >= r.top &&
+          pt.y <= r.bottom) {
         hit = i;
         break;
       }
@@ -136,87 +140,95 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     final decoded = _decoded;
     final selected = _selected;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('개인정보 가림'),
-        actions: [
-          TextButton(
-            onPressed: _processing ? null : _done,
-            child: const Text('완료'),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: (decoded == null)
-                ? const Center(child: CircularProgressIndicator())
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      final fit = containRect(
-                        constraints.maxWidth,
-                        constraints.maxHeight,
-                        decoded.width.toDouble(),
-                        decoded.height.toDouble(),
-                      );
-                      return GestureDetector(
-                        onPanStart: (d) => _onPanStart(d.localPosition, fit),
-                        onPanUpdate: (d) => _onPanUpdate(d.localPosition, fit),
-                        onPanEnd: (_) => _onPanEnd(),
-                        onTapUp: (d) => _onTap(d.localPosition, fit),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Center(
-                              child: Image.file(
-                                widget.image,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                            CustomPaint(
-                              painter: _MaskPainter(
-                                regions: _regions,
-                                selected: _selected,
-                                fit: fit,
-                                dragStart: _dragStart,
-                                dragNow: _dragNow,
-                              ),
-                            ),
-                            if (_detecting || _processing)
-                              const ColoredBox(
-                                color: Colors.black45,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
+    return Theme(
+      data: CommunityTheme.themeOf(context),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('개인정보 가림'),
+          actions: [
+            TextButton(
+              onPressed: _processing ? null : _done,
+              child: const Text('완료'),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: (decoded == null)
+                  ? const Center(child: CircularProgressIndicator())
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final fit = containRect(
+                          constraints.maxWidth,
+                          constraints.maxHeight,
+                          decoded.width.toDouble(),
+                          decoded.height.toDouble(),
+                        );
+                        return GestureDetector(
+                          onPanStart: (d) => _onPanStart(d.localPosition, fit),
+                          onPanUpdate: (d) =>
+                              _onPanUpdate(d.localPosition, fit),
+                          onPanEnd: (_) => _onPanEnd(),
+                          onTapUp: (d) => _onTap(d.localPosition, fit),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Center(
+                                child: Image.file(
+                                  widget.image,
+                                  fit: BoxFit.contain,
                                 ),
                               ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          _Controls(
-            hasSelection: selected != null,
-            selectedEnabled: selected != null
-                ? _regions[selected].enabled
-                : false,
-            onDelete: _deleteSelected,
-            onToggle: _toggleSelected,
-          ),
-        ],
+                              CustomPaint(
+                                painter: _MaskPainter(
+                                  regions: _regions,
+                                  selected: _selected,
+                                  fit: fit,
+                                  dragStart: _dragStart,
+                                  dragNow: _dragNow,
+                                ),
+                              ),
+                              if (_detecting || _processing)
+                                const ColoredBox(
+                                  color: Colors.black45,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            _Controls(
+              palette: p,
+              hasSelection: selected != null,
+              selectedEnabled: selected != null
+                  ? _regions[selected].enabled
+                  : false,
+              onDelete: _deleteSelected,
+              onToggle: _toggleSelected,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _Controls extends StatelessWidget {
+  final CommunityPalette palette;
   final bool hasSelection;
   final bool selectedEnabled;
   final VoidCallback onDelete;
   final VoidCallback onToggle;
   const _Controls({
+    required this.palette,
     required this.hasSelection,
     required this.selectedEnabled,
     required this.onDelete,
@@ -232,10 +244,10 @@ class _Controls extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 '드래그로 가릴 영역 추가 · 탭으로 선택',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+                style: TextStyle(fontSize: 12, color: palette.textMuted),
               ),
             ),
             TextButton.icon(
@@ -305,11 +317,11 @@ class _MaskPainter extends CustomPainter {
       final w = (a.x - b.x).abs();
       final h = (a.y - b.y).abs();
       final rect = _toWidget(left, top, w, h);
-      final p = Paint()
+      final paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
         ..color = Colors.amberAccent;
-      canvas.drawRect(rect, p);
+      canvas.drawRect(rect, paint);
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/community_theme.dart';
 
 /// 신고 사유(사전 정의).
 const List<String> reportReasons = [
@@ -13,24 +14,27 @@ const List<String> reportReasons = [
 Future<String?> showReportSheet(BuildContext context) {
   return showModalBottomSheet<String>(
     context: context,
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              '신고 사유를 선택하세요',
-              style: TextStyle(fontWeight: FontWeight.bold),
+    builder: (ctx) {
+      final p = CommunityTheme.paletteOf(ctx);
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '신고 사유를 선택하세요',
+                style: TextStyle(fontWeight: FontWeight.bold, color: p.text),
+              ),
             ),
-          ),
-          for (final reason in reportReasons)
-            ListTile(
-              title: Text(reason),
-              onTap: () => Navigator.pop(ctx, reason),
-            ),
-        ],
-      ),
-    ),
+            for (final reason in reportReasons)
+              ListTile(
+                title: Text(reason),
+                onTap: () => Navigator.pop(ctx, reason),
+              ),
+          ],
+        ),
+      );
+    },
   );
 }

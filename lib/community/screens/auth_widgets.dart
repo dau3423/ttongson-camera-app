@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-
-const _text = Color(0xFFF4F1EA);
+import '../theme/community_theme.dart';
 
 /// 로그인/회원가입 공용 배경 — 상단 라디얼 그라디언트.
 class AuthBackground extends StatelessWidget {
@@ -10,12 +9,13 @@ class AuthBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: RadialGradient(
           center: Alignment.topCenter,
           radius: 1.1,
-          colors: [Color(0xFF1C2026), AppColors.surfaceApp],
+          colors: [p.surfaceCard, p.surface],
         ),
       ),
       child: child,
@@ -63,11 +63,12 @@ class AuthField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return TextField(
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: _text, fontSize: 15),
+      style: TextStyle(color: p.text, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
         isDense: true,
@@ -128,13 +129,14 @@ class AuthOutlineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return Expanded(
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          foregroundColor: _text,
+          foregroundColor: p.text,
           padding: const EdgeInsets.symmetric(vertical: 13),
-          side: const BorderSide(color: Color(0x26FFFFFF)),
+          side: BorderSide(color: p.border),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -190,7 +192,7 @@ class AuthSuccessOverlay extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  color: _text,
+                  color: Color(0xFFF4F1EA),
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),

@@ -6,15 +6,13 @@ import '../user_repository.dart';
 import '../auth_service.dart';
 import '../moderation.dart';
 import '../models/post.dart';
+import '../theme/community_theme.dart';
 import 'confirm_dialog.dart';
 import 'like_button.dart';
 import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import 'report_sheet.dart';
 import 'account_screen.dart';
-
-const _text = Color(0xFFF4F1EA);
-const _muted = Color(0x80FFFFFF);
 
 /// 촬영 팁 피드. 로그인 게이트 뒤에서 진입. 인기/최신 정렬 탭.
 class FeedScreen extends StatefulWidget {
@@ -57,118 +55,122 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     final uid = widget.auth.currentUser?.uid ?? '';
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 20,
-        title: Row(
-          children: [
-            const Text(
-              '촬영 팁',
-              style: TextStyle(
-                fontFamily: AppFonts.display,
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
+    return Theme(
+      data: CommunityTheme.themeOf(context),
+      child: Scaffold(
+        appBar: AppBar(
+          titleSpacing: 20,
+          title: Row(
+            children: [
+              const Text(
+                '촬영 팁',
+                style: TextStyle(
+                  fontFamily: AppFonts.display,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              _Tab('인기', _popular, () => setState(() => _popular = true)),
+              const SizedBox(width: 4),
+              _Tab('최신', !_popular, () => setState(() => _popular = false)),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              tooltip: '내 계정',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      AccountScreen(auth: widget.auth, users: widget.users),
+                ),
               ),
             ),
-            const Spacer(),
-            _Tab('인기', _popular, () => setState(() => _popular = true)),
-            const SizedBox(width: 4),
-            _Tab('최신', !_popular, () => setState(() => _popular = false)),
           ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: '내 계정',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    AccountScreen(auth: widget.auth, users: widget.users),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(48),
+            child: SizedBox(
+              height: 48,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                children: [
+                  _FilterChip('전체', _filter == null, () {
+                    setState(() => _filter = null);
+                  }),
+                  for (final m in ShootingMode.values)
+                    _FilterChip(m.label, _filter == m, () {
+                      setState(() => _filter = m);
+                    }),
+                ],
               ),
             ),
           ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: SizedBox(
-            height: 48,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              children: [
-                _FilterChip('전체', _filter == null, () {
-                  setState(() => _filter = null);
-                }),
-                for (final m in ShootingMode.values)
-                  _FilterChip(m.label, _filter == m, () {
-                    setState(() => _filter = m);
-                  }),
-              ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: AppColors.accent,
+          foregroundColor: p.surface,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  CreatePostScreen(auth: widget.auth, posts: widget.posts),
             ),
           ),
+          child: const Icon(Icons.add_a_photo),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.accent,
-        foregroundColor: AppColors.surfaceApp,
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                CreatePostScreen(auth: widget.auth, posts: widget.posts),
-          ),
-        ),
-        child: const Icon(Icons.add_a_photo),
-      ),
-      body: StreamBuilder<Set<String>>(
-        stream: widget.users.blockedUids(uid),
-        builder: (context, blockedSnap) {
-          final blocked = blockedSnap.data ?? <String>{};
-          return StreamBuilder<Set<String>>(
-            stream: widget.posts.myReportedPostIds(uid),
-            builder: (context, reportedSnap) {
-              final reported = reportedSnap.data ?? <String>{};
-              return StreamBuilder<List<Post>>(
-                stream: widget.posts.feed(),
-                builder: (context, snap) {
-                  if (snap.hasError) {
-                    return const Center(child: Text('불러오지 못했어요'));
-                  }
-                  if (!snap.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final items = _sorted(
-                    visibleItems(
-                      snap.data!,
-                      authorUidOf: (p) => p.authorUid,
-                      idOf: (p) => p.id,
-                      blockedAuthors: blocked,
-                      reportedIds: reported,
-                    ),
-                  );
-                  if (items.isEmpty) {
-                    return const Center(
-                      child: Text('아직 게시물이 없어요. 첫 사진을 올려보세요!'),
+        body: StreamBuilder<Set<String>>(
+          stream: widget.users.blockedUids(uid),
+          builder: (context, blockedSnap) {
+            final blocked = blockedSnap.data ?? <String>{};
+            return StreamBuilder<Set<String>>(
+              stream: widget.posts.myReportedPostIds(uid),
+              builder: (context, reportedSnap) {
+                final reported = reportedSnap.data ?? <String>{};
+                return StreamBuilder<List<Post>>(
+                  stream: widget.posts.feed(),
+                  builder: (context, snap) {
+                    if (snap.hasError) {
+                      return const Center(child: Text('불러오지 못했어요'));
+                    }
+                    if (!snap.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final items = _sorted(
+                      visibleItems(
+                        snap.data!,
+                        authorUidOf: (p) => p.authorUid,
+                        idOf: (p) => p.id,
+                        blockedAuthors: blocked,
+                        reportedIds: reported,
+                      ),
                     );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                    itemCount: items.length,
-                    itemBuilder: (_, i) => _PostCard(
-                      post: items[i],
-                      posts: widget.posts,
-                      users: widget.users,
-                      uid: uid,
-                      auth: widget.auth,
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
+                    if (items.isEmpty) {
+                      return const Center(
+                        child: Text('아직 게시물이 없어요. 첫 사진을 올려보세요!'),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                      itemCount: items.length,
+                      itemBuilder: (_, i) => _PostCard(
+                        post: items[i],
+                        posts: widget.posts,
+                        users: widget.users,
+                        uid: uid,
+                        auth: widget.auth,
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -183,6 +185,7 @@ class _Tab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -197,7 +200,7 @@ class _Tab extends StatelessWidget {
             fontFamily: AppFonts.mono,
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: selected ? AppColors.surfaceApp : _muted,
+            color: selected ? p.surface : p.textMuted,
           ),
         ),
       ),
@@ -214,6 +217,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
@@ -224,16 +228,14 @@ class _FilterChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? AppColors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(100),
-            border: Border.all(
-              color: selected ? AppColors.accent : const Color(0x33FFFFFF),
-            ),
+            border: Border.all(color: selected ? AppColors.accent : p.border),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: selected ? AppColors.surfaceApp : _text,
+              color: selected ? p.surface : p.text,
             ),
           ),
         ),
@@ -320,13 +322,14 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     final initial = post.authorName.isNotEmpty
         ? post.authorName.characters.first
         : '?';
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: p.surfaceCard,
         borderRadius: BorderRadius.circular(16),
       ),
       clipBehavior: Clip.antiAlias,
@@ -353,8 +356,8 @@ class _PostCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     post.authorName,
-                    style: const TextStyle(
-                      color: _text,
+                    style: TextStyle(
+                      color: p.text,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -366,8 +369,8 @@ class _PostCard extends StatelessWidget {
                 ],
                 if (uid.isNotEmpty && uid != post.authorUid)
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz, color: _muted),
-                    color: AppColors.surfaceCard,
+                    icon: Icon(Icons.more_horiz, color: p.textMuted),
+                    color: p.surfaceCard,
                     onSelected: (v) {
                       if (v == 'report') _report(context);
                       if (v == 'block') _block(context);
@@ -401,7 +404,10 @@ class _PostCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
               child: Text(
                 post.caption,
-                style: const TextStyle(color: Color(0xE6F4F1EA), fontSize: 14),
+                style: TextStyle(
+                  color: p.text.withValues(alpha: 0.9),
+                  fontSize: 14,
+                ),
               ),
             ),
           Padding(
@@ -413,11 +419,11 @@ class _PostCard extends StatelessWidget {
                   postId: post.id,
                   uid: uid,
                   likeCount: post.likeCount,
-                  mutedColor: _muted,
+                  mutedColor: p.textMuted,
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.mode_comment_outlined, color: _muted),
+                  icon: Icon(Icons.mode_comment_outlined, color: p.textMuted),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -429,10 +435,7 @@ class _PostCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  '${post.commentCount}',
-                  style: const TextStyle(color: _text),
-                ),
+                Text('${post.commentCount}', style: TextStyle(color: p.text)),
               ],
             ),
           ),
