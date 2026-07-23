@@ -210,63 +210,71 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Image.file(
-                  _preview,
-                  fit: BoxFit.contain,
-                  key: ValueKey(_preview.path),
-                ),
-                if (_working) const CircularProgressIndicator(),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: TextField(
-              controller: _nameController,
-              maxLength: 40,
-              decoration: InputDecoration(
-                hintText: 'AI가 이름을 지어줘요',
-                counterText: '',
-                suffixIcon: _naming
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : null,
+      // 하단 무드 칩이 시스템 내비게이션 바와 겹치지 않도록 바텀 세이프에어리어 적용.
+      // (상단은 AppBar가 이미 처리하므로 top: false)
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.file(
+                    _preview,
+                    fit: BoxFit.contain,
+                    key: ValueKey(_preview.path),
+                  ),
+                  if (_working) const CircularProgressIndicator(),
+                ],
               ),
             ),
-          ),
-          SizedBox(
-            height: 92,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              children: [
-                _MoodChip(
-                  label: '원본',
-                  selected: _selected == null,
-                  onTap: () => _selectMood(null),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: TextField(
+                controller: _nameController,
+                maxLength: 40,
+                decoration: InputDecoration(
+                  hintText: 'AI가 이름을 지어줘요',
+                  counterText: '',
+                  suffixIcon: _naming
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : null,
                 ),
-                for (final m in Mood.values)
-                  _MoodChip(
-                    label: m.label,
-                    selected: _selected == m,
-                    onTap: () => _selectMood(m),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ],
+            SizedBox(
+              height: 92,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                children: [
+                  _MoodChip(
+                    label: '원본',
+                    selected: _selected == null,
+                    onTap: () => _selectMood(null),
+                  ),
+                  for (final m in Mood.values)
+                    _MoodChip(
+                      label: m.label,
+                      selected: _selected == m,
+                      onTap: () => _selectMood(m),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
