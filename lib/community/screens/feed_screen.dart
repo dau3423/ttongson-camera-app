@@ -228,9 +228,7 @@ class _FilterChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? AppColors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(100),
-            border: Border.all(
-              color: selected ? AppColors.accent : const Color(0x33FFFFFF),
-            ),
+            border: Border.all(color: selected ? AppColors.accent : p.border),
           ),
           child: Text(
             label,
@@ -406,7 +404,10 @@ class _PostCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
               child: Text(
                 post.caption,
-                style: const TextStyle(color: Color(0xE6F4F1EA), fontSize: 14),
+                style: TextStyle(
+                  color: p.text.withValues(alpha: 0.9),
+                  fontSize: 14,
+                ),
               ),
             ),
           Padding(
