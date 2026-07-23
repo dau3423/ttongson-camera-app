@@ -84,8 +84,11 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     setState(() => _selected = mood);
 
     if (mood == null) {
+      // 원본 선택은 진행 중이던 필터 로딩을 취소한다(seq 증가로 이전 요청은
+      // 무시됨). 이 분기가 _working을 내리지 않으면 스피너가 무한히 남는다.
       setState(() {
         _preview = widget.original;
+        _working = false;
       });
       return;
     }
