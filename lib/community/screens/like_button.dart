@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../post_repository.dart';
+import '../theme/community_theme.dart';
 
 /// 좋아요 아이콘 + 카운트. 탭 즉시 낙관적으로 반영하고,
 /// 서버 카운트(함수 관리)가 따라오면 자연스럽게 정합을 맞춘다.
@@ -9,14 +10,14 @@ class LikeButton extends StatefulWidget {
   final String postId;
   final String uid;
   final int likeCount;
-  final Color mutedColor;
+  final Color? mutedColor;
   const LikeButton({
     super.key,
     required this.posts,
     required this.postId,
     required this.uid,
     required this.likeCount,
-    this.mutedColor = const Color(0x80FFFFFF),
+    this.mutedColor,
   });
 
   @override
@@ -47,6 +48,7 @@ class _LikeButtonState extends State<LikeButton> {
 
   @override
   Widget build(BuildContext context) {
+    final p = CommunityTheme.paletteOf(context);
     return StreamBuilder<bool>(
       stream: widget.posts.likedByMe(postId: widget.postId, uid: widget.uid),
       builder: (_, snap) {
@@ -62,7 +64,9 @@ class _LikeButtonState extends State<LikeButton> {
             IconButton(
               icon: Icon(
                 liked ? Icons.favorite : Icons.favorite_border,
-                color: liked ? AppColors.danger : widget.mutedColor,
+                color: liked
+                    ? AppColors.danger
+                    : (widget.mutedColor ?? p.textMuted),
               ),
               onPressed: widget.uid.isEmpty ? null : () => _toggle(liked),
             ),

@@ -5,6 +5,7 @@ import '../../models/shooting_mode.dart';
 import '../../theme/app_colors.dart';
 import '../auth_service.dart';
 import '../post_repository.dart';
+import '../theme/community_theme.dart';
 import 'mask_editor_screen.dart';
 
 /// 사진 선택 → 가림 편집 → 캡션 → 업로드.
@@ -66,78 +67,82 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('사진 올리기'),
-        actions: [
-          TextButton(
-            onPressed: (_image != null && !_uploading) ? _submit : null,
-            child: const Text('올리기'),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          GestureDetector(
-            onTap: _pick,
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black12,
-                  borderRadius: BorderRadius.circular(12),
-                  image: _image != null
-                      ? DecorationImage(
-                          image: FileImage(_image!),
-                          fit: BoxFit.cover,
+    final p = CommunityTheme.paletteOf(context);
+    return Theme(
+      data: CommunityTheme.themeOf(context),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('사진 올리기'),
+          actions: [
+            TextButton(
+              onPressed: (_image != null && !_uploading) ? _submit : null,
+              child: const Text('올리기'),
+            ),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            GestureDetector(
+              onTap: _pick,
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(12),
+                    image: _image != null
+                        ? DecorationImage(
+                            image: FileImage(_image!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: _image == null
+                      ? const Center(
+                          child: Icon(Icons.add_photo_alternate, size: 48),
                         )
                       : null,
                 ),
-                child: _image == null
-                    ? const Center(
-                        child: Icon(Icons.add_photo_alternate, size: 48),
-                      )
-                    : null,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          const Text('촬영 모드', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final m in ShootingMode.values)
-                ChoiceChip(
-                  label: Text(m.label),
-                  selected: _mode == m,
-                  onSelected: (_) => setState(() => _mode = m),
-                  selectedColor: AppColors.accent,
-                  labelStyle: TextStyle(
-                    color: _mode == m
-                        ? AppColors.surfaceApp
-                        : const Color(0xB3F4F1EA),
-                    fontWeight: FontWeight.w600,
+            const SizedBox(height: 16),
+            const Text('촬영 모드', style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final m in ShootingMode.values)
+                  ChoiceChip(
+                    label: Text(m.label),
+                    selected: _mode == m,
+                    onSelected: (_) => setState(() => _mode = m),
+                    selectedColor: AppColors.accent,
+                    labelStyle: TextStyle(
+                      color: _mode == m
+                          ? AppColors.surfaceApp
+                          : p.text.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _caption,
-            maxLength: 140,
-            decoration: const InputDecoration(
-              hintText: '한 줄 팁을 남겨보세요',
-              border: OutlineInputBorder(),
+              ],
             ),
-          ),
-          if (_uploading)
-            const Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _caption,
+              maxLength: 140,
+              decoration: const InputDecoration(
+                hintText: '한 줄 팁을 남겨보세요',
+                border: OutlineInputBorder(),
+              ),
             ),
-        ],
+            if (_uploading)
+              const Padding(
+                padding: EdgeInsets.only(top: 16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+          ],
+        ),
       ),
     );
   }
