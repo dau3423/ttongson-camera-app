@@ -82,25 +82,24 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
 
   Future<void> _selectMood(Mood? mood) async {
     final seq = ++_reqSeq;
-    setState(() => _selected = mood);
+    // 새 선택은 진행 중이던 AI 개선(_enhancing)을 무효화한다.
+    setState(() {
+      _selected = mood;
+      _enhancing = false;
+    });
 
     if (mood == null) {
-      // 원본 선택은 진행 중이던 필터 로딩을 취소한다(seq 증가로 이전 요청은
-      // 무시됨). 이 분기가 플래그를 내리지 않으면 인디케이터가 남는다.
       setState(() {
         _preview = widget.original;
         _working = false;
-        _enhancing = false;
       });
       return;
     }
 
-    // 1) 프리셋 즉시 미리보기 (디코드 실패 등은 스킵+안내 — 스펙 §8)
-    setState(() {
-      _working = true;
-      _enhancing = false;
-    });
-    var params = mood.preset;
+    // 필터는 온디바이스 프리셋을 즉시 적용한다(네트워크·AI 불필요).
+    // 더 나은 튜닝이 필요하면 사용자가 'AI로 더 예쁘게'를 눌러 개선한다.
+    setState(() => _working = true);
+    final params = mood.preset;
     File file;
     try {
       file = await applyMood(widget.original, params);
@@ -110,7 +109,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         _selected = null;
         _preview = widget.original;
         _working = false;
-        _enhancing = false;
       });
       ScaffoldMessenger.of(
         context,
@@ -118,35 +116,40 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
       return;
     }
     if (!mounted || seq != _reqSeq) return;
-    // 프리셋 결과를 즉시 보여주고 '전체 스피너'는 바로 내린다. AI 개선은 서버
-    // 왕복이 필요하므로 여기서 블로킹하지 않고 비차단 인디케이터로만 알린다
-    // (스피너가 네트워크 대기까지 물고 있어 "왜 이리 오래 걸리지" 오해를 유발했음).
     setState(() {
       _preview = file;
       _working = false;
     });
+  }
 
-    // 2) AI 갱신(동의 시). 실패/거부 시 프리셋 유지.
-    if (await _ensureConsent()) {
+  /// 'AI로 더 예쁘게' — 현재 무드를 이 사진에 맞게 서버가 튜닝한 값으로 다시 적용.
+  /// 선택 사항이며, 거부/실패 시 이미 적용된 프리셋 결과를 그대로 유지한다.
+  Future<void> _enhanceWithAi() async {
+    final mood = _selected;
+    if (mood == null || _working) return;
+    final seq = ++_reqSeq;
+    if (!await _ensureConsent()) return;
+    if (!mounted || seq != _reqSeq) return;
+    setState(() => _enhancing = true);
+    try {
+      final deviceId = await _deviceId.get();
+      final params = await _advisor.enhance(
+        jpegPath: widget.original.path,
+        moodWire: mood.wire,
+        deviceId: deviceId,
+      );
+      final file = await applyMood(widget.original, params);
       if (!mounted || seq != _reqSeq) return;
-      setState(() => _enhancing = true);
-      try {
-        final deviceId = await _deviceId.get();
-        params = await _advisor.enhance(
-          jpegPath: widget.original.path,
-          moodWire: mood.wire,
-          deviceId: deviceId,
+      setState(() => _preview = file);
+    } catch (_) {
+      if (mounted && seq == _reqSeq) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI 개선을 못 받았어요. 프리셋을 유지합니다.')),
         );
-        file = await applyMood(widget.original, params);
-        if (!mounted || seq != _reqSeq) return;
-        setState(() {
-          _preview = file;
-        });
-      } catch (_) {
-        // 프리셋 결과 유지(조용히 폴백)
       }
+    } finally {
+      if (mounted && seq == _reqSeq) setState(() => _enhancing = false);
     }
-    if (mounted && seq == _reqSeq) setState(() => _enhancing = false);
   }
 
   Future<void> _generateName() async {
@@ -162,8 +165,17 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         deviceId: deviceId,
       );
       if (!mounted) return;
+      // 사용자가 입력란을 이미 터치(포커스)했을 수 있다. 이때 `.text`만 대입하면
+      // 선택 영역이 갱신되지 않아 IME가 새 텍스트를 표시하지 않는 경우가 있다.
+      // 전체 TextEditingValue(텍스트+끝 커서)로 넣어 포커스 여부와 무관히 반영한다.
+      // 사용자가 직접 입력한 값은 덮어쓰지 않는다(isEmpty 가드).
       setState(() {
-        if (_nameController.text.isEmpty) _nameController.text = desc.name;
+        if (_nameController.text.isEmpty) {
+          _nameController.value = TextEditingValue(
+            text: desc.name,
+            selection: TextSelection.collapsed(offset: desc.name.length),
+          );
+        }
       });
     } catch (_) {
       // 이름 없이 진행(폴백)
@@ -223,6 +235,27 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
       appBar: AppBar(
         title: const Text('오늘의 무드'),
         actions: [
+          // AI 개선은 선택 사항. 기본 필터(프리셋)는 온디바이스로 즉시 적용되고,
+          // 이 버튼을 눌렀을 때만 서버가 이 사진에 맞게 파라미터를 튜닝한다.
+          if (_enhancing)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              tooltip: 'AI로 더 예쁘게 (이 사진에 맞게)',
+              icon: const Icon(Icons.auto_awesome),
+              onPressed: (_selected == null || _working || _saving)
+                  ? null
+                  : _enhanceWithAi,
+            ),
           TextButton(
             onPressed: (_working || _saving) ? null : _save,
             child: const Text('저장'),
@@ -245,49 +278,6 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
                     key: ValueKey(_preview.path),
                   ),
                   if (_working) const CircularProgressIndicator(),
-                  // AI 개선은 프리셋을 이미 보여준 상태에서 백그라운드로 진행 —
-                  // 화면을 막지 않는 소형 안내만 띄운다.
-                  if (_enhancing)
-                    const Positioned(
-                      top: 12,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.all(Radius.circular(20)),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'AI로 더 다듬는 중…',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
