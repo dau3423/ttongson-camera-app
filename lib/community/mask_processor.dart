@@ -100,3 +100,11 @@ void _mosaic(img.Image image, IntRect pr) {
   );
   img.compositeImage(image, up, dstX: pr.left, dstY: pr.top);
 }
+
+/// 얼굴을 자동 감지해 전부 모자이크한 마스킹본을 만든다(UI 없음).
+/// detectFaceRegions는 감지 영역을 enabled=true로 돌려주므로 그대로 적용한다.
+/// 얼굴이 없어도 applyMasks(빈 영역)로 방향 정리·EXIF 제거·축소된 사본을 반환한다.
+Future<File> autoMaskFaces(File src) async {
+  final regions = await detectFaceRegions(src);
+  return applyMasks(src, regions);
+}

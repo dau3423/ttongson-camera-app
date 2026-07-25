@@ -13,6 +13,7 @@ import 'create_post_screen.dart';
 import 'post_detail_screen.dart';
 import 'report_sheet.dart';
 import 'account_screen.dart';
+import 'post_image_carousel.dart';
 
 /// 촬영 팁 피드. 로그인 게이트 뒤에서 진입. 인기/최신 정렬 탭.
 class FeedScreen extends StatefulWidget {
@@ -393,10 +394,7 @@ class _PostCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: Image.network(post.imageUrl, fit: BoxFit.cover),
-              ),
+              child: PostImageCarousel(imageUrls: post.imageUrls),
             ),
           ),
           if (post.caption.isNotEmpty)

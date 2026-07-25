@@ -10,6 +10,7 @@ import '../theme/community_theme.dart';
 import 'confirm_dialog.dart';
 import 'like_button.dart';
 import 'report_sheet.dart';
+import 'post_image_carousel.dart';
 
 /// 게시물 상세 — 사진·캡션·좋아요 + 댓글 목록·입력. 피드 카드에서 진입.
 class PostDetailScreen extends StatefulWidget {
@@ -142,10 +143,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: Image.network(post.imageUrl, fit: BoxFit.cover),
-                  ),
+                  PostImageCarousel(imageUrls: post.imageUrls),
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Column(

@@ -21,7 +21,10 @@ service cloud.firestore {
                     && request.resource.data.commentCount == 0
                     && request.resource.data.reportCount == 0
                     && request.resource.data.hidden == false
-                    && request.resource.data.caption.size() <= 140;
+                    && request.resource.data.caption.size() <= 140
+                    && request.resource.data.imageUrls is list
+                    && request.resource.data.imageUrls.size() >= 1
+                    && request.resource.data.imageUrls.size() <= 10;
       allow update, delete: if false;
       match /likes/{uid} {
         allow read: if request.auth != null;
