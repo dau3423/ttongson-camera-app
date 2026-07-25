@@ -1,7 +1,11 @@
 // lib/camera/camera_service.dart
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, File;
+import 'dart:isolate';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 /// 카메라 프리뷰/프레임 스트림/촬영·저장을 캡슐화한다.
 class CameraService {
@@ -132,10 +136,34 @@ class CameraService {
 
   /// 사진을 촬영해 임시 파일 경로를 반환(갤러리 저장 안 함). 후처리(배경흐림 등)용.
   /// 스트림은 중단하며, 재개는 호출측 책임.
+  /// 전면(셀카)은 프리뷰가 거울처럼 좌우 반전돼 보이는데 플러그인 촬영본은
+  /// 반전되지 않아 프리뷰와 어긋난다. WYSIWYG를 위해 좌우로 뒤집어 맞춘다.
   Future<String> capturePhoto() async {
     if (_streaming) await stopStream();
     final file = await controller.takePicture();
+    if (isFront) return _mirrorHorizontal(file.path);
     return file.path;
+  }
+
+  /// 이미지를 좌우 반전한 새 JPEG 임시 파일 경로를 반환한다(픽셀 처리는 아이솔레이트).
+  /// 디코드 실패 시 원본 경로를 그대로 반환한다.
+  Future<String> _mirrorHorizontal(String path) async {
+    final bytes = await File(path).readAsBytes();
+    final jpeg = await Isolate.run<Uint8List?>(() {
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+      // EXIF 방향을 반영한 뒤 좌우 반전(방향 태그와 반전이 겹치지 않게).
+      final baked = img.bakeOrientation(decoded);
+      final mirrored = img.flipHorizontal(baked);
+      return img.encodeJpg(mirrored, quality: 95);
+    });
+    if (jpeg == null) return path;
+    final dir = await getTemporaryDirectory();
+    final out = File(
+      '${dir.path}/selfie_${DateTime.now().microsecondsSinceEpoch}.jpg',
+    );
+    await out.writeAsBytes(jpeg);
+    return out.path;
   }
 
   /// 주어진 경로의 이미지를 사진첩에 저장. 성공 여부 반환.
