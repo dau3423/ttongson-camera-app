@@ -44,7 +44,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       await widget.posts.createPost(
         uid: uid,
         authorName: profile?.nickname ?? '익명',
-        image: image,
+        images: [image],
         caption: _caption.text.trim(),
         mode: _mode,
       );

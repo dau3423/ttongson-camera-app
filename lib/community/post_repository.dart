@@ -14,32 +14,35 @@ class PostRepository {
     : _db = db ?? FirebaseFirestore.instance,
       _storage = storage ?? FirebaseStorage.instance;
 
-  /// 이미지를 Storage에 올리고 게시물 문서를 생성한다.
+  /// 이미지 N장을 Storage에 순서대로 올리고 게시물 문서를 생성한다(1~10장).
   Future<Post> createPost({
     required String uid,
     required String authorName,
-    required File image,
+    required List<File> images,
     required String caption,
     ShootingMode? mode,
   }) async {
     final ref = _db.collection('posts').doc();
     final postId = ref.id;
-    final storageRef = _storage.ref('post_images/$uid/$postId.jpg');
-    await storageRef.putFile(
-      image,
-      SettableMetadata(contentType: 'image/jpeg'),
-    );
-    final imageUrl = await storageRef.getDownloadURL();
+    final urls = <String>[];
+    for (var i = 0; i < images.length; i++) {
+      final storageRef = _storage.ref('post_images/$uid/${postId}_$i.jpg');
+      await storageRef.putFile(
+        images[i],
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      urls.add(await storageRef.getDownloadURL());
+    }
     final post = Post(
       id: postId,
       authorUid: uid,
       authorName: authorName,
-      imageUrls: [imageUrl],
+      imageUrls: urls,
       caption: caption,
       mode: mode,
     );
     await ref.set({
-      ...post.toCreateMap(imageUrls: [imageUrl]),
+      ...post.toCreateMap(imageUrls: urls),
       'createdAt': FieldValue.serverTimestamp(),
     });
     return post;
