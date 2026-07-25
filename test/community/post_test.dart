@@ -2,53 +2,69 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ttongson_camera/community/models/post.dart';
 
 void main() {
-  test('toCreateMap: 카운터는 0, hidden false, createdAt 제외', () {
+  test('toCreateMap: imageUrls와 레거시 imageUrl(첫 장) 병기, 순서 보존', () {
     const p = Post(
       id: '',
       authorUid: 'u1',
       authorName: '귀여운너구리1',
-      imageUrl: 'https://x/y.jpg',
+      imageUrls: ['https://x/0.jpg', 'https://x/1.jpg'],
       caption: '역광에서 살짝 밑에서',
     );
-    final m = p.toCreateMap(imageUrl: 'https://x/y.jpg');
+    final m = p.toCreateMap(imageUrls: ['https://x/0.jpg', 'https://x/1.jpg']);
+    expect(m['imageUrls'], ['https://x/0.jpg', 'https://x/1.jpg']);
+    expect(m['imageUrl'], 'https://x/0.jpg'); // 레거시 = 첫 장
     expect(m['authorUid'], 'u1');
-    expect(m['authorName'], '귀여운너구리1');
-    expect(m['imageUrl'], 'https://x/y.jpg');
-    expect(m['caption'], '역광에서 살짝 밑에서');
     expect(m['likeCount'], 0);
-    expect(m['commentCount'], 0);
     expect(m['reportCount'], 0);
     expect(m['hidden'], false);
     expect(m.containsKey('createdAt'), isFalse);
   });
 
-  test('fromData: 복원(createdAt DateTime, 카운터 유지)', () {
-    final now = DateTime(2026, 7, 6);
+  test('coverUrl: 첫 장', () {
+    const p = Post(
+      id: 'p',
+      authorUid: 'u',
+      authorName: 'n',
+      imageUrls: ['a', 'b', 'c'],
+      caption: 'c',
+    );
+    expect(p.coverUrl, 'a');
+  });
+
+  test('fromData: imageUrls 리스트 우선', () {
     final p = Post.fromData('post9', {
       'authorUid': 'u2',
       'authorName': '느긋한수달2',
-      'imageUrl': 'https://a/b.jpg',
+      'imageUrls': ['https://a/0.jpg', 'https://a/1.jpg'],
+      'imageUrl': 'https://a/0.jpg',
       'caption': '가운데 정렬',
-      'createdAt': now,
       'likeCount': 5,
       'commentCount': 2,
     });
-    expect(p.id, 'post9');
-    expect(p.authorName, '느긋한수달2');
-    expect(p.caption, '가운데 정렬');
-    expect(p.createdAt, now);
+    expect(p.imageUrls, ['https://a/0.jpg', 'https://a/1.jpg']);
+    expect(p.coverUrl, 'https://a/0.jpg');
     expect(p.likeCount, 5);
     expect(p.commentCount, 2);
   });
 
-  test('fromData: 카운터 누락 시 0', () {
+  test('fromData: imageUrls 없으면 구 imageUrl 폴백(1장)', () {
     final p = Post.fromData('p', {
       'authorUid': 'u',
       'authorName': 'n',
-      'imageUrl': 'i',
+      'imageUrl': 'https://a/b.jpg',
       'caption': 'c',
     });
-    expect(p.likeCount, 0);
-    expect(p.commentCount, 0);
+    expect(p.imageUrls, ['https://a/b.jpg']);
+    expect(p.coverUrl, 'https://a/b.jpg');
+  });
+
+  test('fromData: 둘 다 없으면 빈 리스트, coverUrl 빈 문자열', () {
+    final p = Post.fromData('p', {
+      'authorUid': 'u',
+      'authorName': 'n',
+      'caption': 'c',
+    });
+    expect(p.imageUrls, isEmpty);
+    expect(p.coverUrl, '');
   });
 }

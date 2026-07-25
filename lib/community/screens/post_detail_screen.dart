@@ -144,7 +144,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 children: [
                   AspectRatio(
                     aspectRatio: 1,
-                    child: Image.network(post.imageUrl, fit: BoxFit.cover),
+                    child: Image.network(post.coverUrl, fit: BoxFit.cover),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(12),

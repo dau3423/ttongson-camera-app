@@ -34,12 +34,12 @@ class PostRepository {
       id: postId,
       authorUid: uid,
       authorName: authorName,
-      imageUrl: imageUrl,
+      imageUrls: [imageUrl],
       caption: caption,
       mode: mode,
     );
     await ref.set({
-      ...post.toCreateMap(imageUrl: imageUrl),
+      ...post.toCreateMap(imageUrls: [imageUrl]),
       'createdAt': FieldValue.serverTimestamp(),
     });
     return post;

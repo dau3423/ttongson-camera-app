@@ -395,7 +395,7 @@ class _PostCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: Image.network(post.imageUrl, fit: BoxFit.cover),
+                child: Image.network(post.coverUrl, fit: BoxFit.cover),
               ),
             ),
           ),
