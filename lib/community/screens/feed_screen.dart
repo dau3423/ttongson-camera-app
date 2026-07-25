@@ -298,6 +298,26 @@ class _PostCard extends StatelessWidget {
     }
   }
 
+  Future<void> _delete(BuildContext context) async {
+    final ok = await showAppConfirm(
+      context,
+      icon: Icons.delete_outline,
+      title: '이 글을 삭제할까요?',
+      body: '삭제하면 되돌릴 수 없어요.',
+      confirmLabel: '삭제',
+      destructive: true,
+    );
+    if (ok != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      // 피드는 스트림이라 문서가 삭제되면 카드가 자동으로 사라진다.
+      await posts.deletePost(post);
+      messenger.showSnackBar(const SnackBar(content: Text('삭제했어요')));
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('삭제에 실패했어요')));
+    }
+  }
+
   Future<void> _block(BuildContext context) async {
     final ok = await showAppConfirm(
       context,
@@ -382,6 +402,24 @@ class _PostCard extends StatelessWidget {
                         value: 'block',
                         child: Text(
                           '차단하기',
+                          style: TextStyle(color: AppColors.danger),
+                        ),
+                      ),
+                    ],
+                  )
+                // 본인 글은 삭제 메뉴를 노출한다.
+                else if (uid.isNotEmpty && uid == post.authorUid)
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_horiz, color: p.textMuted),
+                    color: p.surfaceCard,
+                    onSelected: (v) {
+                      if (v == 'delete') _delete(context);
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          '삭제하기',
                           style: TextStyle(color: AppColors.danger),
                         ),
                       ),
