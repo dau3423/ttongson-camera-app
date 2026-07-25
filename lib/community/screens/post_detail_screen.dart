@@ -32,8 +32,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final _input = TextEditingController();
   final _users = UserRepository();
   bool _sending = false;
+  bool _deleting = false;
 
   String get _uid => widget.auth.currentUser?.uid ?? '';
+
+  /// 작성자 본인이면 삭제할 수 있다.
+  bool get _isMine => _uid.isNotEmpty && widget.post.authorUid == _uid;
+
+  Future<void> _delete() async {
+    final ok = await showAppConfirm(
+      context,
+      icon: Icons.delete_outline,
+      title: '이 글을 삭제할까요?',
+      body: '삭제하면 되돌릴 수 없어요.',
+      confirmLabel: '삭제',
+      destructive: true,
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _deleting = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await widget.posts.deletePost(widget.post);
+      messenger.showSnackBar(const SnackBar(content: Text('삭제했어요')));
+      navigator.pop();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _deleting = false);
+        messenger.showSnackBar(const SnackBar(content: Text('삭제에 실패했어요')));
+      }
+    }
+  }
 
   Future<void> _send() async {
     final text = _input.text.trim();
@@ -137,7 +166,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
-        appBar: AppBar(title: Text(post.authorName)),
+        appBar: AppBar(
+          title: Text(post.authorName),
+          actions: [
+            if (_isMine)
+              IconButton(
+                tooltip: '삭제',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: _deleting ? null : _delete,
+              ),
+          ],
+        ),
         body: Column(
           children: [
             Expanded(
