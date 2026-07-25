@@ -117,7 +117,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           title: const Text('사진 올리기'),
           actions: [
             TextButton(
-              onPressed: (_images.isNotEmpty && !_uploading) ? _submit : null,
+              onPressed: (_images.isNotEmpty && !_uploading && !_masking)
+                  ? _submit
+                  : null,
               child: const Text('올리기'),
             ),
           ],
