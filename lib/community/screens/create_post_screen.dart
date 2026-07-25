@@ -4,9 +4,17 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/shooting_mode.dart';
 import '../../theme/app_colors.dart';
 import '../auth_service.dart';
+import '../mask_processor.dart';
 import '../post_repository.dart';
 import '../theme/community_theme.dart';
 import 'mask_editor_screen.dart';
+
+/// 작성 중 슬롯: 편집을 위해 원본을, 표시·업로드를 위해 마스킹본을 함께 보관.
+class _PickedImage {
+  final File original;
+  File masked;
+  _PickedImage({required this.original, required this.masked});
+}
 
 /// 사진 선택 → 가림 편집 → 캡션 → 업로드.
 class CreatePostScreen extends StatefulWidget {
@@ -19,32 +27,68 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final _caption = TextEditingController();
-  File? _image;
+  final List<_PickedImage> _images = [];
   ShootingMode _mode = ShootingMode.person;
   bool _uploading = false;
+  bool _masking = false;
+  static const _maxImages = 10;
 
-  Future<void> _pick() async {
-    final x = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (x == null || !mounted) return;
-    final masked = await Navigator.push<File>(
-      context,
-      MaterialPageRoute(builder: (_) => MaskEditorScreen(image: File(x.path))),
-    );
-    // 편집 취소(null) 시 이미지 미설정 유지.
-    if (masked != null && mounted) setState(() => _image = masked);
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  Future<void> _pick() async {
+    final picked = await ImagePicker().pickMultiImage();
+    if (picked.isEmpty || !mounted) return;
+    final remaining = _maxImages - _images.length;
+    if (remaining <= 0) {
+      _snack('사진은 최대 10장까지 올릴 수 있어요');
+      return;
+    }
+    var toAdd = picked;
+    if (picked.length > remaining) {
+      toAdd = picked.sublist(0, remaining);
+      _snack('사진은 최대 10장까지 올릴 수 있어요');
+    }
+    setState(() => _masking = true);
+    try {
+      for (final x in toAdd) {
+        final original = File(x.path);
+        final masked = await autoMaskFaces(original);
+        if (!mounted) return;
+        setState(() {
+          _images.add(_PickedImage(original: original, masked: masked));
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _masking = false);
+    }
+  }
+
+  Future<void> _editAt(int i) async {
+    final masked = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MaskEditorScreen(image: _images[i].original),
+      ),
+    );
+    if (masked != null && mounted) {
+      setState(() => _images[i].masked = masked);
+    }
+  }
+
+  void _removeAt(int i) => setState(() => _images.removeAt(i));
+
   Future<void> _submit() async {
-    final image = _image;
     final uid = widget.auth.currentUser?.uid;
-    if (image == null || uid == null || _uploading) return;
+    if (_images.isEmpty || uid == null || _uploading) return;
     setState(() => _uploading = true);
     try {
       final profile = await widget.auth.ensureMyProfile();
       await widget.posts.createPost(
         uid: uid,
         authorName: profile?.nickname ?? '익명',
-        images: [image],
+        images: _images.map((e) => e.masked).toList(),
         caption: _caption.text.trim(),
         mode: _mode,
       );
@@ -52,9 +96,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _uploading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('업로드에 실패했어요')));
+        _snack('업로드에 실패했어요');
       }
     }
   }
@@ -75,7 +117,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           title: const Text('사진 올리기'),
           actions: [
             TextButton(
-              onPressed: (_image != null && !_uploading) ? _submit : null,
+              onPressed: (_images.isNotEmpty && !_uploading) ? _submit : null,
               child: const Text('올리기'),
             ),
           ],
@@ -83,27 +125,78 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            GestureDetector(
-              onTap: _pick,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(12),
-                    image: _image != null
-                        ? DecorationImage(
-                            image: FileImage(_image!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+            // 선택한 사진 그리드(마스킹본 표시). 탭=마스크 재편집, ×=삭제, +=추가.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (var i = 0; i < _images.length; i++)
+                  SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: GestureDetector(
+                            onTap: () => _editAt(i),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(
+                                _images[i].masked,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => _removeAt(i),
+                            child: const DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(2),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: _image == null
-                      ? const Center(
-                          child: Icon(Icons.add_photo_alternate, size: 48),
-                        )
-                      : null,
-                ),
+                if (_images.length < _maxImages)
+                  GestureDetector(
+                    onTap: _masking ? null : _pick,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: _masking
+                          ? const Center(child: CircularProgressIndicator())
+                          : const Center(
+                              child: Icon(Icons.add_photo_alternate, size: 32),
+                            ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${_images.length}/$_maxImages · 얼굴은 자동으로 가려집니다. 사진을 탭해 수정할 수 있어요.',
+              style: TextStyle(
+                fontSize: 12,
+                color: p.text.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 16),
