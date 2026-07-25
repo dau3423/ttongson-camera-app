@@ -52,14 +52,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
     setState(() => _masking = true);
     try {
-      for (final x in toAdd) {
-        final original = File(x.path);
-        final masked = await autoMaskFaces(original);
-        if (!mounted) return;
-        setState(() {
-          _images.add(_PickedImage(original: original, masked: masked));
-        });
-      }
+      // 여러 장을 동시(최대 3개)에 자동 마스킹 — 순차보다 빠르고 순서는 보존된다.
+      final originals = [for (final x in toAdd) File(x.path)];
+      final masked = await autoMaskFacesAll(originals);
+      if (!mounted) return;
+      setState(() {
+        for (var i = 0; i < originals.length; i++) {
+          _images.add(_PickedImage(original: originals[i], masked: masked[i]));
+        }
+      });
     } finally {
       if (mounted) setState(() => _masking = false);
     }

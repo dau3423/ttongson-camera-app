@@ -108,3 +108,27 @@ Future<File> autoMaskFaces(File src) async {
   final regions = await detectFaceRegions(src);
   return applyMasks(src, regions);
 }
+
+/// 여러 이미지를 최대 [concurrency]개씩 동시에 자동 마스킹한다(입력 순서 보존).
+/// 순차 처리보다 빠르되, 폰 메모리 보호를 위해 동시 실행 수를 제한한다(기본 3).
+/// 얼굴 감지·아이솔레이트 디코드/인코드를 여러 장 겹쳐 총 대기시간을 줄인다.
+Future<List<File>> autoMaskFacesAll(
+  List<File> sources, {
+  int concurrency = 3,
+}) async {
+  final results = List<File?>.filled(sources.length, null);
+  var next = 0;
+  // 워커 하나가 남은 인덱스를 하나씩 집어 처리한다. Dart 단일 이벤트루프라
+  // `next++`(await 없음)는 원자적 — 인덱스 경합이 없다.
+  Future<void> worker() async {
+    while (true) {
+      final i = next++;
+      if (i >= sources.length) break;
+      results[i] = await autoMaskFaces(sources[i]);
+    }
+  }
+
+  final count = concurrency < sources.length ? concurrency : sources.length;
+  await Future.wait([for (var w = 0; w < count; w++) worker()]);
+  return results.cast<File>();
+}

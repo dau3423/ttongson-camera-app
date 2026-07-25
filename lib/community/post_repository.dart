@@ -14,7 +14,8 @@ class PostRepository {
     : _db = db ?? FirebaseFirestore.instance,
       _storage = storage ?? FirebaseStorage.instance;
 
-  /// 이미지 N장을 Storage에 순서대로 올리고 게시물 문서를 생성한다(1~10장).
+  /// 이미지 N장을 Storage에 병렬 업로드하고 게시물 문서를 생성한다(1~10장).
+  /// 병렬(Future.wait)이라 네트워크 지연이 겹쳐 직렬보다 빠르며, 순서는 인덱스로 보존.
   Future<Post> createPost({
     required String uid,
     required String authorName,
@@ -24,15 +25,10 @@ class PostRepository {
   }) async {
     final ref = _db.collection('posts').doc();
     final postId = ref.id;
-    final urls = <String>[];
-    for (var i = 0; i < images.length; i++) {
-      final storageRef = _storage.ref('post_images/$uid/${postId}_$i.jpg');
-      await storageRef.putFile(
-        images[i],
-        SettableMetadata(contentType: 'image/jpeg'),
-      );
-      urls.add(await storageRef.getDownloadURL());
-    }
+    final urls = await Future.wait([
+      for (var i = 0; i < images.length; i++)
+        _uploadPostImage(uid: uid, postId: postId, index: i, file: images[i]),
+    ]);
     final post = Post(
       id: postId,
       authorUid: uid,
@@ -46,6 +42,33 @@ class PostRepository {
       'createdAt': FieldValue.serverTimestamp(),
     });
     return post;
+  }
+
+  Future<String> _uploadPostImage({
+    required String uid,
+    required String postId,
+    required int index,
+    required File file,
+  }) async {
+    final ref = _storage.ref('post_images/$uid/${postId}_$index.jpg');
+    await ref.putFile(file, SettableMetadata(contentType: 'image/jpeg'));
+    return ref.getDownloadURL();
+  }
+
+  /// 본인 게시물 삭제 — Storage 이미지(가능하면)와 Firestore 문서를 제거한다.
+  /// 이미지 삭제 실패(이미 없음·URL 파싱 불가 등)는 무시하고 문서 삭제를 우선한다.
+  /// 이미지 경로는 download URL에서 역참조해 구/신 저장 경로 모두 대응한다.
+  Future<void> deletePost(Post post) async {
+    await Future.wait([for (final url in post.imageUrls) _deleteByUrl(url)]);
+    await _db.collection('posts').doc(post.id).delete();
+  }
+
+  Future<void> _deleteByUrl(String url) async {
+    try {
+      await _storage.refFromURL(url).delete();
+    } catch (_) {
+      // 이미 삭제됐거나 refFromURL로 열 수 없는 URL — 문서 삭제가 우선.
+    }
   }
 
   /// 최신순 피드(숨김 제외).
