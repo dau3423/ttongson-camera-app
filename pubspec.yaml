@@ -66,6 +66,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.1
 
 # 앱 아이콘 생성 설정: dart run flutter_launcher_icons 로 Android/iOS 아이콘 생성.
 # 소스는 1254x1254 PNG(알파 없음). iOS는 알파 금지라 remove_alpha_ios로 안전 처리.
@@ -75,6 +76,19 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   min_sdk_android: 21
+
+# 스플래시 화면 설정: dart run flutter_native_splash:create 로 네이티브 스플래시 생성.
+# splash.png는 둥근 모서리 + 검은 코너의 정사각이라 배경을 검정으로 맞춰 코너가
+# 자연스럽게 이어지게 하고(앱 다크 테마와도 일치), 로고를 크게 중앙 배치한다.
+flutter_native_splash:
+  color: "#000000"
+  image: assets/images/splash.png
+  android_12:
+    image: assets/images/splash.png
+    color: "#000000"
+  android: true
+  ios: true
+  fullscreen: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
