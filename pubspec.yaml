@@ -78,14 +78,14 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
 # 스플래시 화면 설정: dart run flutter_native_splash:create 로 네이티브 스플래시 생성.
-# splash_logo.png는 splash.png에서 둥근 코너를 투명 처리하고 여백을 준(카드 55%)
-# 로고 — 흰 배경에 검은 코너 없이 작게 중앙 배치되며 Android 12 원형에도 안 잘린다.
+# splash_logo.png(다크 프레임 가이드 아이콘)에 맞춰 배경을 앱 표면색(#0B0C0E)으로
+# 두어 아이콘이 자연스럽게 이어지게 한다(앱 다크 테마와도 일치).
 flutter_native_splash:
-  color: "#FFFFFF"
+  color: "#0B0C0E"
   image: assets/images/splash_logo.png
   android_12:
     image: assets/images/splash_logo.png
-    color: "#FFFFFF"
+    color: "#0B0C0E"
   android: true
   ios: true
   fullscreen: true
