@@ -19,6 +19,7 @@ class CameraService {
   double _currentZoom = 1.0;
 
   CameraLensDirection get lensDirection => _lens;
+  bool get isInitialized => _controller?.value.isInitialized ?? false;
   bool get isFront => _lens == CameraLensDirection.front;
   bool get canSwitch =>
       _cameras.any((c) => c.lensDirection == CameraLensDirection.front) &&

@@ -595,6 +595,8 @@ class _CameraScreenState extends State<CameraScreen>
 
   Future<void> _resumeCamera() async {
     if (!mounted || !_ready) return;
+    // 리모컨 모드 등에서 카메라를 완전 해제한 경우 resume 불가(재초기화 경로가 처리).
+    if (!_camera.isInitialized) return;
     await _camera.resumePreview();
     _prevStepKind = null; // 복귀 직후 오발 진동 방지
     _camera.startStream(_onFrame);
@@ -651,13 +653,31 @@ class _CameraScreenState extends State<CameraScreen>
     );
     if (!mounted || role == null) return;
     if (role == RemoteRole.remote) {
-      await _pauseCamera();
+      // 리모컨 화면의 QR 스캐너(mobile_scanner)가 카메라를 점유하므로,
+      // pause가 아니라 세션을 완전히 해제했다가 복귀 시 재초기화한다.
+      // (다른 컴포넌트에 뺏긴 카메라는 resumePreview로 되살아나지 않음)
+      setState(() => _ready = false);
+      await _camera.dispose();
       if (!mounted) return;
       await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const RemoteControlScreen()),
       );
-      if (mounted) await _resumeCamera();
+      if (!mounted) return;
+      try {
+        await _camera.initialize();
+        _zoom = _camera.currentZoom;
+        if (mounted) {
+          setState(() => _ready = true);
+          _camera.startStream(_onFrame);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('카메라를 다시 시작하지 못했어요: $e')));
+        }
+      }
       return;
     }
     await _startHost();
