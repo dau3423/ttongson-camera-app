@@ -253,7 +253,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(title: const Text('리모컨')),
       body: switch (_phase) {
-        _Phase.scanning => MobileScanner(onDetect: _onScanned),
+        _Phase.scanning => _scanner(),
         _Phase.connecting => const Center(child: CircularProgressIndicator()),
         _Phase.failed => Center(
           child: ElevatedButton(
@@ -263,6 +263,86 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
         ),
         _Phase.connected => _controls(),
       },
+    );
+  }
+
+  /// QR 스캔 단계 UI. 스캔 프레임·안내 문구로 촬영 화면과 혼동되지 않게 한다.
+  Widget _scanner() {
+    const frameSize = 260.0;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        MobileScanner(onDetect: _onScanned),
+        // 스캔 프레임 밖을 어둡게 눌러 카메라 화면이 아님을 드러낸다.
+        ColorFiltered(
+          colorFilter: const ColorFilter.mode(Colors.black54, BlendMode.srcOut),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  backgroundBlendMode: BlendMode.dstOut,
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: frameSize,
+                  height: frameSize,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Center(
+          child: Container(
+            width: frameSize,
+            height: frameSize,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 3),
+              borderRadius: BorderRadius.circular(24),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 48,
+          left: 24,
+          right: 24,
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '촬영 폰에 표시된 QR 코드를 스캔하세요',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '촬영 폰: 카메라 화면 상단 리모컨 아이콘 → 이 폰으로 촬영하기',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

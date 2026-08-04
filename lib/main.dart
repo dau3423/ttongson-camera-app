@@ -20,15 +20,17 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    // App Check 콘솔 허용 목록에 등록된 고정 debug 토큰. 디버그 빌드에서만 사용되며,
+    // 재설치 시 토큰이 재생성돼 추천 기능이 깨지는 문제를 막는다.
+    const debugToken = '00651760-c042-4cca-91e7-56fcddfd60ed';
     await FirebaseAppCheck.instance.activate(
       // 릴리즈: Play Integrity/DeviceCheck (콘솔에 등록돼 있어야 함).
-      // 디버그: debug provider — 기기별 debug 토큰을 콘솔 허용 목록에 등록해야 함.
       providerAndroid: kReleaseMode
           ? AndroidPlayIntegrityProvider()
-          : AndroidDebugProvider(),
+          : AndroidDebugProvider(debugToken: debugToken),
       providerApple: kReleaseMode
           ? AppleDeviceCheckProvider()
-          : AppleDebugProvider(),
+          : AppleDebugProvider(debugToken: debugToken),
     );
   } catch (e) {
     // Firebase 초기화 실패해도 온디바이스 카메라 기능은 계속 동작.
