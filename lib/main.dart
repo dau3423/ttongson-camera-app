@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -20,9 +21,14 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     await FirebaseAppCheck.instance.activate(
-      // 디버그: 개발 중에는 debug provider, 배포 시 Play Integrity/DeviceCheck로 교체.
-      providerAndroid: AndroidDebugProvider(),
-      providerApple: AppleDebugProvider(),
+      // 릴리즈: Play Integrity/DeviceCheck (콘솔에 등록돼 있어야 함).
+      // 디버그: debug provider — 기기별 debug 토큰을 콘솔 허용 목록에 등록해야 함.
+      providerAndroid: kReleaseMode
+          ? AndroidPlayIntegrityProvider()
+          : AndroidDebugProvider(),
+      providerApple: kReleaseMode
+          ? AppleDeviceCheckProvider()
+          : AppleDebugProvider(),
     );
   } catch (e) {
     // Firebase 초기화 실패해도 온디바이스 카메라 기능은 계속 동작.
