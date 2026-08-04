@@ -109,8 +109,9 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       });
     } catch (_) {
       // I3(c): viaReconnect이고 정책이 소진되지 않았으면 재접속 경로로 처리.
+      // _onDisconnected 대신 _scheduleReconnect을 직접 호출해 connecting 상태 가드를 우회.
       if (viaReconnect) {
-        _onDisconnected();
+        _scheduleReconnect();
       } else {
         _fail('연결하지 못했어요. 두 폰이 같은 Wi-Fi(또는 핫스팟)에 있는지 확인해 주세요.');
       }
@@ -129,12 +130,11 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     });
   }
 
-  void _onDisconnected() {
-    // I3(b): 이미 connecting 상태면 중복 진입 방지.
-    if (_phase == _Phase.connecting) return;
+  // I3: 재접속 스케줄링 로직 분리 — _onDisconnected와 _connect catch 양쪽에서 호출.
+  void _scheduleReconnect() {
     if (!mounted) return;
     _watchdogTimer?.cancel();
-    _cancelCountdown(); // 카운트다운도 정리
+    _cancelCountdown();
     setState(() {
       _pendingShutterSeq = null; // I1: 셔터 in-flight 초기화
     });
@@ -150,6 +150,13 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     _reconnectTimer = Timer(delay, () {
       if (mounted) _connect(payload, viaReconnect: true);
     });
+  }
+
+  void _onDisconnected() {
+    // I3(b): 이미 connecting 상태면 중복 진입 방지.
+    if (_phase == _Phase.connecting) return;
+    if (!mounted) return;
+    _scheduleReconnect();
   }
 
   void _fail(String message) {
