@@ -26,6 +26,21 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
       _controllers.putIfAbsent(i, () => TransformationController());
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAround(_current);
+  }
+
+  /// 현재 페이지의 양옆 이미지를 미리 받아 스와이프 시 바로 뜨게 한다.
+  void _precacheAround(int i) {
+    for (final j in [i - 1, i + 1]) {
+      if (j >= 0 && j < widget.imageUrls.length) {
+        precacheImage(NetworkImage(widget.imageUrls[j]), context);
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _page.dispose();
     for (final c in _controllers.values) {
@@ -58,7 +73,12 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
         children: [
           PageView.builder(
             controller: _page,
-            onPageChanged: (i) => setState(() => _current = i),
+            // 양옆 페이지를 미리 빌드해 이미지 로딩을 앞당긴다.
+            allowImplicitScrolling: true,
+            onPageChanged: (i) {
+              setState(() => _current = i);
+              _precacheAround(i);
+            },
             itemCount: urls.length,
             itemBuilder: (context, i) => GestureDetector(
               onDoubleTapDown: (d) => _lastDoubleTap = d,
@@ -68,7 +88,22 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                 minScale: 1,
                 maxScale: 4,
                 child: Center(
-                  child: Image.network(urls[i], fit: BoxFit.contain),
+                  child: Image.network(
+                    urls[i],
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white54,
+                          value: progress.expectedTotalBytes != null
+                              ? progress.cumulativeBytesLoaded /
+                                    progress.expectedTotalBytes!
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
