@@ -1,6 +1,6 @@
 // lib/screens/camera_screen.dart
 import 'dart:async';
-import 'dart:io' show File;
+import 'dart:io' show File, Platform;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
@@ -40,6 +40,13 @@ import '../poses/pose_advisor.dart';
 import '../overlay/pose_overlay.dart';
 import '../poses/pose_picker.dart';
 import 'capture_result_screen.dart';
+import '../remote/host_controller.dart';
+import '../remote/protocol/pairing_payload.dart';
+import '../remote/protocol/remote_message.dart';
+import '../remote/transport/local_network.dart';
+import '../remote/transport/remote_server.dart';
+import 'remote_control_screen.dart';
+import 'remote_pairing_screen.dart';
 
 /// 카메라 화면 위로 다른 화면(피드·로그인 등)이 뜨고 닫히는 걸 감지하는 옵서버.
 /// main.dart의 MaterialApp.navigatorObservers에 등록한다.
@@ -60,6 +67,12 @@ class _CameraScreenState extends State<CameraScreen>
   final ModeStore _modeStore = ModeStore();
   ShootingMode _mode = ShootingMode.person;
   late final AnalysisEngine _engine;
+
+  HostController? _remoteHost;
+  bool _remoteConnected = false;
+  bool _qrScreenOpen = false; // QR 대기 화면이 열려 있는 동안만 true
+  int? _remoteCountdown; // 원격 타이머 카운트다운 표시(null이면 숨김)
+  DateTime _lastStateSentAt = DateTime.fromMillisecondsSinceEpoch(0);
   StreamSubscription<AccelerometerEvent>? _accelSub;
 
   final AuthService _auth = AuthService();
@@ -183,6 +196,27 @@ class _CameraScreenState extends State<CameraScreen>
           _step = step;
         });
       }
+      // 리모컨 연결 시: 프리뷰 프레임 + 가이드 상태 전송
+      final host = _remoteHost;
+      if (host != null && _remoteConnected) {
+        host.pushCameraImage(
+          image,
+          rotationDegrees: Platform.isAndroid ? _camera.sensorOrientation : 0,
+          mirror: _camera.isFront,
+        );
+        final stateNow = DateTime.now();
+        if (stateNow.difference(_lastStateSentAt).inMilliseconds >= 500) {
+          _lastStateSentAt = stateNow;
+          host.pushState(
+            StateMessage(
+              hints: _metrics.activeHints,
+              zoom: _camera.currentZoom,
+              isFront: _camera.isFront,
+              mode: _mode.wire,
+            ),
+          );
+        }
+      }
       // 인물 모드 + 포트레이트 ON일 때만, 그리고 검출보다 드물게 마스크를 갱신.
       if (_portrait &&
           mode == ShootingMode.person &&
@@ -297,7 +331,7 @@ class _CameraScreenState extends State<CameraScreen>
     if (mounted && applied != _zoom) setState(() => _zoom = applied);
   }
 
-  Future<void> _switchCamera() async {
+  Future<bool> _switchCamera() async {
     // 전환 중에는 프리뷰를 먼저 트리에서 제거(스피너로 교체)한다.
     // 그렇지 않으면 옛 컨트롤러를 dispose하는 순간 아직 남아 있는 CameraPreview가
     // disposed 컨트롤러에서 buildPreview()를 호출해 예외가 난다.
@@ -312,6 +346,7 @@ class _CameraScreenState extends State<CameraScreen>
           _ready = true;
         });
       }
+      return true;
     } catch (e) {
       // switchCamera는 실패 시 원래 렌즈로 복구하므로 프리뷰를 다시 켠다.
       if (mounted) {
@@ -320,6 +355,7 @@ class _CameraScreenState extends State<CameraScreen>
           context,
         ).showSnackBar(const SnackBar(content: Text('카메라 전환에 실패했어요')));
       }
+      return false;
     }
   }
 
@@ -536,6 +572,7 @@ class _CameraScreenState extends State<CameraScreen>
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       _pauseCamera();
+      _stopHost(); // 스펙 6장: 호스트 백그라운드 전환 시 세션 종료
     }
   }
 
@@ -568,6 +605,7 @@ class _CameraScreenState extends State<CameraScreen>
     WidgetsBinding.instance.removeObserver(this);
     routeObserver.unsubscribe(this);
     _accelSub?.cancel();
+    _remoteHost?.dispose();
     _camera.dispose();
     _faceDetector.dispose();
     _objectDetector.dispose();
@@ -604,6 +642,145 @@ class _CameraScreenState extends State<CameraScreen>
       context,
       MaterialPageRoute(builder: (_) => FeedScreen(auth: _auth)),
     );
+  }
+
+  Future<void> _openRemotePairing() async {
+    final role = await Navigator.push<RemoteRole>(
+      context,
+      MaterialPageRoute(builder: (_) => const RemotePairingScreen()),
+    );
+    if (!mounted || role == null) return;
+    if (role == RemoteRole.remote) {
+      await _pauseCamera();
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const RemoteControlScreen()),
+      );
+      if (mounted) await _resumeCamera();
+      return;
+    }
+    await _startHost();
+  }
+
+  Future<void> _startHost() async {
+    // 중복 진입 방지: 이미 호스트가 실행 중이면 기존 세션을 먼저 정리한다.
+    if (_remoteHost != null) {
+      await _stopHost();
+    }
+    final ip = await localIpv4();
+    if (ip == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Wi-Fi에 연결돼 있지 않아요. 같은 Wi-Fi 또는 핫스팟에 연결해 주세요.'),
+          ),
+        );
+      }
+      return;
+    }
+    final token = generateToken();
+    final server = RemoteServer(
+      token: token,
+      welcomeBuilder: () => WelcomeMessage(
+        previewAspectRatio: 1 / _camera.controller.value.aspectRatio,
+        minZoom: _camera.minZoom,
+        maxZoom: _camera.maxZoom,
+        zoom: _camera.currentZoom,
+        isFront: _camera.isFront,
+        mode: _mode.wire,
+        protocolVersion: remoteProtocolVersion,
+      ),
+    );
+    final host = HostController(
+      server: server,
+      onShutter: _remoteCapture,
+      onZoom: (z) async {
+        final applied = await _camera.setZoom(z);
+        if (mounted) setState(() => _zoom = applied);
+        return applied;
+      },
+      onSwitchCamera: _switchCamera,
+    );
+    if (mounted) setState(() => _remoteHost = host);
+    server.onClientChanged = (connected) {
+      if (!mounted) return;
+      setState(() => _remoteConnected = connected);
+      if (connected && _qrScreenOpen && Navigator.canPop(context)) {
+        Navigator.pop(context); // QR 대기 화면 닫기
+      }
+    };
+    final port = await _startServerSafely(server);
+    if (port == null) return;
+    if (!mounted) return;
+    _qrScreenOpen = true;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RemoteHostQrScreen(
+          payload: PairingPayload(host: ip, port: port, token: token),
+        ),
+      ),
+    );
+    _qrScreenOpen = false;
+    // QR 화면에서 뒤로가기로 나왔고 연결도 안 됐으면 서버 정리
+    if (!_remoteConnected) await _stopHost();
+  }
+
+  /// server.start()를 실행하고 실패 시 정리 후 null 반환.
+  Future<int?> _startServerSafely(RemoteServer server) async {
+    try {
+      return await server.start();
+    } catch (e) {
+      await _stopHost();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('리모컨 연결 준비에 실패했어요. 잠시 후 다시 시도해 주세요.')),
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<void> _stopHost() async {
+    final host = _remoteHost;
+    _remoteHost = null;
+    if (mounted) setState(() => _remoteConnected = false);
+    await host?.dispose();
+  }
+
+  /// 원격 셔터: 카운트다운 → 촬영(+인물 블러) → 갤러리 저장 → 파일 경로 반환.
+  /// 호스트 화면 전환 없음(피사체가 보는 화면 유지).
+  Future<String?> _remoteCapture(int timerSeconds) async {
+    try {
+      for (var i = timerSeconds; i > 0; i--) {
+        if (!mounted) return null;
+        setState(() => _remoteCountdown = i);
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    } finally {
+      if (mounted) setState(() => _remoteCountdown = null);
+    }
+    _triggerCaptureFeedback();
+    try {
+      final String shotPath;
+      if (_portrait && _mode == ShootingMode.person) {
+        final path = await _camera.capturePhoto();
+        final blurred = await applyPortraitBlur(
+          File(path),
+          nowMicros: DateTime.now().microsecondsSinceEpoch,
+        );
+        shotPath = blurred.path;
+      } else {
+        shotPath = await _camera.capturePhoto();
+      }
+      final saved = await _camera.saveToGallery(shotPath);
+      return saved ? shotPath : null;
+    } catch (_) {
+      return null;
+    } finally {
+      if (mounted) _camera.startStream(_onFrame);
+    }
   }
 
   /// 배경만 흐린 프리뷰 오버레이. 맨 아래 '선명한' CameraPreview 위에,
@@ -879,8 +1056,12 @@ class _CameraScreenState extends State<CameraScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             _topIcon(Icons.people, _openCommunity),
+                            _topIcon(Icons.settings_remote, _openRemotePairing),
                             if (_camera.canSwitch)
-                              _topIcon(Icons.cameraswitch, _switchCamera)
+                              _topIcon(
+                                Icons.cameraswitch,
+                                () => _switchCamera(),
+                              )
                             else
                               const SizedBox(width: 44),
                           ],
@@ -891,6 +1072,44 @@ class _CameraScreenState extends State<CameraScreen>
                         _readyBadge()
                       else if (_step.message.isNotEmpty)
                         _stepPill(_step.message),
+                      if (_remoteHost != null)
+                        Container(
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.settings_remote,
+                                size: 16,
+                                color: _remoteConnected
+                                    ? Colors.greenAccent
+                                    : Colors.white54,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _remoteConnected ? '리모컨 연결됨' : '리모컨 대기 중',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: _stopHost,
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -1028,6 +1247,19 @@ class _CameraScreenState extends State<CameraScreen>
                         fontSize: 13,
                       ),
                     ),
+                  ),
+                ),
+              ),
+            // 원격 카운트다운 오버레이
+            if (_remoteCountdown != null)
+              Center(
+                child: Text(
+                  '$_remoteCountdown',
+                  style: const TextStyle(
+                    fontSize: 120,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [Shadow(blurRadius: 24, color: Colors.black)],
                   ),
                 ),
               ),
