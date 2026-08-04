@@ -39,10 +39,10 @@ class CameraService {
   double get maxZoom => _maxZoom;
   double get currentZoom => _currentZoom;
 
-  Future<void> initialize() async {
+  Future<void> initialize() => _serialized(() async {
     _cameras = await availableCameras();
     await _open(CameraLensDirection.back);
-  }
+  });
 
   /// 지정한 렌즈 방향의 카메라를 열어 컨트롤러를 준비한다.
   Future<void> _open(CameraLensDirection lens) async {
@@ -102,8 +102,11 @@ class CameraService {
 
   void startStream(void Function(CameraImage) onFrame) {
     if (_streaming) return;
+    // 해제 경쟁 중이면 무해하게 무시(리모컨 모드 진입 등).
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
     _streaming = true;
-    controller.startImageStream(onFrame);
+    c.startImageStream(onFrame);
   }
 
   Future<void> stopStream() async {
@@ -112,20 +115,33 @@ class CameraService {
     await controller.stopImageStream();
   }
 
+  /// 수명주기 연산(pause/resume/dispose/initialize) 직렬화 체인.
+  /// 라우트 옵저버의 fire-and-forget resume과 dispose가 겹치면
+  /// "used after disposed"가 나므로, 순서를 보장하고 각 연산이
+  /// 실행 시점의 컨트롤러 상태를 다시 확인하게 한다.
+  Future<void> _lifecycle = Future<void>.value();
+
+  Future<void> _serialized(Future<void> Function() op) {
+    final run = _lifecycle.then((_) => op());
+    // 한 연산의 실패가 체인을 끊지 않게 오류는 여기서 흡수(호출측엔 run으로 전파).
+    _lifecycle = run.then((_) {}, onError: (_) {});
+    return run;
+  }
+
   /// 프리뷰 정지(화면에 보이지 않을 때 호출해 발열·전력을 줄인다). 안전/가역.
-  Future<void> pausePreview() async {
+  Future<void> pausePreview() => _serialized(() async {
     final c = _controller;
     if (c != null && c.value.isInitialized && !c.value.isPreviewPaused) {
       await c.pausePreview();
     }
-  }
+  });
 
-  Future<void> resumePreview() async {
+  Future<void> resumePreview() => _serialized(() async {
     final c = _controller;
     if (c != null && c.value.isInitialized && c.value.isPreviewPaused) {
       await c.resumePreview();
     }
-  }
+  });
 
   /// 촬영 후 사진첩(갤러리)에 저장한다. 저장 성공 여부를 반환.
   /// 프리뷰가 센서 전체 프레임을 그대로(contain) 보여주므로, 저장 사진도
@@ -181,9 +197,10 @@ class CameraService {
     return file.path;
   }
 
-  Future<void> dispose() async {
+  Future<void> dispose() => _serialized(() async {
     await stopStream();
-    await _controller?.dispose();
-    _controller = null;
-  }
+    final c = _controller;
+    _controller = null; // 이후 도착하는 pause/resume이 no-op이 되도록 먼저 비운다.
+    await c?.dispose();
+  });
 }
