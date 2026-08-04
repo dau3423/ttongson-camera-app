@@ -62,11 +62,15 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     setState(() => _phase = _Phase.connecting);
     try {
       final welcome = await _client.connect(payload);
+      if (!mounted) return;
+      await _msgSub?.cancel();
+      await _frameSub?.cancel();
       _reconnect.reset();
       _msgSub = _client.messages.listen(_onMessage);
-      _frameSub = _client.frames.listen(
-        (f) => setState(() => _frame = Uint8List.fromList(f)),
-      );
+      _frameSub = _client.frames.listen((f) {
+        if (!mounted) return;
+        setState(() => _frame = Uint8List.fromList(f));
+      });
       _client.onDisconnected = _onDisconnected;
       setState(() {
         _welcome = welcome;
@@ -77,7 +81,8 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       _fail(switch (e.reason) {
         'bad-token' => 'QR이 만료됐어요. 촬영 폰에서 QR을 다시 띄워 스캔해 주세요.',
         'busy' => '이미 다른 리모컨이 연결돼 있어요.',
-        _ => '앱 버전이 서로 달라요. 두 폰 모두 최신으로 업데이트해 주세요.',
+        'version' => '연결이 거부됐어요. 두 폰의 앱을 최신으로 업데이트해 주세요.',
+        _ => '연결이 거부됐어요. 두 폰의 앱을 최신으로 업데이트해 주세요.',
       });
     } catch (_) {
       _fail('연결하지 못했어요. 두 폰이 같은 Wi-Fi(또는 핫스팟)에 있는지 확인해 주세요.');
@@ -107,6 +112,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
   }
 
   void _onMessage(RemoteMessage m) {
+    if (!mounted) return;
     switch (m) {
       case StateMessage():
         setState(() {
