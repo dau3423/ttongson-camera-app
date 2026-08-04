@@ -74,6 +74,7 @@ class HostController {
         .then((jpeg) {
           server.sendFrame(jpeg);
         })
+        .catchError((_) {})
         .whenComplete(() {
           _encoding = false;
         });

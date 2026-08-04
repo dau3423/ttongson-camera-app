@@ -37,9 +37,26 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
   StreamSubscription<List<int>>? _frameSub;
   Timer? _zoomDebounce;
 
+  // I1: 셔터 in-flight 추적 — 전송 후 결과 수신 전까지 버튼 비활성화.
+  int? _pendingShutterSeq;
+
+  // I1: 로컬 카운트다운 타이머 및 현재 표시 숫자.
+  Timer? _countdownTimer;
+  int? _countdownValue;
+
+  // I2: 수신 워치독 — 마지막 수신 시각 추적.
+  DateTime _lastRxAt = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _watchdogTimer;
+
+  // I3: 재접속 딜레이 타이머 필드로 관리.
+  Timer? _reconnectTimer;
+
   @override
   void dispose() {
     _zoomDebounce?.cancel();
+    _countdownTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _reconnectTimer?.cancel();
     _msgSub?.cancel();
     _frameSub?.cancel();
     _client.close();
@@ -58,7 +75,10 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     }
   }
 
-  Future<void> _connect(PairingPayload payload) async {
+  Future<void> _connect(
+    PairingPayload payload, {
+    bool viaReconnect = false,
+  }) async {
     setState(() => _phase = _Phase.connecting);
     try {
       final welcome = await _client.connect(payload);
@@ -66,12 +86,15 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       await _msgSub?.cancel();
       await _frameSub?.cancel();
       _reconnect.reset();
+      _lastRxAt = DateTime.now();
       _msgSub = _client.messages.listen(_onMessage);
       _frameSub = _client.frames.listen((f) {
         if (!mounted) return;
+        _lastRxAt = DateTime.now(); // I2: 프레임 수신 시각 갱신
         setState(() => _frame = Uint8List.fromList(f));
       });
       _client.onDisconnected = _onDisconnected;
+      _startWatchdog(); // I2: 연결 직후 워치독 시작
       setState(() {
         _welcome = welcome;
         _zoom = welcome.zoom;
@@ -85,12 +108,36 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
         _ => '연결이 거부됐어요. 두 폰의 앱을 최신으로 업데이트해 주세요.',
       });
     } catch (_) {
-      _fail('연결하지 못했어요. 두 폰이 같은 Wi-Fi(또는 핫스팟)에 있는지 확인해 주세요.');
+      // I3(c): viaReconnect이고 정책이 소진되지 않았으면 재접속 경로로 처리.
+      if (viaReconnect) {
+        _onDisconnected();
+      } else {
+        _fail('연결하지 못했어요. 두 폰이 같은 Wi-Fi(또는 핫스팟)에 있는지 확인해 주세요.');
+      }
     }
   }
 
+  // I2: 수신 워치독 — 5초 침묵이면 연결 끊김으로 처리.
+  void _startWatchdog() {
+    _watchdogTimer?.cancel();
+    _watchdogTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_phase != _Phase.connected) return;
+      if (DateTime.now().difference(_lastRxAt).inSeconds > 5) {
+        _client.close();
+        _onDisconnected();
+      }
+    });
+  }
+
   void _onDisconnected() {
+    // I3(b): 이미 connecting 상태면 중복 진입 방지.
+    if (_phase == _Phase.connecting) return;
     if (!mounted) return;
+    _watchdogTimer?.cancel();
+    _cancelCountdown(); // 카운트다운도 정리
+    setState(() {
+      _pendingShutterSeq = null; // I1: 셔터 in-flight 초기화
+    });
     final delay = _reconnect.next();
     final payload = _payload;
     if (delay == null || payload == null) {
@@ -98,13 +145,16 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       return;
     }
     setState(() => _phase = _Phase.connecting);
-    Timer(delay, () {
-      if (mounted) _connect(payload);
+    // I3(a): 기존 재접속 타이머 취소 후 새로 예약.
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(delay, () {
+      if (mounted) _connect(payload, viaReconnect: true);
     });
   }
 
   void _fail(String message) {
     if (!mounted) return;
+    _watchdogTimer?.cancel();
     setState(() => _phase = _Phase.failed);
     ScaffoldMessenger.of(
       context,
@@ -113,6 +163,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
 
   void _onMessage(RemoteMessage m) {
     if (!mounted) return;
+    _lastRxAt = DateTime.now(); // I2: 메시지 수신 시각 갱신
     switch (m) {
       case StateMessage():
         setState(() {
@@ -120,6 +171,11 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
           _zoom = m.zoom;
         });
       case ResultMessage():
+        // I1: 셔터 결과 수신 — seq 일치 시 in-flight 해제 + 카운트다운 정리.
+        if (_pendingShutterSeq == m.seq) {
+          _cancelCountdown();
+          setState(() => _pendingShutterSeq = null);
+        }
         if (m.thumbBase64 != null) {
           final thumb = base64Decode(m.thumbBase64!);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -144,8 +200,35 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     }
   }
 
-  void _sendShutter() =>
-      _client.send(ShutterMessage(seq: ++_seq, timerSeconds: _timerSeconds));
+  // I1: 카운트다운 취소 헬퍼.
+  void _cancelCountdown() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+    if (mounted) setState(() => _countdownValue = null);
+  }
+
+  void _sendShutter() {
+    final seq = ++_seq;
+    _client.send(ShutterMessage(seq: seq, timerSeconds: _timerSeconds));
+    setState(() => _pendingShutterSeq = seq);
+
+    // I1(b): timerSeconds > 0이면 로컬 카운트다운 오버레이 표시.
+    if (_timerSeconds > 0) {
+      _countdownTimer?.cancel();
+      setState(() => _countdownValue = _timerSeconds);
+      var remaining = _timerSeconds;
+      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+        remaining--;
+        if (!mounted || remaining <= 0) {
+          t.cancel();
+          _countdownTimer = null;
+          if (mounted) setState(() => _countdownValue = null);
+        } else {
+          setState(() => _countdownValue = remaining);
+        }
+      });
+    }
+  }
 
   void _sendSwitchCamera() => _client.send(SwitchCameraMessage(seq: ++_seq));
 
@@ -178,6 +261,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
 
   Widget _controls() {
     final welcome = _welcome!;
+    final shutterEnabled = _pendingShutterSeq == null; // I1: in-flight이면 비활성
     return Column(
       children: [
         Expanded(
@@ -220,6 +304,21 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
                       ),
                     ),
                   ),
+                  // I1(b): 로컬 카운트다운 오버레이 (큰 숫자, 가운데).
+                  if (_countdownValue != null)
+                    Center(
+                      child: Text(
+                        '$_countdownValue',
+                        style: const TextStyle(
+                          fontSize: 96,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(blurRadius: 24, color: Colors.black),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -248,15 +347,19 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _timerButton(),
+              // I1: shutterEnabled가 false면 비활성(onTap null).
               GestureDetector(
-                onTap: _sendShutter,
+                onTap: shutterEnabled ? _sendShutter : null,
                 child: Container(
                   width: 76,
                   height: 76,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: Colors.white24,
+                    border: Border.all(
+                      color: shutterEnabled ? Colors.white : Colors.white38,
+                      width: 4,
+                    ),
+                    color: shutterEnabled ? Colors.white24 : Colors.white10,
                   ),
                 ),
               ),
