@@ -28,7 +28,12 @@ void main() {
     server = RemoteServer(token: 'good', welcomeBuilder: _welcome);
     final port = await server.start();
     final ws = await _connect(port);
-    ws.add(const HelloMessage(token: 'good', protocolVersion: 1).encode());
+    ws.add(
+      const HelloMessage(
+        token: 'good',
+        protocolVersion: remoteProtocolVersion,
+      ).encode(),
+    );
     final first = RemoteMessage.decode(await ws.first as String);
     expect(first, isA<WelcomeMessage>());
     expect(server.hasClient, isTrue);
@@ -49,7 +54,12 @@ void main() {
       onDone: closed.complete,
       onError: closed.completeError,
     );
-    ws.add(const HelloMessage(token: 'evil', protocolVersion: 1).encode());
+    ws.add(
+      const HelloMessage(
+        token: 'evil',
+        protocolVersion: remoteProtocolVersion,
+      ).encode(),
+    );
     await closed.future; // 서버가 reject 후 닫음
     expect((firstMsg as RejectMessage).reason, 'bad-token');
     expect(server.hasClient, isFalse);
@@ -59,10 +69,20 @@ void main() {
     server = RemoteServer(token: 'good', welcomeBuilder: _welcome);
     final port = await server.start();
     final first = await _connect(port);
-    first.add(const HelloMessage(token: 'good', protocolVersion: 1).encode());
+    first.add(
+      const HelloMessage(
+        token: 'good',
+        protocolVersion: remoteProtocolVersion,
+      ).encode(),
+    );
     await first.first; // welcome 소비
     final second = await _connect(port);
-    second.add(const HelloMessage(token: 'good', protocolVersion: 1).encode());
+    second.add(
+      const HelloMessage(
+        token: 'good',
+        protocolVersion: remoteProtocolVersion,
+      ).encode(),
+    );
     final msg = RemoteMessage.decode(await second.first as String);
     expect((msg as RejectMessage).reason, 'busy');
     await first.close();
@@ -76,7 +96,12 @@ void main() {
 
     final ws = await _connect(port);
     final inbox = StreamQueue(ws);
-    ws.add(const HelloMessage(token: 'good', protocolVersion: 1).encode());
+    ws.add(
+      const HelloMessage(
+        token: 'good',
+        protocolVersion: remoteProtocolVersion,
+      ).encode(),
+    );
     await inbox.next; // welcome
 
     ws.add(const ShutterMessage(seq: 1, timerSeconds: 0).encode());

@@ -114,7 +114,15 @@ class RemoteServer {
   /// 최신 프레임을 큐잉한다(전송은 frameInterval 틱마다 최신 것만).
   void sendFrame(List<int> jpeg) => _frames.push(jpeg);
 
-  void sendMessage(RemoteMessage m) => _client?.add(m.encode());
+  void sendMessage(RemoteMessage m) {
+    final client = _client;
+    if (client == null) return;
+    try {
+      client.add(m.encode());
+    } on StateError {
+      // 소켓이 이미 닫혔으면 무시
+    }
+  }
 
   void _flushFrame() {
     final client = _client;
@@ -123,7 +131,13 @@ class RemoteServer {
       return;
     }
     final frame = _frames.take();
-    if (frame != null) client.add(frame);
+    if (frame != null) {
+      try {
+        client.add(frame);
+      } on StateError {
+        // 소켓이 이미 닫혔으면 무시
+      }
+    }
   }
 
   void _pingTick() {
@@ -135,15 +149,24 @@ class RemoteServer {
       return;
     }
     _health.onPingSent();
-    client.add(const PingMessage().encode());
+    try {
+      client.add(const PingMessage().encode());
+    } on StateError {
+      // 소켓이 이미 닫혔으면 무시
+    }
   }
 
   Future<void> stop() async {
     _frameTimer?.cancel();
     _pingTimer?.cancel();
-    await _client?.close();
-    _client = null;
-    await _http?.close(force: true);
-    _http = null;
+    final client = _client;
+    _client = null; // 먼저 null화: 진행 중인 tick이 add를 시도하지 않도록
+    try {
+      await client?.close();
+      if (client != null) onClientChanged?.call(false);
+    } finally {
+      await _http?.close(force: true);
+      _http = null;
+    }
   }
 }
