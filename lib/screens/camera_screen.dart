@@ -70,6 +70,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   HostController? _remoteHost;
   bool _remoteConnected = false;
+  bool _qrScreenOpen = false; // QR 대기 화면이 열려 있는 동안만 true
   int? _remoteCountdown; // 원격 타이머 카운트다운 표시(null이면 숨김)
   DateTime _lastStateSentAt = DateTime.fromMillisecondsSinceEpoch(0);
   StreamSubscription<AccelerometerEvent>? _accelSub;
@@ -701,12 +702,14 @@ class _CameraScreenState extends State<CameraScreen>
     server.onClientChanged = (connected) {
       if (!mounted) return;
       setState(() => _remoteConnected = connected);
-      if (connected && Navigator.canPop(context)) {
+      if (connected && _qrScreenOpen && Navigator.canPop(context)) {
         Navigator.pop(context); // QR 대기 화면 닫기
       }
     };
-    final port = await server.start();
+    final port = await _startServerSafely(server);
+    if (port == null) return;
     if (!mounted) return;
+    _qrScreenOpen = true;
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -715,8 +718,24 @@ class _CameraScreenState extends State<CameraScreen>
         ),
       ),
     );
+    _qrScreenOpen = false;
     // QR 화면에서 뒤로가기로 나왔고 연결도 안 됐으면 서버 정리
     if (!_remoteConnected) await _stopHost();
+  }
+
+  /// server.start()를 실행하고 실패 시 정리 후 null 반환.
+  Future<int?> _startServerSafely(RemoteServer server) async {
+    try {
+      return await server.start();
+    } catch (e) {
+      await _stopHost();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('리모컨 연결 준비에 실패했어요. 잠시 후 다시 시도해 주세요.')),
+        );
+      }
+      return null;
+    }
   }
 
   Future<void> _stopHost() async {
@@ -729,12 +748,15 @@ class _CameraScreenState extends State<CameraScreen>
   /// 원격 셔터: 카운트다운 → 촬영(+인물 블러) → 갤러리 저장 → 파일 경로 반환.
   /// 호스트 화면 전환 없음(피사체가 보는 화면 유지).
   Future<String?> _remoteCapture(int timerSeconds) async {
-    for (var i = timerSeconds; i > 0; i--) {
-      if (!mounted) return null;
-      setState(() => _remoteCountdown = i);
-      await Future.delayed(const Duration(seconds: 1));
+    try {
+      for (var i = timerSeconds; i > 0; i--) {
+        if (!mounted) return null;
+        setState(() => _remoteCountdown = i);
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    } finally {
+      if (mounted) setState(() => _remoteCountdown = null);
     }
-    if (mounted) setState(() => _remoteCountdown = null);
     _triggerCaptureFeedback();
     try {
       final String shotPath;
