@@ -1,8 +1,10 @@
 import '../models/person_box.dart';
 
+enum HeadroomHint { none, raiseCamera, lowerCamera }
+
 class HeadroomAdvice {
   final double ratio;
-  final String hint;
+  final HeadroomHint hint;
   const HeadroomAdvice({required this.ratio, required this.hint});
 }
 
@@ -13,13 +15,13 @@ HeadroomAdvice computeHeadroom(
   double idealMax = 0.15,
 }) {
   final ratio = person.top;
-  String hint;
+  final HeadroomHint hint;
   if (ratio < idealMin) {
-    hint = '카메라를 살짝 올리세요';
+    hint = HeadroomHint.raiseCamera;
   } else if (ratio > idealMax) {
-    hint = '카메라를 살짝 내리세요';
+    hint = HeadroomHint.lowerCamera;
   } else {
-    hint = '';
+    hint = HeadroomHint.none;
   }
   return HeadroomAdvice(ratio: ratio, hint: hint);
 }

@@ -9,16 +9,16 @@ void main() {
   test('머리 공간이 너무 좁으면 카메라를 올리라고 안내', () {
     final a = computeHeadroom(boxWithTop(0.01));
     expect(a.ratio, closeTo(0.01, 0.0001));
-    expect(a.hint, '카메라를 살짝 올리세요');
+    expect(a.hint, HeadroomHint.raiseCamera);
   });
 
   test('머리 공간이 너무 넓으면 카메라를 내리라고 안내', () {
     final a = computeHeadroom(boxWithTop(0.30));
-    expect(a.hint, '카메라를 살짝 내리세요');
+    expect(a.hint, HeadroomHint.lowerCamera);
   });
 
   test('적정 범위면 힌트 없음', () {
     final a = computeHeadroom(boxWithTop(0.10));
-    expect(a.hint, '');
+    expect(a.hint, HeadroomHint.none);
   });
 }
