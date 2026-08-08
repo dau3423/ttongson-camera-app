@@ -164,6 +164,7 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				A1B2C3D4E5F601230000BB00 /* InfoPlist.strings */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
