@@ -13,16 +13,6 @@ class CropWarning {
   });
 
   bool get any => top || bottom || left || right;
-
-  String get message {
-    if (!any) return '';
-    final sides = <String>[];
-    if (top) sides.add('위');
-    if (bottom) sides.add('아래');
-    if (left) sides.add('왼쪽');
-    if (right) sides.add('오른쪽');
-    return '${sides.join('/')}이(가) 잘렸어요';
-  }
 }
 
 /// 인물 경계가 프레임 가장자리에 닿아 잘렸는지 감지.
