@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
+enum TiltHint { none, lowerLeft, lowerRight }
+
 class TiltInfo {
   final double rollDegrees;
   final bool isLevel;
-  final String hint;
+  final TiltHint hint;
   const TiltInfo({
     required this.rollDegrees,
     required this.isLevel,
@@ -20,13 +22,13 @@ TiltInfo computeTilt(
 }) {
   final roll = math.atan2(accelX, accelY) * 180 / math.pi;
   final level = roll.abs() <= levelToleranceDeg;
-  String hint;
+  final TiltHint hint;
   if (level) {
-    hint = '';
+    hint = TiltHint.none;
   } else if (roll > 0) {
-    hint = '왼쪽을 내리세요';
+    hint = TiltHint.lowerLeft;
   } else {
-    hint = '오른쪽을 내리세요';
+    hint = TiltHint.lowerRight;
   }
   return TiltInfo(rollDegrees: roll, isLevel: level, hint: hint);
 }
