@@ -88,11 +88,11 @@ flutter_launcher_icons:
 flutter_native_splash:
   color: "#0B0C0E"
   image: assets/images/splash_logo.png
-  branding: assets/images/splash_branding_800x200.png
+  branding: assets/images/splash_branding_800x320.png
   android_12:
     image: assets/images/splash_icon_1152.png
     color: "#0B0C0E"
-    branding: assets/images/splash_branding_800x200.png
+    branding: assets/images/splash_branding_800x320.png
   android: true
   ios: true
   fullscreen: true
