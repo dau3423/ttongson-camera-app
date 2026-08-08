@@ -1,14 +1,18 @@
 import 'dart:math' as math;
 
+enum AngleHint { none, eyeLevelUp, eyeLevelDown, frontalUp, frontalDown }
+
+enum ZoomHint { none, closer, farther }
+
 class AngleAdvice {
   final double pitchDegrees;
-  final String hint;
+  final AngleHint hint;
   const AngleAdvice({required this.pitchDegrees, required this.hint});
 }
 
 class ZoomAdvice {
   final double subjectRatio;
-  final String hint;
+  final ZoomHint hint;
   const ZoomAdvice({required this.subjectRatio, required this.hint});
 }
 
@@ -26,18 +30,18 @@ AngleAdvice computeAngle(
   AngleGuide guide = AngleGuide.none,
   double tolerance = 10,
 }) {
-  String hint = '';
+  AngleHint hint = AngleHint.none;
   if (guide == AngleGuide.eyeLevel) {
     if (pitchDegrees > tolerance) {
-      hint = '카메라를 눈높이로 내리세요';
+      hint = AngleHint.eyeLevelDown;
     } else if (pitchDegrees < -tolerance) {
-      hint = '카메라를 눈높이로 올리세요';
+      hint = AngleHint.eyeLevelUp;
     }
   } else if (guide == AngleGuide.frontal) {
     if (pitchDegrees > tolerance) {
-      hint = '카메라를 수평으로 내리세요';
+      hint = AngleHint.frontalDown;
     } else if (pitchDegrees < -tolerance) {
-      hint = '카메라를 수평으로 올리세요';
+      hint = AngleHint.frontalUp;
     }
   }
   return AngleAdvice(pitchDegrees: pitchDegrees, hint: hint);
@@ -49,13 +53,13 @@ ZoomAdvice computeZoom(
   double idealMin = 0.5,
   double idealMax = 0.8,
 }) {
-  String hint;
+  final ZoomHint hint;
   if (subjectHeightRatio < idealMin) {
-    hint = '조금 다가가거나 확대하세요';
+    hint = ZoomHint.closer;
   } else if (subjectHeightRatio > idealMax) {
-    hint = '조금 물러나거나 축소하세요';
+    hint = ZoomHint.farther;
   } else {
-    hint = '';
+    hint = ZoomHint.none;
   }
   return ZoomAdvice(subjectRatio: subjectHeightRatio, hint: hint);
 }
