@@ -7,7 +7,11 @@ class ThirdsAlignment {
   final double targetY;
   final double distance;
   final double score;
-  final String hint;
+  final bool isAligned;
+  final bool moveRight;
+  final bool moveLeft;
+  final bool moveUp;
+  final bool moveDown;
   const ThirdsAlignment({
     required this.currentX,
     required this.currentY,
@@ -15,7 +19,11 @@ class ThirdsAlignment {
     required this.targetY,
     required this.distance,
     required this.score,
-    required this.hint,
+    required this.isAligned,
+    required this.moveRight,
+    required this.moveLeft,
+    required this.moveUp,
+    required this.moveDown,
   });
 }
 
@@ -41,18 +49,11 @@ ThirdsAlignment computeThirds(
   final score = 1.0 - math.min(bestD / 0.4, 1.0);
   final dx = bestX - cx;
   final dy = bestY - cy;
-  final parts = <String>[];
-  if (dx > alignedTolerance) {
-    parts.add('오른쪽으로');
-  } else if (dx < -alignedTolerance) {
-    parts.add('왼쪽으로');
-  }
-  if (dy > alignedTolerance) {
-    parts.add('아래로');
-  } else if (dy < -alignedTolerance) {
-    parts.add('위로');
-  }
-  final hint = parts.isEmpty ? '좋아요' : parts.join(' · ');
+  final moveRight = dx > alignedTolerance;
+  final moveLeft = dx < -alignedTolerance;
+  final moveDown = dy > alignedTolerance;
+  final moveUp = dy < -alignedTolerance;
+  final isAligned = !moveRight && !moveLeft && !moveUp && !moveDown;
   return ThirdsAlignment(
     currentX: cx,
     currentY: cy,
@@ -60,6 +61,10 @@ ThirdsAlignment computeThirds(
     targetY: bestY,
     distance: bestD,
     score: score,
-    hint: hint,
+    isAligned: isAligned,
+    moveRight: moveRight,
+    moveLeft: moveLeft,
+    moveUp: moveUp,
+    moveDown: moveDown,
   );
 }
