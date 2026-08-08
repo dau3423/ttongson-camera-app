@@ -24,20 +24,4 @@ class GuideMetrics {
     this.crop,
     this.zoom,
   });
-
-  /// 사용자에게 보여줄 활성 힌트 목록(우선순위 순, 빈 문자열 제외).
-  List<String> get activeHints {
-    final out = <String>[];
-    void add(String? s) {
-      if (s != null && s.isNotEmpty) out.add(s);
-    }
-
-    add(tilt.hint);
-    add(crop?.message);
-    add(headroom?.hint);
-    add(thirds?.hint == '좋아요' ? '' : thirds?.hint);
-    add(angle.hint);
-    add(zoom?.hint);
-    return out;
-  }
 }

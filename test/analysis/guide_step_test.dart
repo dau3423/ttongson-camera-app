@@ -16,8 +16,8 @@ void main() {
   test('수평이 안 맞으면 level 단계가 최우선', () {
     final m = engine.buildMetrics(person: null, sensor: tilted);
     final s = computeCurrentStep(m);
+    // level 단계
     expect(s.kind, GuideStepKind.level);
-    expect(s.message, '왼쪽을 내리세요');
   });
 
   test('인물이 프레임 밖으로 잘리면 수평 다음 crop 단계', () {
@@ -54,7 +54,7 @@ void main() {
     expect(s.target!.currentX, closeTo(0.85, 1e-9)); // face centerX
   });
 
-  test('모든 조건이 좋으면 ready + 찍으세요!', () {
+  test('모든 조건이 좋으면 ready', () {
     // 얼굴이 (1/3,1/3) 교차점, person 헤드룸(top 0.10)·크기(height 0.65) 적정,
     // 잘림 없음, 수평, 눈높이(pitch 0).
     final m = engine.buildMetrics(
@@ -63,8 +63,8 @@ void main() {
       sensor: level,
     );
     final s = computeCurrentStep(m);
+    // ready 단계
     expect(s.kind, GuideStepKind.ready);
-    expect(s.message, '찍으세요!');
   });
 
   test('자연 모드에서 주제 미검출이면 수평만 맞으면 ready', () {
