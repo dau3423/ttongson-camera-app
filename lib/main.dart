@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import 'community/kakao_config.dart';
 import 'community/theme/community_theme.dart';
 import 'community/theme/community_theme_controller.dart';
@@ -47,10 +48,18 @@ class TtongsonApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '똥손카메라',
+      onGenerateTitle: (ctx) => AppLocalizations.of(ctx)!.appTitle,
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      // 카메라 화면이 최상위인지 감지해 스트림을 일시중단/재개(발열 감소)한다.
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (locale, supported) {
+        if (locale == null) return const Locale('ko');
+        for (final s in supported) {
+          if (s.languageCode == locale.languageCode) return s;
+        }
+        return const Locale('ko');
+      },
       navigatorObservers: [routeObserver],
       builder: (context, child) => CommunityTheme(
         controller: themeController,
