@@ -137,7 +137,7 @@ class GuidePainter extends CustomPainter {
   }
 
   void _paintPosition(Canvas canvas, Size size, ThirdsAlignment t) {
-    final aligned = t.hint == '좋아요';
+    final aligned = t.isAligned;
     final tgt = Offset(t.targetX * size.width, t.targetY * size.height);
     final color = aligned ? _good : _amber;
     // 목표 링 + 중앙 점

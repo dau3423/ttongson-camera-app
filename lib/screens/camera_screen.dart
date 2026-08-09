@@ -21,6 +21,8 @@ import '../camera/gallery_launcher.dart';
 import '../camera/person_segmenter.dart';
 import '../camera/portrait_blur.dart';
 import '../overlay/guide_overlay.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
+import '../l10n/guide_text.dart';
 import '../overlay/mode_selector.dart';
 import '../theme/app_colors.dart';
 import '../community/auth_service.dart';
@@ -89,8 +91,8 @@ class _CameraScreenState extends State<CameraScreen>
 
   SensorSample _sensor = const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0);
   GuideMetrics _metrics = GuideMetrics(
-    tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
-    angle: const AngleAdvice(pitchDegrees: 0, hint: ''),
+    tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: TiltHint.none),
+    angle: const AngleAdvice(pitchDegrees: 0, hint: AngleHint.none),
   );
   bool _ready = false;
   bool _showGrid = true;
@@ -113,7 +115,7 @@ class _CameraScreenState extends State<CameraScreen>
   ui.Image? _maskImage; // 프리뷰용 배경 알파 마스크(세운 좌표계)
   bool _segmenting = false;
 
-  GuideStep _step = const GuideStep(kind: GuideStepKind.level, message: '');
+  GuideStep _step = const GuideStep(kind: GuideStepKind.level);
   GuideStepKind? _prevStepKind;
 
   static const _stepOrder = <GuideStepKind>[
@@ -207,9 +209,11 @@ class _CameraScreenState extends State<CameraScreen>
         final stateNow = DateTime.now();
         if (stateNow.difference(_lastStateSentAt).inMilliseconds >= 500) {
           _lastStateSentAt = stateNow;
+          // Build localized hints list for remote state.
+          // (context is not available here; use ko locale as wire format for now)
           host.pushState(
             StateMessage(
-              hints: _metrics.activeHints,
+              hints: const [],
               zoom: _camera.currentZoom,
               isFront: _camera.isFront,
               mode: _mode.wire,
@@ -289,11 +293,15 @@ class _CameraScreenState extends State<CameraScreen>
       _advice = null; // 이전 추천/시각 가이드 무효화
       // 이전 대상 박스 즉시 제거(다음 프레임까지 잔상 방지).
       _metrics = GuideMetrics(
-        tilt: const TiltInfo(rollDegrees: 0, isLevel: true, hint: ''),
-        angle: const AngleAdvice(pitchDegrees: 0, hint: ''),
+        tilt: const TiltInfo(
+          rollDegrees: 0,
+          isLevel: true,
+          hint: TiltHint.none,
+        ),
+        angle: const AngleAdvice(pitchDegrees: 0, hint: AngleHint.none),
       );
       _prevStepKind = null;
-      _step = const GuideStep(kind: GuideStepKind.level, message: '');
+      _step = const GuideStep(kind: GuideStepKind.level);
       // 인물 모드가 아니면 배경흐림 마스크·포즈 오버레이 제거(사물/자연은 미지원).
       if (mode != ShootingMode.person) {
         _clearMask();
@@ -891,14 +899,14 @@ class _CameraScreenState extends State<CameraScreen>
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 20),
-            SizedBox(width: 8),
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
             Text(
-              '찍으세요!',
-              style: TextStyle(
+              AppLocalizations.of(context)!.guideReady,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -1090,8 +1098,10 @@ class _CameraScreenState extends State<CameraScreen>
                       const SizedBox(height: 4),
                       if (_step.kind == GuideStepKind.ready)
                         _readyBadge()
-                      else if (_step.message.isNotEmpty)
-                        _stepPill(_step.message),
+                      else if (_step.kind == GuideStepKind.position)
+                        _stepPill(
+                          stepText(AppLocalizations.of(context)!, _step),
+                        ),
                       if (_remoteHost != null)
                         Container(
                           margin: const EdgeInsets.only(top: 6),
