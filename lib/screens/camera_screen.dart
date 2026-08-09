@@ -209,11 +209,14 @@ class _CameraScreenState extends State<CameraScreen>
         final stateNow = DateTime.now();
         if (stateNow.difference(_lastStateSentAt).inMilliseconds >= 500) {
           _lastStateSentAt = stateNow;
-          // Build localized hints list for remote state.
-          // (context is not available here; use ko locale as wire format for now)
+          // 호스트(이 기기) 로케일로 힌트를 만들어 전송한다. State.context는
+          // 프레임 콜백에서도 유효하므로 mounted 가드 후 사용.
+          final hints = mounted
+              ? activeHintTexts(AppLocalizations.of(context)!, m)
+              : const <String>[];
           host.pushState(
             StateMessage(
-              hints: const [],
+              hints: hints,
               zoom: _camera.currentZoom,
               isFront: _camera.isFront,
               mode: _mode.wire,
