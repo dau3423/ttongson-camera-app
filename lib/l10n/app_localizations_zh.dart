@@ -12,52 +12,52 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => '手残相机';
 
   @override
-  String get guideLevelLowerLeft => '请降低左侧';
+  String get guideLevelLowerLeft => '把左边放低一点';
 
   @override
-  String get guideLevelLowerRight => '请降低右侧';
+  String get guideLevelLowerRight => '把右边放低一点';
 
   @override
-  String get guideHeadroomRaise => '请稍微抬高相机';
+  String get guideHeadroomRaise => '相机稍微抬高一点';
 
   @override
-  String get guideHeadroomLower => '请稍微放低相机';
+  String get guideHeadroomLower => '相机稍微放低一点';
 
   @override
-  String get guideAngleEyeLevelDown => '请将相机向下调至眼平高度';
+  String get guideAngleEyeLevelDown => '相机往下调到眼平高度';
 
   @override
-  String get guideAngleEyeLevelUp => '请将相机向上调至眼平高度';
+  String get guideAngleEyeLevelUp => '相机往上调到眼平高度';
 
   @override
-  String get guideAngleFrontalDown => '请将相机向下调至水平';
+  String get guideAngleFrontalDown => '相机往下调至水平';
 
   @override
-  String get guideAngleFrontalUp => '请将相机向上调至水平';
+  String get guideAngleFrontalUp => '相机往上调至水平';
 
   @override
-  String get guideZoomCloser => '请靠近一点或放大';
+  String get guideZoomCloser => '靠近一点或放大';
 
   @override
-  String get guideZoomFarther => '请退后一点或缩小';
+  String get guideZoomFarther => '退后一点或缩小';
 
   @override
-  String get guideMoveRight => '向右';
+  String get guideMoveRight => '右';
 
   @override
-  String get guideMoveLeft => '向左';
+  String get guideMoveLeft => '左';
 
   @override
-  String get guideMoveUp => '向上';
+  String get guideMoveUp => '上';
 
   @override
-  String get guideMoveDown => '向下';
+  String get guideMoveDown => '下';
 
   @override
   String get guideMoveSeparator => ' · ';
 
   @override
-  String get guideMovePrompt => '移到这里';
+  String get guideMovePrompt => '往这边移';
 
   @override
   String get guideReady => '拍吧！';
@@ -79,7 +79,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String cropCut(String sides) {
-    return '$sides被截掉了';
+    return '$sides被切到了';
   }
 
   @override
@@ -92,6 +92,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonRetry => '重试';
 
   @override
+  String get commonDelete => '删除';
+
+  @override
   String get cameraSwitchFailed => '切换相机失败';
 
   @override
@@ -99,73 +102,73 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String saveFailed(String error) {
-    return '保存失败: $error';
+    return '保存失败：$error';
   }
 
   @override
   String get compositionConsentTitle => '构图推荐说明';
 
   @override
-  String get compositionConsentBody => '请求推荐时，将把当前画面发送至分析服务器。图像不会被保存。';
+  String get compositionConsentBody => '请求推荐时，会将当前画面发送至分析服务器，图像不会被留存。';
 
   @override
-  String get suggestFailed => '未能获取推荐。请重试。';
+  String get suggestFailed => '获取推荐失败，请重试。';
 
   @override
-  String get posesLoadFailed => '无法加载姿势';
+  String get posesLoadFailed => '加载姿势失败';
 
   @override
   String get aiConsentTitle => 'AI推荐说明';
 
   @override
-  String get aiConsentBody => '请求推荐时，将把当前画面发送至分析服务器。图像不会被保存。';
+  String get aiConsentBody => '请求推荐时，会将当前画面发送至分析服务器，图像不会被留存。';
 
   @override
   String cameraRestartFailedDetail(String error) {
-    return '无法重启相机: $error';
+    return '相机重启失败：$error';
   }
 
   @override
-  String get wifiNotConnected => '未连接Wi-Fi。请连接到同一Wi-Fi或热点。';
+  String get wifiNotConnected => '未连接Wi-Fi，请连接到同一Wi-Fi或热点。';
 
   @override
-  String get remotePrepFailed => '遥控连接准备失败。请稍后重试。';
+  String get remotePrepFailed => '遥控连接准备失败，请稍后重试。';
 
   @override
   String get remoteConnected => '遥控已连接';
 
   @override
-  String get remoteWaiting => '等待遥控';
+  String get remoteWaiting => '等待遥控中';
 
   @override
   String get captureAiEnhanceConsentTitle => 'AI修图说明';
 
   @override
-  String get captureAiEnhanceConsentBody => '修图时，将把一张照片发送至分析服务器。图像不会被保存。';
+  String get captureAiEnhanceConsentBody => 'AI修图时，会将一张照片发送至分析服务器，图像不会被留存。';
 
   @override
-  String get captureEnhanceFailed => '此照片无法修图';
+  String get captureEnhanceFailed => '这张照片无法修图';
 
   @override
-  String get captureAiEnhanceFailed => '未能获取AI改善结果。保持预设效果。';
+  String get captureAiEnhanceFailed => 'AI优化失败，保持原有滤镜。';
 
   @override
   String get captureSaved => '已保存';
 
   @override
-  String get captureSavePermissionFailed => '保存失败 — 请检查权限';
+  String get captureSavePermissionFailed => '保存失败——请检查权限';
 
   @override
-  String get captureMoodTitle => '今日心情';
+  String get captureMoodTitle => '今日氛围';
 
   @override
-  String get captureAiEnhanceTooltip => '用AI美化（根据此照片调整）';
+  String get captureAiEnhanceTooltip => 'AI美化（针对这张照片）';
 
   @override
   String get captureSaveButton => '保存';
 
   @override
-  String get captureNameHint => 'AI将为您命名';
+  String get captureNameHint => '让AI给它取个名字';
 
   @override
   String get captureOriginalLabel => '原图';
@@ -174,7 +177,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authWelcomeBack => '欢迎回来';
 
   @override
-  String get authLoginSubtitle => '新手也能像专业一样 · 登录后继续拍摄';
+  String get authLoginSubtitle => '手残也能拍出大片 · 登录后继续拍';
 
   @override
   String get authEmailLabel => '邮箱';
@@ -189,7 +192,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authOrDivider => '或';
 
   @override
-  String get authNoAccount => '还没有账户？ ';
+  String get authNoAccount => '还没有账号？ ';
 
   @override
   String get authSignupLink => '注册';
@@ -210,37 +213,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authWrongCredential => '邮箱或密码不正确。';
 
   @override
-  String get authAccountDisabled => '此账户已被禁用。';
+  String get authAccountDisabled => '此账号已被禁用。';
 
   @override
-  String get authWithdrawnTitle => '已注销账户';
+  String get authWithdrawnTitle => '该账号已注销';
 
   @override
-  String get authWithdrawnBody => '此账户已注销。是否重新注册？';
+  String get authWithdrawnBody => '此账号已注销，要重新注册吗？';
 
   @override
   String get authRejoin => '重新注册';
 
   @override
-  String get authLoginSuccess => '欢迎！';
+  String get authLoginSuccess => '欢迎回来！';
 
   @override
-  String get authLoginSuccessSubtitle => '准备开始拍摄了吗？';
+  String get authLoginSuccessSubtitle => '开始拍摄吧？';
 
   @override
-  String get authLoginSuccessCta => '去拍摄';
+  String get authLoginSuccessCta => '去拍照';
 
   @override
   String get authSignupTitle => '注册';
 
   @override
-  String get authSignupSubtitle => '只需30秒';
+  String get authSignupSubtitle => '30秒搞定';
 
   @override
   String get authNicknameLabel => '昵称';
 
   @override
-  String get authNicknameHint => '摄影新星';
+  String get authNicknameHint => '手残逆袭者';
 
   @override
   String get authPasswordHint => '8位以上';
@@ -252,16 +255,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authSignupButton => '注册并开始';
 
   @override
-  String get authHaveAccount => '已有账户？ ';
+  String get authHaveAccount => '已有账号？ ';
 
   @override
   String get authSigninLink => '登录';
 
   @override
+  String get authKakao => 'Kakao';
+
+  @override
   String get authAllFieldsRequired => '请填写所有字段。';
 
   @override
-  String get authNicknameInvalid => '昵称需为1至20个字符。';
+  String get authNicknameInvalid => '昵称需为1~20个字符。';
 
   @override
   String get authWeakPassword => '密码至少需要8个字符。';
@@ -270,10 +276,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authAgreeRequired => '请同意条款。';
 
   @override
-  String get authEmailInUse => '该邮箱已被注册，请登录。';
+  String get authEmailInUse => '该邮箱已被注册，请直接登录。';
 
   @override
-  String get authWeakPasswordServer => '密码太弱，请使用至少8个字符。';
+  String get authWeakPasswordServer => '密码太简单，请使用8位以上字符。';
 
   @override
   String get authSignupFailed => '注册失败，请重试。';
@@ -294,19 +300,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedFilterAll => '全部';
 
   @override
-  String get feedMyAccountTooltip => '我的账户';
+  String get feedMyAccountTooltip => '我的账号';
 
   @override
   String get feedLoadFailed => '加载失败';
 
   @override
-  String get feedEmpty => '暂无帖子，快来分享第一张照片吧！';
+  String get feedEmpty => '还没有帖子，来发第一张照片吧！';
 
   @override
   String get feedReportSuccess => '已举报';
 
   @override
-  String get feedReportFailed => '举报失败（可能已经举报过）';
+  String get feedReportFailed => '举报失败（可能已经举报过了）';
 
   @override
   String get feedDeleteSuccess => '已删除';
@@ -329,7 +335,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get feedBlockBody => '您将看不到该用户的帖子和评论。';
+  String get feedBlockBody => '屏蔽后将看不到该用户的帖子和评论。';
 
   @override
   String get feedBlockConfirm => '屏蔽';
@@ -368,13 +374,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get postCommentDeleteTitle => '删除这条评论？';
 
   @override
-  String get postCommentDeleteBody => '删除的评论无法恢复。';
+  String get postCommentDeleteBody => '删除后无法恢复。';
 
   @override
   String get postCommentSendFailed => '评论发送失败';
 
   @override
-  String get postCommentHint => '留下评论';
+  String get postCommentHint => '来说点什么吧';
 
   @override
   String get postCommentLoadFailed => '加载评论失败';
@@ -386,7 +392,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get postReportSuccess => '已举报';
 
   @override
-  String get postReportFailed => '举报失败（可能已经举报过）';
+  String get postReportFailed => '举报失败（可能已经举报过了）';
 
   @override
   String postBlockTitle(String name) {
@@ -394,7 +400,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get postBlockBody => '您将看不到该用户的帖子和评论。';
+  String get postBlockBody => '屏蔽后将看不到该用户的帖子和评论。';
 
   @override
   String get postBlockSuccess => '已屏蔽';
@@ -412,7 +418,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get postAnonymous => '匿名';
 
   @override
-  String get createPostTitle => '上传照片';
+  String get createPostTitle => '发布照片';
 
   @override
   String get createPostSubmit => '发布';
@@ -422,26 +428,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String createPostCountLabel(int count, int max) {
-    return '$count/$max · 人脸自动遮蔽。点击照片可以编辑。';
+    return '$count/$max · 人脸自动打码，点击照片可编辑。';
   }
 
   @override
   String get createPostModeLabel => '拍摄模式';
 
   @override
-  String get createPostCaptionHint => '留下一条小贴士';
+  String get createPostCaptionHint => '留下一条拍摄小贴士';
 
   @override
   String get createPostUploadFailed => '上传失败';
 
   @override
-  String get accountTitle => '我的个人资料';
+  String get accountTitle => '我的主页';
 
   @override
   String get accountLoadFailed => '加载失败';
 
   @override
-  String get accountNoProfile => '未找到个人资料';
+  String get accountNoProfile => '暂无个人资料';
 
   @override
   String get accountEditNickname => '编辑昵称';
@@ -453,24 +459,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountLoginMethod => '登录方式';
 
   @override
-  String get accountBlockedUsers => '已屏蔽用户';
+  String get accountBlockedUsers => '已屏蔽的用户';
 
   @override
-  String get accountTheme => '显示主题';
+  String get blockedUsersEmpty => '还没有屏蔽任何人';
+
+  @override
+  String get blockedUsersUnblock => '解除屏蔽';
+
+  @override
+  String get accountTheme => '界面主题';
 
   @override
   String get accountLogout => '退出登录';
 
   @override
-  String get accountWithdraw => '注销账户';
+  String get accountWithdraw => '注销账号';
 
   @override
   String accountPhotoChangeFailed(String error) {
-    return '照片更改失败: $error';
+    return '头像更换失败：$error';
   }
 
   @override
-  String get accountNicknameInvalid => '昵称需为1至20个字符';
+  String get accountNicknameInvalid => '昵称需为1~20个字符';
 
   @override
   String get accountNicknameChangeFailed => '昵称修改失败';
@@ -479,25 +491,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountLogoutTitle => '退出登录？';
 
   @override
-  String get accountLogoutBody => '重新登录后可以继续使用。';
+  String get accountLogoutBody => '重新登录后可继续使用。';
 
   @override
   String get accountLogoutConfirm => '退出登录';
 
   @override
-  String get accountWithdrawTitle => '确定要注销账户吗？';
+  String get accountWithdrawTitle => '确定要注销账号吗？';
 
   @override
-  String get accountWithdrawBody => '重新登录可重新注册。';
+  String get accountWithdrawBody => '注销后可以重新登录注册。';
 
   @override
   String get accountWithdrawConfirm => '注销';
 
   @override
-  String get accountWithdrawFailed => '注销账户失败';
+  String get accountWithdrawFailed => '注销失败';
 
   @override
-  String get accountThemeSystem => '系统设置';
+  String get accountThemeSystem => '跟随系统';
 
   @override
   String get accountThemeLight => '浅色';
@@ -506,7 +518,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountThemeDark => '深色';
 
   @override
-  String get accountThemePickerTitle => '显示主题';
+  String get accountThemePickerTitle => '界面主题';
 
   @override
   String get accountEditNicknameTitle => '编辑昵称';
@@ -527,13 +539,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get maskEditorApplyFailed => '遮蔽处理失败';
 
   @override
-  String get maskEditorHint => '拖动添加遮蔽区域 · 点击选择';
+  String get maskEditorHint => '拖动添加遮蔽区域 · 点击选中';
 
   @override
-  String get maskEditorHide => '启用遮蔽';
+  String get maskEditorHide => '开启遮蔽';
 
   @override
-  String get maskEditorShow => '禁用遮蔽';
+  String get maskEditorShow => '关闭遮蔽';
 
   @override
   String get maskEditorDelete => '删除';
@@ -542,13 +554,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportTitle => '请选择举报原因';
 
   @override
-  String get reportReasonSpam => '垃圾广告';
+  String get reportReasonSpam => '垃圾广告/营销';
 
   @override
   String get reportReasonHate => '辱骂/仇恨言论';
 
   @override
-  String get reportReasonInappropriate => '不当图片';
+  String get reportReasonInappropriate => '不当内容';
 
   @override
   String get reportReasonPrivacy => '隐私泄露';
@@ -560,70 +572,70 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteControlTitle => '遥控';
 
   @override
-  String get remoteQrRescan => '重新扫描QR';
+  String get remoteQrRescan => '重新扫码';
 
   @override
-  String get remoteScanPrompt => '扫描拍摄手机上显示的二维码';
+  String get remoteScanPrompt => '扫描拍摄手机上的二维码';
 
   @override
-  String get remoteScanHint => '拍摄手机：相机界面顶部遥控图标 → 用这部手机拍摄';
+  String get remoteScanHint => '拍摄手机：相机界面顶部遥控图标 → 用这台手机拍摄';
 
   @override
-  String get remoteHintReady => '很好';
+  String get remoteHintReady => '棒！';
 
   @override
   String get remoteCaptureSuccess => '咔嚓！已保存到拍摄手机';
 
   @override
-  String get remoteCommandFailed => '命令失败';
+  String get remoteCommandFailed => '指令发送失败';
 
   @override
-  String get remoteTimerOff => '定时器\n关';
+  String get remoteTimerOff => '定时\n关';
 
   @override
   String remoteTimerOn(int sec) {
-    return '定时器\n$sec秒';
+    return '定时\n$sec秒';
   }
 
   @override
-  String get remoteQrExpired => '二维码已过期，请在拍摄手机上重新显示二维码并扫描。';
+  String get remoteQrExpired => '二维码已过期，请在拍摄手机上重新生成并扫码。';
 
   @override
-  String get remoteBusy => '已有其他遥控器连接。';
+  String get remoteBusy => '已有其他遥控器在连接中。';
 
   @override
-  String get remoteVersionMismatch => '连接被拒绝，请将两部手机的应用更新到最新版本。';
+  String get remoteVersionMismatch => '连接被拒绝，请把两台手机的应用都更新到最新版本。';
 
   @override
-  String get remoteConnectFailed => '无法连接，请确认两部手机在同一Wi-Fi（或热点）网络下。';
+  String get remoteConnectFailed => '连接失败，请确认两台手机在同一Wi-Fi（或热点）下。';
 
   @override
-  String get remoteDisconnected => '已断开连接。';
+  String get remoteDisconnected => '连接已断开。';
 
   @override
   String get remotePairingTitle => '遥控拍摄';
 
   @override
-  String get remotePairingHostTitle => '用这部手机拍摄';
+  String get remotePairingHostTitle => '用这台手机拍摄';
 
   @override
-  String get remotePairingHostSubtitle => '放在三脚架上，用另一部手机扫描QR码';
+  String get remotePairingHostSubtitle => '架好三脚架，用另一台手机扫码';
 
   @override
-  String get remotePairingRemoteTitle => '将这部手机用作遥控器';
+  String get remotePairingRemoteTitle => '把这台手机当遥控器';
 
   @override
-  String get remotePairingRemoteSubtitle => '扫描拍摄手机上的QR码进行连接';
+  String get remotePairingRemoteSubtitle => '扫描拍摄手机上的二维码即可连接';
 
   @override
-  String get remotePairingWifiHint => '两部手机必须在同一Wi-Fi（或一部手机的热点）下。';
+  String get remotePairingWifiHint => '两台手机需在同一Wi-Fi（或其中一台的热点）下。';
 
   @override
-  String get remoteHostQrTitle => '等待遥控连接';
+  String get remoteHostQrTitle => '等待遥控器连接';
 
   @override
   String get remoteHostQrInstruction =>
-      '在遥控手机的똥손카메라中，\n点击[遥控拍摄 → 将这部手机用作遥控器]\n并扫描此QR码。';
+      '在遥控手机的手残相机里，\n点击【遥控拍摄 → 把这台手机当遥控器】\n然后扫描这个二维码。';
 
   @override
   String get poseOff => '关闭';
@@ -644,5 +656,5 @@ class AppLocalizationsZh extends AppLocalizations {
   String get poseCategoryFriends => '朋友';
 
   @override
-  String get posePreparing => '姿势准备中';
+  String get posePreparing => '姿势加载中';
 }

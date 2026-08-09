@@ -12,52 +12,52 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'へたっぴカメラ';
 
   @override
-  String get guideLevelLowerLeft => '左側を下げてください';
+  String get guideLevelLowerLeft => '左を下げて';
 
   @override
-  String get guideLevelLowerRight => '右側を下げてください';
+  String get guideLevelLowerRight => '右を下げて';
 
   @override
-  String get guideHeadroomRaise => 'カメラを少し上げてください';
+  String get guideHeadroomRaise => 'カメラを少し上げて';
 
   @override
-  String get guideHeadroomLower => 'カメラを少し下げてください';
+  String get guideHeadroomLower => 'カメラを少し下げて';
 
   @override
-  String get guideAngleEyeLevelDown => 'カメラを目線の高さまで下げてください';
+  String get guideAngleEyeLevelDown => 'カメラを目線まで下げて';
 
   @override
-  String get guideAngleEyeLevelUp => 'カメラを目線の高さまで上げてください';
+  String get guideAngleEyeLevelUp => 'カメラを目線まで上げて';
 
   @override
-  String get guideAngleFrontalDown => 'カメラを水平に下げてください';
+  String get guideAngleFrontalDown => 'カメラを水平に下げて';
 
   @override
-  String get guideAngleFrontalUp => 'カメラを水平に上げてください';
+  String get guideAngleFrontalUp => 'カメラを水平に上げて';
 
   @override
-  String get guideZoomCloser => '少し近づくかズームインしてください';
+  String get guideZoomCloser => '少し近づくかズームしてみて';
 
   @override
-  String get guideZoomFarther => '少し離れるかズームアウトしてください';
+  String get guideZoomFarther => '少し離れるか引いてみて';
 
   @override
-  String get guideMoveRight => '右へ';
+  String get guideMoveRight => '右';
 
   @override
-  String get guideMoveLeft => '左へ';
+  String get guideMoveLeft => '左';
 
   @override
-  String get guideMoveUp => '上へ';
+  String get guideMoveUp => '上';
 
   @override
-  String get guideMoveDown => '下へ';
+  String get guideMoveDown => '下';
 
   @override
   String get guideMoveSeparator => ' · ';
 
   @override
-  String get guideMovePrompt => 'ここに移動してください';
+  String get guideMovePrompt => 'ここに移動して';
 
   @override
   String get guideReady => '撮ろう！';
@@ -79,7 +79,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String cropCut(String sides) {
-    return '$sidesが切れています';
+    return '$sidesが切れてるよ';
   }
 
   @override
@@ -92,10 +92,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
+  String get commonDelete => '削除';
+
+  @override
   String get cameraSwitchFailed => 'カメラの切り替えに失敗しました';
 
   @override
-  String get galleryOpenFailed => '写真を開けません';
+  String get galleryOpenFailed => '写真を開けませんでした';
 
   @override
   String saveFailed(String error) {
@@ -103,23 +106,23 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get compositionConsentTitle => '構図おすすめ案内';
+  String get compositionConsentTitle => '構図おすすめのご案内';
 
   @override
   String get compositionConsentBody =>
-      'おすすめリクエスト時、現在のフレームを分析サーバーに送信します。画像は保存されません。';
+      'おすすめ時に現在のフレーム1枚を分析サーバーへ送信します。画像は保存されません。';
 
   @override
-  String get suggestFailed => 'おすすめを取得できませんでした。もう一度お試しください。';
+  String get suggestFailed => 'おすすめを取得できませんでした。もう一度試してみてください。';
 
   @override
   String get posesLoadFailed => 'ポーズを読み込めませんでした';
 
   @override
-  String get aiConsentTitle => 'AIおすすめ案内';
+  String get aiConsentTitle => 'AIおすすめのご案内';
 
   @override
-  String get aiConsentBody => 'おすすめリクエスト時、現在のフレームを分析サーバーに送信します。画像は保存されません。';
+  String get aiConsentBody => 'おすすめ時に現在のフレーム1枚を分析サーバーへ送信します。画像は保存されません。';
 
   @override
   String cameraRestartFailedDetail(String error) {
@@ -130,19 +133,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wifiNotConnected => 'Wi-Fiに接続されていません。同じWi-Fiまたはホットスポットに接続してください。';
 
   @override
-  String get remotePrepFailed => 'リモコン接続の準備に失敗しました。しばらくしてから再試行してください。';
+  String get remotePrepFailed => 'リモコン接続の準備に失敗しました。少し待ってからもう一度試してみてください。';
 
   @override
-  String get remoteConnected => 'リモコン接続済み';
+  String get remoteConnected => 'リモコン接続中';
 
   @override
   String get remoteWaiting => 'リモコン待機中';
 
   @override
-  String get captureAiEnhanceConsentTitle => 'AI補正案内';
+  String get captureAiEnhanceConsentTitle => 'AI補正のご案内';
 
   @override
-  String get captureAiEnhanceConsentBody => '補正時、写真1枚を分析サーバーに送信します。画像は保存されません。';
+  String get captureAiEnhanceConsentBody =>
+      'AI補正時に写真1枚を分析サーバーへ送信します。画像は保存されません。';
 
   @override
   String get captureEnhanceFailed => 'この写真は補正できません';
@@ -160,25 +164,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String get captureMoodTitle => '今日のムード';
 
   @override
-  String get captureAiEnhanceTooltip => 'AIでもっときれいに（この写真に合わせて）';
+  String get captureAiEnhanceTooltip => 'AIでもっとかわいく（この写真に合わせて）';
 
   @override
   String get captureSaveButton => '保存';
 
   @override
-  String get captureNameHint => 'AIが名前をつけます';
+  String get captureNameHint => 'AIが名前をつけてくれます';
 
   @override
-  String get captureOriginalLabel => '原本';
+  String get captureOriginalLabel => '元の写真';
 
   @override
-  String get authWelcomeBack => 'おかえりなさい';
+  String get authWelcomeBack => 'おかえり！';
 
   @override
-  String get authLoginSubtitle => '初心者でもプロのように · ログインして続きを撮ろう';
+  String get authLoginSubtitle => 'へたっぴでもプロみたいに · ログインして続きを撮ろう';
 
   @override
-  String get authEmailLabel => 'メール';
+  String get authEmailLabel => 'メールアドレス';
 
   @override
   String get authPasswordLabel => 'パスワード';
@@ -205,19 +209,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authLoginFailed => 'ログインに失敗しました。';
 
   @override
-  String get authLoginFailedRetry => 'ログインに失敗しました。もう一度お試しください。';
+  String get authLoginFailedRetry => 'ログインに失敗しました。もう一度試してみてください。';
 
   @override
-  String get authWrongCredential => 'メールアドレスまたはパスワードが正しくありません。';
+  String get authWrongCredential => 'メールアドレスまたはパスワードが違います。';
 
   @override
-  String get authAccountDisabled => 'このアカウントは無効化されています。';
+  String get authAccountDisabled => 'このアカウントは使用できません。';
 
   @override
   String get authWithdrawnTitle => '退会済みのアカウントです';
 
   @override
-  String get authWithdrawnBody => 'このアカウントは退会処理されました。再登録しますか？';
+  String get authWithdrawnBody => 'このアカウントは退会処理済みです。再登録しますか？';
 
   @override
   String get authRejoin => '再登録';
@@ -226,7 +230,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authLoginSuccess => 'ようこそ！';
 
   @override
-  String get authLoginSuccessSubtitle => '撮影を始めましょう！';
+  String get authLoginSuccessSubtitle => 'さっそく撮影してみましょう！';
 
   @override
   String get authLoginSuccessCta => '撮影へ';
@@ -241,7 +245,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authNicknameLabel => 'ニックネーム';
 
   @override
-  String get authNicknameHint => '下手っぴ卒業生';
+  String get authNicknameHint => 'へたっぴ卒業生';
 
   @override
   String get authPasswordHint => '8文字以上';
@@ -257,6 +261,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get authSigninLink => 'ログイン';
+
+  @override
+  String get authKakao => 'カカオ';
 
   @override
   String get authAllFieldsRequired => 'すべての項目を入力してください。';
@@ -277,7 +284,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authWeakPasswordServer => 'パスワードが弱すぎます。8文字以上にしてください。';
 
   @override
-  String get authSignupFailed => '登録に失敗しました。もう一度お試しください。';
+  String get authSignupFailed => '登録に失敗しました。もう一度試してみてください。';
 
   @override
   String get authSignupSuccess => '登録完了！';
@@ -301,7 +308,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get feedLoadFailed => '読み込めませんでした';
 
   @override
-  String get feedEmpty => 'まだ投稿がありません。最初の写真を投稿しましょう！';
+  String get feedEmpty => 'まだ投稿がありません。最初の写真を投稿してみましょう！';
 
   @override
   String get feedReportSuccess => '通報しました';
@@ -330,7 +337,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get feedBlockBody => 'このユーザーの投稿とコメントは表示されなくなります。';
+  String get feedBlockBody => 'このユーザーの投稿やコメントが表示されなくなります。';
 
   @override
   String get feedBlockConfirm => 'ブロック';
@@ -375,13 +382,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postCommentSendFailed => 'コメントの送信に失敗しました';
 
   @override
-  String get postCommentHint => 'コメントを残してください';
+  String get postCommentHint => 'コメントを書いてみよう';
 
   @override
   String get postCommentLoadFailed => 'コメントを読み込めませんでした';
 
   @override
-  String get postCommentEmpty => '最初のコメントを残してください';
+  String get postCommentEmpty => '最初のコメントを書いてみよう';
 
   @override
   String get postReportSuccess => '通報しました';
@@ -395,7 +402,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get postBlockBody => 'このユーザーの投稿とコメントは表示されなくなります。';
+  String get postBlockBody => 'このユーザーの投稿やコメントが表示されなくなります。';
 
   @override
   String get postBlockSuccess => 'ブロックしました';
@@ -423,14 +430,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String createPostCountLabel(int count, int max) {
-    return '$count/$max · 顔は自動的にマスクされます。写真をタップして編集できます。';
+    return '$count/$max · 顔は自動でマスクされます。写真をタップして編集できます。';
   }
 
   @override
   String get createPostModeLabel => '撮影モード';
 
   @override
-  String get createPostCaptionHint => '一言アドバイスを残してください';
+  String get createPostCaptionHint => '一言アドバイスを書いてみよう';
 
   @override
   String get createPostUploadFailed => 'アップロードに失敗しました';
@@ -442,7 +449,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get accountLoadFailed => '読み込めませんでした';
 
   @override
-  String get accountNoProfile => 'プロフィールが見つかりません';
+  String get accountNoProfile => 'プロフィールがありません';
 
   @override
   String get accountEditNickname => 'ニックネームを編集';
@@ -457,7 +464,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get accountBlockedUsers => 'ブロックしたユーザー';
 
   @override
-  String get accountTheme => '表示テーマ';
+  String get blockedUsersEmpty => 'ブロックしたユーザーはいません';
+
+  @override
+  String get blockedUsersUnblock => 'ブロック解除';
+
+  @override
+  String get accountTheme => 'テーマ';
 
   @override
   String get accountLogout => 'ログアウト';
@@ -480,7 +493,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get accountLogoutTitle => 'ログアウトしますか？';
 
   @override
-  String get accountLogoutBody => '再ログインすれば続きができます。';
+  String get accountLogoutBody => '再ログインすればいつでも続きができます。';
 
   @override
   String get accountLogoutConfirm => 'ログアウト';
@@ -489,7 +502,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get accountWithdrawTitle => '本当に退会しますか？';
 
   @override
-  String get accountWithdrawBody => '再ログインして再登録できます。';
+  String get accountWithdrawBody => '再登録はいつでもできます。';
 
   @override
   String get accountWithdrawConfirm => '退会';
@@ -507,7 +520,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get accountThemeDark => 'ダーク';
 
   @override
-  String get accountThemePickerTitle => '表示テーマ';
+  String get accountThemePickerTitle => 'テーマ';
 
   @override
   String get accountEditNicknameTitle => 'ニックネームを編集';
@@ -528,22 +541,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get maskEditorApplyFailed => 'マスク処理に失敗しました';
 
   @override
-  String get maskEditorHint => 'ドラッグでマスク領域追加 · タップで選択';
+  String get maskEditorHint => 'ドラッグでマスク領域を追加 · タップで選択';
 
   @override
-  String get maskEditorHide => 'マスクを有効にする';
+  String get maskEditorHide => 'マスクをオン';
 
   @override
-  String get maskEditorShow => 'マスクを無効にする';
+  String get maskEditorShow => 'マスクをオフ';
 
   @override
   String get maskEditorDelete => '削除';
 
   @override
-  String get reportTitle => '通報理由を選択してください';
+  String get reportTitle => '通報理由を選んでください';
 
   @override
-  String get reportReasonSpam => 'スパム/広告';
+  String get reportReasonSpam => 'スパム・広告';
 
   @override
   String get reportReasonHate => '暴言・ヘイトスピーチ';
@@ -552,7 +565,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get reportReasonInappropriate => '不適切な写真';
 
   @override
-  String get reportReasonPrivacy => '個人情報漏洩';
+  String get reportReasonPrivacy => '個人情報の漏洩';
 
   @override
   String get reportReasonEtc => 'その他';
@@ -564,19 +577,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteQrRescan => 'QRを再スキャン';
 
   @override
-  String get remoteScanPrompt => '撮影用スマホに表示されたQRコードをスキャンしてください';
+  String get remoteScanPrompt => '撮影スマホに表示されたQRコードをスキャンしてください';
 
   @override
   String get remoteScanHint => '撮影スマホ：カメラ画面上部のリモコンアイコン → このスマホで撮影';
 
   @override
-  String get remoteHintReady => 'いいですね';
+  String get remoteHintReady => 'いいね！';
 
   @override
   String get remoteCaptureSuccess => 'パシャ！撮影スマホに保存しました';
 
   @override
-  String get remoteCommandFailed => 'コマンドが失敗しました';
+  String get remoteCommandFailed => 'コマンドに失敗しました';
 
   @override
   String get remoteTimerOff => 'タイマー\nOFF';
@@ -593,11 +606,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteBusy => 'すでに別のリモコンが接続されています。';
 
   @override
-  String get remoteVersionMismatch => '接続が拒否されました。両方のスマホのアプリを最新版に更新してください。';
+  String get remoteVersionMismatch => '接続が拒否されました。両方のスマホのアプリを最新版にアップデートしてください。';
 
   @override
   String get remoteConnectFailed =>
-      '接続できませんでした。両方のスマホが同じWi-Fi（またはホットスポット）に接続されているか確認してください。';
+      '接続できませんでした。両方のスマホが同じWi-Fi（またはホットスポット）に接続しているか確認してください。';
 
   @override
   String get remoteDisconnected => '接続が切れました。';
@@ -609,24 +622,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remotePairingHostTitle => 'このスマホで撮影する';
 
   @override
-  String get remotePairingHostSubtitle => '三脚に置いて、別のスマホでQRをスキャンしてください';
+  String get remotePairingHostSubtitle => '三脚に置いて、別のスマホでQRをスキャンしてね';
 
   @override
-  String get remotePairingRemoteTitle => 'このスマホをリモコンとして使う';
+  String get remotePairingRemoteTitle => 'このスマホをリモコンにする';
 
   @override
-  String get remotePairingRemoteSubtitle => '撮影スマホのQRをスキャンして接続してください';
+  String get remotePairingRemoteSubtitle => '撮影スマホのQRをスキャンして接続しよう';
 
   @override
   String get remotePairingWifiHint =>
-      '両方のスマホが同じWi-Fi（または一方のスマホのホットスポット）に接続している必要があります。';
+      '両方のスマホが同じWi-Fi（またはホットスポット）に接続している必要があります。';
 
   @override
   String get remoteHostQrTitle => 'リモコン接続待機中';
 
   @override
   String get remoteHostQrInstruction =>
-      'リモコンスマホのへたっぴカメラで\n[リモコン撮影 → このスマホをリモコンとして使う]をタップして\nこのQRをスキャンしてください。';
+      'リモコンスマホのへたっぴカメラで\n[リモコン撮影 → このスマホをリモコンにする]をタップして\nこのQRをスキャンしてください。';
 
   @override
   String get poseOff => 'オフ';

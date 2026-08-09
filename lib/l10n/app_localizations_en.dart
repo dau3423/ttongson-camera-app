@@ -18,61 +18,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guideLevelLowerRight => 'Lower the right side';
 
   @override
-  String get guideHeadroomRaise => 'Raise the camera slightly';
+  String get guideHeadroomRaise => 'Raise the camera a bit';
 
   @override
-  String get guideHeadroomLower => 'Lower the camera slightly';
+  String get guideHeadroomLower => 'Lower the camera a bit';
 
   @override
-  String get guideAngleEyeLevelDown => 'Tilt camera down to eye level';
+  String get guideAngleEyeLevelDown => 'Tilt the camera down to eye level';
 
   @override
-  String get guideAngleEyeLevelUp => 'Tilt camera up to eye level';
+  String get guideAngleEyeLevelUp => 'Tilt the camera up to eye level';
 
   @override
-  String get guideAngleFrontalDown => 'Tilt camera down to horizontal';
+  String get guideAngleFrontalDown => 'Tilt the camera down to level';
 
   @override
-  String get guideAngleFrontalUp => 'Tilt camera up to horizontal';
+  String get guideAngleFrontalUp => 'Tilt the camera up to level';
 
   @override
   String get guideZoomCloser => 'Move closer or zoom in';
 
   @override
-  String get guideZoomFarther => 'Move back or zoom out';
+  String get guideZoomFarther => 'Step back or zoom out';
 
   @override
-  String get guideMoveRight => 'right';
+  String get guideMoveRight => 'Right';
 
   @override
-  String get guideMoveLeft => 'left';
+  String get guideMoveLeft => 'Left';
 
   @override
-  String get guideMoveUp => 'up';
+  String get guideMoveUp => 'Up';
 
   @override
-  String get guideMoveDown => 'down';
+  String get guideMoveDown => 'Down';
 
   @override
   String get guideMoveSeparator => ' · ';
 
   @override
-  String get guideMovePrompt => 'Move here';
+  String get guideMovePrompt => 'Move this way';
 
   @override
   String get guideReady => 'Shoot!';
 
   @override
-  String get cropTop => 'top';
+  String get cropTop => 'Top';
 
   @override
-  String get cropBottom => 'bottom';
+  String get cropBottom => 'Bottom';
 
   @override
-  String get cropLeft => 'left';
+  String get cropLeft => 'Left';
 
   @override
-  String get cropRight => 'right';
+  String get cropRight => 'Right';
 
   @override
   String get cropSeparator => '/';
@@ -92,10 +92,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRetry => 'Retry';
 
   @override
-  String get cameraSwitchFailed => 'Failed to switch camera';
+  String get commonDelete => 'Delete';
 
   @override
-  String get galleryOpenFailed => 'Cannot open photo library';
+  String get cameraSwitchFailed => 'Couldn\'t switch camera';
+
+  @override
+  String get galleryOpenFailed => 'Can\'t open photo library';
 
   @override
   String saveFailed(String error) {
@@ -103,37 +106,37 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get compositionConsentTitle => 'Composition Suggestion Notice';
+  String get compositionConsentTitle => 'Composition Suggestion';
 
   @override
   String get compositionConsentBody =>
-      'When requesting a suggestion, the current frame will be sent to the analysis server. Images are not stored.';
+      'One frame will be sent to our analysis server to suggest a composition. Images are not stored.';
 
   @override
-  String get suggestFailed => 'Could not get a suggestion. Please try again.';
+  String get suggestFailed => 'Couldn\'t get a suggestion. Please try again.';
 
   @override
-  String get posesLoadFailed => 'Failed to load poses';
+  String get posesLoadFailed => 'Couldn\'t load poses';
 
   @override
-  String get aiConsentTitle => 'AI Suggestion Notice';
+  String get aiConsentTitle => 'AI Suggestion';
 
   @override
   String get aiConsentBody =>
-      'When requesting a suggestion, the current frame will be sent to the analysis server. Images are not stored.';
+      'One frame will be sent to our analysis server to generate a suggestion. Images are not stored.';
 
   @override
   String cameraRestartFailedDetail(String error) {
-    return 'Failed to restart camera: $error';
+    return 'Couldn\'t restart camera: $error';
   }
 
   @override
   String get wifiNotConnected =>
-      'Not connected to Wi-Fi. Please connect to the same Wi-Fi or hotspot.';
+      'Not connected to Wi-Fi. Connect to the same Wi-Fi or hotspot.';
 
   @override
   String get remotePrepFailed =>
-      'Failed to prepare remote connection. Please try again later.';
+      'Couldn\'t prepare remote connection. Please try again later.';
 
   @override
   String get remoteConnected => 'Remote connected';
@@ -142,47 +145,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteWaiting => 'Waiting for remote';
 
   @override
-  String get captureAiEnhanceConsentTitle => 'AI Enhancement Notice';
+  String get captureAiEnhanceConsentTitle => 'AI Enhancement';
 
   @override
   String get captureAiEnhanceConsentBody =>
-      'When enhancing, one photo will be sent to the analysis server. Images are not stored.';
+      'One photo will be sent to our analysis server for AI enhancement. Images are not stored.';
 
   @override
-  String get captureEnhanceFailed => 'This photo cannot be enhanced';
+  String get captureEnhanceFailed => 'This photo can\'t be enhanced';
 
   @override
-  String get captureAiEnhanceFailed => 'AI enhancement failed. Keeping preset.';
+  String get captureAiEnhanceFailed =>
+      'AI enhancement failed. Keeping the preset.';
 
   @override
-  String get captureSaved => 'Saved';
+  String get captureSaved => 'Saved!';
 
   @override
   String get captureSavePermissionFailed =>
-      'Save failed — please check permissions';
+      'Save failed — check your permissions';
 
   @override
   String get captureMoodTitle => 'Today\'s Mood';
 
   @override
-  String get captureAiEnhanceTooltip =>
-      'Make it prettier with AI (tuned for this photo)';
+  String get captureAiEnhanceTooltip => 'AI polish, tuned for this photo';
 
   @override
   String get captureSaveButton => 'Save';
 
   @override
-  String get captureNameHint => 'AI will name this for you';
+  String get captureNameHint => 'AI will name this';
 
   @override
   String get captureOriginalLabel => 'Original';
 
   @override
-  String get authWelcomeBack => 'Welcome back';
+  String get authWelcomeBack => 'Welcome back!';
 
   @override
   String get authLoginSubtitle =>
-      'Even beginners can shoot like pros · Log in to continue';
+      'Even beginners shoot like pros · Sign in to keep going';
 
   @override
   String get authEmailLabel => 'Email';
@@ -206,7 +209,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authEmailEmpty => 'Please enter your email and password.';
 
   @override
-  String get authInvalidEmail => 'Invalid email format.';
+  String get authInvalidEmail => 'That doesn\'t look like a valid email.';
 
   @override
   String get authLoginFailed => 'Sign in failed.';
@@ -221,14 +224,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authAccountDisabled => 'This account has been disabled.';
 
   @override
-  String get authWithdrawnTitle => 'Withdrawn account';
+  String get authWithdrawnTitle => 'Account deleted';
 
   @override
   String get authWithdrawnBody =>
-      'This account has been withdrawn. Would you like to re-register?';
+      'This account has been deleted. Would you like to sign up again?';
 
   @override
-  String get authRejoin => 'Re-register';
+  String get authRejoin => 'Sign up again';
 
   @override
   String get authLoginSuccess => 'Welcome!';
@@ -237,13 +240,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authLoginSuccessSubtitle => 'Ready to start shooting?';
 
   @override
-  String get authLoginSuccessCta => 'Go shoot';
+  String get authLoginSuccessCta => 'Let\'s shoot';
 
   @override
   String get authSignupTitle => 'Sign up';
 
   @override
-  String get authSignupSubtitle => 'Takes only 30 seconds';
+  String get authSignupSubtitle => 'Takes about 30 seconds';
 
   @override
   String get authNicknameLabel => 'Nickname';
@@ -259,13 +262,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'I agree to the Terms of Service and Privacy Policy';
 
   @override
-  String get authSignupButton => 'Sign up and start';
+  String get authSignupButton => 'Sign up and get started';
 
   @override
   String get authHaveAccount => 'Already have an account? ';
 
   @override
   String get authSigninLink => 'Sign in';
+
+  @override
+  String get authKakao => 'Kakao';
 
   @override
   String get authAllFieldsRequired => 'Please fill in all fields.';
@@ -280,17 +286,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authAgreeRequired => 'Please agree to the terms.';
 
   @override
-  String get authEmailInUse => 'Email already in use. Please sign in.';
+  String get authEmailInUse => 'Email already in use. Please sign in instead.';
 
   @override
   String get authWeakPasswordServer =>
-      'Password too weak. Use at least 8 characters.';
+      'Password too weak. Please use at least 8 characters.';
 
   @override
   String get authSignupFailed => 'Sign up failed. Please try again.';
 
   @override
-  String get authSignupSuccess => 'Registration complete!';
+  String get authSignupSuccess => 'You\'re in!';
 
   @override
   String get feedTitle => 'Photo Tips';
@@ -308,10 +314,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedMyAccountTooltip => 'My account';
 
   @override
-  String get feedLoadFailed => 'Failed to load';
+  String get feedLoadFailed => 'Couldn\'t load';
 
   @override
-  String get feedEmpty => 'No posts yet. Be the first to share a photo!';
+  String get feedEmpty => 'No posts yet. Share the first photo!';
 
   @override
   String get feedReportSuccess => 'Reported';
@@ -330,7 +336,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedDeleteTitle => 'Delete this post?';
 
   @override
-  String get feedDeleteBody => 'This cannot be undone.';
+  String get feedDeleteBody => 'This can\'t be undone.';
 
   @override
   String get feedDeleteConfirm => 'Delete';
@@ -369,7 +375,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postDeleteTitle => 'Delete this post?';
 
   @override
-  String get postDeleteBody => 'This cannot be undone.';
+  String get postDeleteBody => 'This can\'t be undone.';
 
   @override
   String get postDeleteSuccess => 'Deleted';
@@ -381,19 +387,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postCommentDeleteTitle => 'Delete this comment?';
 
   @override
-  String get postCommentDeleteBody => 'Deleted comments cannot be recovered.';
+  String get postCommentDeleteBody => 'Deleted comments can\'t be recovered.';
 
   @override
-  String get postCommentSendFailed => 'Failed to send comment';
+  String get postCommentSendFailed => 'Couldn\'t send comment';
 
   @override
   String get postCommentHint => 'Leave a comment';
 
   @override
-  String get postCommentLoadFailed => 'Failed to load comments';
+  String get postCommentLoadFailed => 'Couldn\'t load comments';
 
   @override
-  String get postCommentEmpty => 'Be the first to comment';
+  String get postCommentEmpty => 'Be the first to comment!';
 
   @override
   String get postReportSuccess => 'Reported';
@@ -427,24 +433,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postAnonymous => 'Anonymous';
 
   @override
-  String get createPostTitle => 'Upload photo';
+  String get createPostTitle => 'Share a photo';
 
   @override
   String get createPostSubmit => 'Post';
 
   @override
-  String get createPostMaxImages => 'You can upload up to 10 photos';
+  String get createPostMaxImages => 'You can add up to 10 photos';
 
   @override
   String createPostCountLabel(int count, int max) {
-    return '$count/$max · Faces are automatically masked. Tap a photo to edit.';
+    return '$count/$max · Faces are auto-masked. Tap a photo to edit.';
   }
 
   @override
   String get createPostModeLabel => 'Shooting mode';
 
   @override
-  String get createPostCaptionHint => 'Leave a one-line tip';
+  String get createPostCaptionHint => 'Share a quick tip';
 
   @override
   String get createPostUploadFailed => 'Upload failed';
@@ -453,7 +459,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountTitle => 'My Profile';
 
   @override
-  String get accountLoadFailed => 'Failed to load';
+  String get accountLoadFailed => 'Couldn\'t load';
 
   @override
   String get accountNoProfile => 'No profile found';
@@ -465,10 +471,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountChangePhoto => 'Change profile photo';
 
   @override
-  String get accountLoginMethod => 'Login method';
+  String get accountLoginMethod => 'Sign-in method';
 
   @override
   String get accountBlockedUsers => 'Blocked users';
+
+  @override
+  String get blockedUsersEmpty => 'No blocked users';
+
+  @override
+  String get blockedUsersUnblock => 'Unblock';
 
   @override
   String get accountTheme => 'Display theme';
@@ -488,29 +500,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountNicknameInvalid => 'Nickname must be 1–20 characters';
 
   @override
-  String get accountNicknameChangeFailed => 'Failed to change nickname';
+  String get accountNicknameChangeFailed => 'Couldn\'t change nickname';
 
   @override
   String get accountLogoutTitle => 'Log out?';
 
   @override
-  String get accountLogoutBody => 'You can log back in to continue.';
+  String get accountLogoutBody => 'You can sign back in anytime to continue.';
 
   @override
   String get accountLogoutConfirm => 'Log out';
 
   @override
-  String get accountWithdrawTitle =>
-      'Are you sure you want to delete your account?';
+  String get accountWithdrawTitle => 'Delete your account?';
 
   @override
-  String get accountWithdrawBody => 'You can re-register by logging in again.';
+  String get accountWithdrawBody =>
+      'You can sign up again later if you change your mind.';
 
   @override
   String get accountWithdrawConfirm => 'Delete';
 
   @override
-  String get accountWithdrawFailed => 'Failed to delete account';
+  String get accountWithdrawFailed => 'Couldn\'t delete account';
 
   @override
   String get accountThemeSystem => 'System';
@@ -540,10 +552,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maskEditorDone => 'Done';
 
   @override
-  String get maskEditorApplyFailed => 'Failed to apply mask';
+  String get maskEditorApplyFailed => 'Couldn\'t apply mask';
 
   @override
-  String get maskEditorHint => 'Drag to add masked area · Tap to select';
+  String get maskEditorHint => 'Drag to add a masked area · Tap to select';
 
   @override
   String get maskEditorHide => 'Enable mask';
@@ -555,16 +567,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maskEditorDelete => 'Delete';
 
   @override
-  String get reportTitle => 'Select a reason to report';
+  String get reportTitle => 'Why are you reporting this?';
 
   @override
-  String get reportReasonSpam => 'Spam/Advertisement';
+  String get reportReasonSpam => 'Spam or ads';
 
   @override
-  String get reportReasonHate => 'Abusive/Hate speech';
+  String get reportReasonHate => 'Hate speech or abuse';
 
   @override
-  String get reportReasonInappropriate => 'Inappropriate photo';
+  String get reportReasonInappropriate => 'Inappropriate content';
 
   @override
   String get reportReasonPrivacy => 'Privacy violation';
@@ -586,10 +598,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Camera phone: tap the remote icon at the top of the camera screen → Shoot with this phone';
 
   @override
-  String get remoteHintReady => 'Good';
+  String get remoteHintReady => 'Looking good!';
 
   @override
-  String get remoteCaptureSuccess => 'Click! Saved to the camera phone';
+  String get remoteCaptureSuccess => 'Snap! Saved to the camera phone';
 
   @override
   String get remoteCommandFailed => 'Command failed';
@@ -604,18 +616,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remoteQrExpired =>
-      'QR expired. Please show the QR again on the camera phone and scan.';
+      'QR expired. Please show the QR again on the camera phone and scan it.';
 
   @override
   String get remoteBusy => 'Another remote is already connected.';
 
   @override
   String get remoteVersionMismatch =>
-      'Connection refused. Please update the app on both phones.';
+      'Connection refused. Please update the app on both phones to the latest version.';
 
   @override
   String get remoteConnectFailed =>
-      'Could not connect. Please make sure both phones are on the same Wi-Fi (or hotspot).';
+      'Couldn\'t connect. Make sure both phones are on the same Wi-Fi (or hotspot).';
 
   @override
   String get remoteDisconnected => 'Disconnected.';
@@ -628,7 +640,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remotePairingHostSubtitle =>
-      'Place on a tripod, then scan the QR from another phone';
+      'Set it on a tripod, then scan the QR from another phone';
 
   @override
   String get remotePairingRemoteTitle => 'Use this phone as remote';
@@ -639,7 +651,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remotePairingWifiHint =>
-      'Both phones must be on the same Wi-Fi (or one phone\'s hotspot).';
+      'Both phones need to be on the same Wi-Fi (or one phone\'s hotspot).';
 
   @override
   String get remoteHostQrTitle => 'Waiting for remote';
@@ -652,7 +664,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get poseOff => 'Off';
 
   @override
-  String get poseAiRecommend => 'AI Recommend';
+  String get poseAiRecommend => 'AI Pick';
 
   @override
   String get poseCategorySelfie => 'Selfie';

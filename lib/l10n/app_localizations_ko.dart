@@ -92,6 +92,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commonRetry => '다시 시도';
 
   @override
+  String get commonDelete => '삭제';
+
+  @override
   String get cameraSwitchFailed => '카메라 전환에 실패했어요';
 
   @override
@@ -258,6 +261,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get authSigninLink => '로그인';
+
+  @override
+  String get authKakao => '카카오';
 
   @override
   String get authAllFieldsRequired => '모든 항목을 입력해주세요.';
@@ -456,6 +462,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get accountBlockedUsers => '차단한 사용자';
+
+  @override
+  String get blockedUsersEmpty => '차단한 사용자가 없어요';
+
+  @override
+  String get blockedUsersUnblock => '차단 해제';
 
   @override
   String get accountTheme => '화면 테마';

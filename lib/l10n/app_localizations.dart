@@ -264,6 +264,12 @@ abstract class AppLocalizations {
   /// **'다시 시도'**
   String get commonRetry;
 
+  /// No description provided for @commonDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get commonDelete;
+
   /// No description provided for @cameraSwitchFailed.
   ///
   /// In ko, this message translates to:
@@ -587,6 +593,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'로그인'**
   String get authSigninLink;
+
+  /// No description provided for @authKakao.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오'**
+  String get authKakao;
 
   /// No description provided for @authAllFieldsRequired.
   ///
@@ -971,6 +983,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'차단한 사용자'**
   String get accountBlockedUsers;
+
+  /// No description provided for @blockedUsersEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단한 사용자가 없어요'**
+  String get blockedUsersEmpty;
+
+  /// No description provided for @blockedUsersUnblock.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단 해제'**
+  String get blockedUsersUnblock;
 
   /// No description provided for @accountTheme.
   ///
