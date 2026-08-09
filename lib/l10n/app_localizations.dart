@@ -107,6 +107,144 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'똥손카메라'**
   String get appTitle;
+
+  /// No description provided for @guideLevelLowerLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽을 내리세요'**
+  String get guideLevelLowerLeft;
+
+  /// No description provided for @guideLevelLowerRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽을 내리세요'**
+  String get guideLevelLowerRight;
+
+  /// No description provided for @guideHeadroomRaise.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라를 살짝 올리세요'**
+  String get guideHeadroomRaise;
+
+  /// No description provided for @guideHeadroomLower.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라를 살짝 내리세요'**
+  String get guideHeadroomLower;
+
+  /// No description provided for @guideAngleEyeLevelDown.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라를 눈높이로 내리세요'**
+  String get guideAngleEyeLevelDown;
+
+  /// No description provided for @guideAngleEyeLevelUp.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라를 눈높이로 올리세요'**
+  String get guideAngleEyeLevelUp;
+
+  /// No description provided for @guideAngleFrontalDown.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라를 수평으로 내리세요'**
+  String get guideAngleFrontalDown;
+
+  /// No description provided for @guideAngleFrontalUp.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라를 수평으로 올리세요'**
+  String get guideAngleFrontalUp;
+
+  /// No description provided for @guideZoomCloser.
+  ///
+  /// In ko, this message translates to:
+  /// **'조금 다가가거나 확대하세요'**
+  String get guideZoomCloser;
+
+  /// No description provided for @guideZoomFarther.
+  ///
+  /// In ko, this message translates to:
+  /// **'조금 물러나거나 축소하세요'**
+  String get guideZoomFarther;
+
+  /// No description provided for @guideMoveRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽으로'**
+  String get guideMoveRight;
+
+  /// No description provided for @guideMoveLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽으로'**
+  String get guideMoveLeft;
+
+  /// No description provided for @guideMoveUp.
+  ///
+  /// In ko, this message translates to:
+  /// **'위로'**
+  String get guideMoveUp;
+
+  /// No description provided for @guideMoveDown.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래로'**
+  String get guideMoveDown;
+
+  /// No description provided for @guideMoveSeparator.
+  ///
+  /// In ko, this message translates to:
+  /// **' · '**
+  String get guideMoveSeparator;
+
+  /// No description provided for @guideMovePrompt.
+  ///
+  /// In ko, this message translates to:
+  /// **'여기로 옮기세요'**
+  String get guideMovePrompt;
+
+  /// No description provided for @guideReady.
+  ///
+  /// In ko, this message translates to:
+  /// **'찍으세요!'**
+  String get guideReady;
+
+  /// No description provided for @cropTop.
+  ///
+  /// In ko, this message translates to:
+  /// **'위'**
+  String get cropTop;
+
+  /// No description provided for @cropBottom.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래'**
+  String get cropBottom;
+
+  /// No description provided for @cropLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽'**
+  String get cropLeft;
+
+  /// No description provided for @cropRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽'**
+  String get cropRight;
+
+  /// No description provided for @cropSeparator.
+  ///
+  /// In ko, this message translates to:
+  /// **'/'**
+  String get cropSeparator;
+
+  /// No description provided for @cropCut.
+  ///
+  /// In ko, this message translates to:
+  /// **'{sides}이(가) 잘렸어요'**
+  String cropCut(String sides);
 }
 
 class _AppLocalizationsDelegate
