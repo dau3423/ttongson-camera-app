@@ -1,5 +1,6 @@
 // lib/community/user_repository.dart
 import 'dart:io';
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -42,7 +43,11 @@ class UserRepository {
       final profile = UserProfile(
         uid: user.uid,
         userId: user.email,
-        nickname: nickname ?? generateNickname(),
+        nickname:
+            nickname ??
+            generateNickname(
+              localeCode: PlatformDispatcher.instance.locale.languageCode,
+            ),
         loginType: loginType,
         photoUrl: user.photoURL,
       );
