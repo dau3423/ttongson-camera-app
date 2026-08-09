@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ttongson_camera/models/person_box.dart';
 import 'package:ttongson_camera/analysis/analysis_engine.dart';
+import 'package:ttongson_camera/analysis/angle_zoom.dart';
+import 'package:ttongson_camera/analysis/tilt.dart';
 
 void main() {
   final engine = AnalysisEngine(null);
@@ -16,7 +18,7 @@ void main() {
     expect(m.crop, isNull);
     expect(m.zoom, isNull);
     expect(m.tilt.isLevel, isTrue);
-    expect(m.angle.hint, ''); // hasPerson=false
+    expect(m.angle.hint, AngleHint.none); // hasPerson=false
   });
 
   test('인물 있으면 모든 지표 계산', () {
@@ -36,7 +38,7 @@ void main() {
       person: null,
       sensor: const SensorSample(accelX: 9.8, accelY: 9.8, accelZ: 0),
     );
-    expect(m.tilt.hint, '왼쪽을 내리세요');
+    expect(m.tilt.hint, TiltHint.lowerLeft);
   });
 
   test('face 박스가 있으면 잘림 감지는 person이 아닌 face 박스 기준', () {
@@ -58,7 +60,7 @@ void main() {
       face: const PersonBox(left: 0.283, top: 0.283, width: 0.1, height: 0.1),
       sensor: const SensorSample(accelX: 0, accelY: 9.8, accelZ: 0),
     );
-    expect(m.thirds!.hint, '좋아요');
+    expect(m.thirds!.isAligned, isTrue);
   });
 
   test('face null 이면 person 박스로 폴백해 잘림 감지', () {

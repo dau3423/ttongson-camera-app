@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ttongson_camera/analysis/analysis_engine.dart';
+import 'package:ttongson_camera/analysis/angle_zoom.dart';
 import 'package:ttongson_camera/models/person_box.dart';
 import 'package:ttongson_camera/models/shooting_mode.dart';
 
@@ -43,7 +44,7 @@ void main() {
       ), // pitch≈45
       mode: ShootingMode.nature,
     );
-    expect(m.angle.hint, '카메라를 수평으로 내리세요');
+    expect(m.angle.hint, AngleHint.frontalDown);
   });
 
   test('사물 모드: person/thirds/zoom/crop 채우고 headroom 은 생략', () {
