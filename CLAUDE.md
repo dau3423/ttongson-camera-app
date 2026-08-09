@@ -14,6 +14,7 @@
 
 - **Flutter (Dart)**, null-safety. 패키지명 `ttongson_camera`.
 - `camera`(프리뷰/프레임 스트림), `sensors_plus`(기울기), `google_ml_kit`(pose/face), `path_provider`, `gallery_saver`.
+- 다국어: `flutter_localizations`+`intl`(gen-l10n). 지원 ko/en/ja/zh(간체), 미지원→ko 폴백. 문자열은 `lib/l10n/app_*.arb`, 가이드 enum→문구 매핑은 `lib/l10n/guide_text.dart`. import는 `package:ttongson_camera/l10n/app_localizations.dart`.
 - Flutter SDK: `/Users/soonbok/flutter/bin` (flutter/dart 모두 PATH에 존재).
 
 ## 구조 (책임 분리)
@@ -40,7 +41,7 @@ lib/
 - 머리 공간 적정 비율: **0.05~0.15**. 피사체 높이 적정 비율: **0.5~0.8**.
 - `lib/analysis/` 중 `person_detector.dart`·`analysis_engine.dart`·`object_detector.dart`를 제외한 파일은 **Flutter/plugin import 금지**(순수 Dart).
 - **Phase 0+1은 네트워크 호출 0회.** 모든 분석은 온디바이스.
-- 정렬 판정 문자열은 `'좋아요'`로 통일(GuideMetrics·GuidePainter가 이 값으로 분기).
+- 정렬 판정은 `ThirdsAlignment.isAligned` 불리언으로 통일(GuideMetrics·GuidePainter가 이 값으로 분기). 표시문구는 `lib/l10n/guide_text.dart`가 로케일별로 매핑한다(analysis/는 의미값 enum만 반환, 문자열 금지).
 
 ## 명령
 
