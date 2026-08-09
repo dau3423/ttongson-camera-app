@@ -152,6 +152,8 @@
   "accountChangePhoto": "更换头像",
   "accountLoginMethod": "登录方式",
   "accountBlockedUsers": "已屏蔽用户",
+  "blockedUsersEmpty": "没有已屏蔽的用户",
+  "blockedUsersUnblock": "解除屏蔽",
   "accountTheme": "显示主题",
   "accountLogout": "退出登录",
   "accountWithdraw": "注销账户",

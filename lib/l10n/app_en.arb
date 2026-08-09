@@ -152,6 +152,8 @@
   "accountChangePhoto": "Change profile photo",
   "accountLoginMethod": "Login method",
   "accountBlockedUsers": "Blocked users",
+  "blockedUsersEmpty": "No blocked users",
+  "blockedUsersUnblock": "Unblock",
   "accountTheme": "Display theme",
   "accountLogout": "Log out",
   "accountWithdraw": "Delete account",

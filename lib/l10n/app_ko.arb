@@ -152,6 +152,8 @@
   "accountChangePhoto": "프로필 사진 변경",
   "accountLoginMethod": "로그인 방식",
   "accountBlockedUsers": "차단한 사용자",
+  "blockedUsersEmpty": "차단한 사용자가 없어요",
+  "blockedUsersUnblock": "차단 해제",
   "accountTheme": "화면 테마",
   "accountLogout": "로그아웃",
   "accountWithdraw": "회원 탈퇴",

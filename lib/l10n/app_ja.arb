@@ -152,6 +152,8 @@
   "accountChangePhoto": "プロフィール写真を変更",
   "accountLoginMethod": "ログイン方法",
   "accountBlockedUsers": "ブロックしたユーザー",
+  "blockedUsersEmpty": "ブロックしたユーザーはいません",
+  "blockedUsersUnblock": "ブロック解除",
   "accountTheme": "表示テーマ",
   "accountLogout": "ログアウト",
   "accountWithdraw": "退会する",

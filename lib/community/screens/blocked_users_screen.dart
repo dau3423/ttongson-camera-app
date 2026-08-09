@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../user_repository.dart';
 import '../models/blocked_user.dart';
@@ -14,17 +15,21 @@ class BlockedUsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     final uid = auth.currentUser?.uid ?? '';
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
-        appBar: AppBar(title: const Text('차단한 사용자')),
+        appBar: AppBar(title: Text(l.accountBlockedUsers)),
         body: StreamBuilder<List<BlockedUser>>(
           stream: users.blockedList(uid),
           builder: (context, snap) {
             if (snap.hasError) {
               return Center(
-                child: Text('불러오지 못했어요', style: TextStyle(color: p.text)),
+                child: Text(
+                  l.accountLoadFailed,
+                  style: TextStyle(color: p.text),
+                ),
               );
             }
             if (!snap.hasData) {
@@ -34,7 +39,7 @@ class BlockedUsersScreen extends StatelessWidget {
             if (items.isEmpty) {
               return Center(
                 child: Text(
-                  '차단한 사용자가 없어요',
+                  l.blockedUsersEmpty,
                   style: TextStyle(color: p.textMuted),
                 ),
               );
@@ -47,7 +52,7 @@ class BlockedUsersScreen extends StatelessWidget {
                     trailing: TextButton(
                       onPressed: () =>
                           users.unblockUser(uid: uid, blockedUid: b.uid),
-                      child: const Text('차단 해제'),
+                      child: Text(l.blockedUsersUnblock),
                     ),
                   ),
               ],
