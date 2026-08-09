@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../community/auth_service.dart';
 import '../community/screens/sign_in_sheet.dart';
 import '../cloud/advice_consent.dart';
@@ -62,16 +63,16 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('AI 보정 안내'),
-        content: const Text('AI 보정 시 사진 1장을 분석 서버로 전송합니다. 이미지는 저장하지 않습니다.'),
+        title: Text(AppLocalizations.of(ctx)!.captureAiEnhanceConsentTitle),
+        content: Text(AppLocalizations.of(ctx)!.captureAiEnhanceConsentBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('취소'),
+            child: Text(AppLocalizations.of(ctx)!.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('동의'),
+            child: Text(AppLocalizations.of(ctx)!.commonAgree),
           ),
         ],
       ),
@@ -110,9 +111,11 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         _preview = widget.original;
         _working = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('이 사진은 보정할 수 없어요')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.captureEnhanceFailed),
+        ),
+      );
       return;
     }
     if (!mounted || seq != _reqSeq) return;
@@ -144,7 +147,9 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     } catch (_) {
       if (mounted && seq == _reqSeq) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI 개선을 못 받았어요. 프리셋을 유지합니다.')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.captureAiEnhanceFailed),
+          ),
         );
       }
     } finally {
@@ -196,6 +201,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
     // 메신저는 앱 최상위(MaterialApp) 소유라 이 화면을 pop해도 스낵바가 유지된다.
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l = AppLocalizations.of(context)!;
     final name = sanitizeFilename(_nameController.text);
     // 파일명 충돌(같은 이름·빈 이름 photo.jpg) 방지용 고유 접미. 이름은 검색 가능한 접두로 유지.
     final tail = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
@@ -215,7 +221,9 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
       }
       final ok = okOriginal && okEdited;
       messenger.showSnackBar(
-        SnackBar(content: Text(ok ? '저장했어요' : '저장 실패 — 권한을 확인해 주세요')),
+        SnackBar(
+          content: Text(ok ? l.captureSaved : l.captureSavePermissionFailed),
+        ),
       );
       // 저장 성공 시 결과 화면을 닫고 카메라로 복귀. 실패면 재시도할 수 있게 유지.
       if (ok) {
@@ -223,7 +231,9 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
         return;
       }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.saveFailed(e.toString()))),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -233,7 +243,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('오늘의 무드'),
+        title: Text(AppLocalizations.of(context)!.captureMoodTitle),
         actions: [
           // AI 개선은 선택 사항. 기본 필터(프리셋)는 온디바이스로 즉시 적용되고,
           // 이 버튼을 눌렀을 때만 서버가 이 사진에 맞게 파라미터를 튜닝한다.
@@ -250,7 +260,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
             )
           else
             IconButton(
-              tooltip: 'AI로 더 예쁘게 (이 사진에 맞게)',
+              tooltip: AppLocalizations.of(context)!.captureAiEnhanceTooltip,
               icon: const Icon(Icons.auto_awesome),
               onPressed: (_selected == null || _working || _saving)
                   ? null
@@ -258,7 +268,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
             ),
           TextButton(
             onPressed: (_working || _saving) ? null : _save,
-            child: const Text('저장'),
+            child: Text(AppLocalizations.of(context)!.captureSaveButton),
           ),
         ],
       ),
@@ -287,7 +297,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
                 controller: _nameController,
                 maxLength: 40,
                 decoration: InputDecoration(
-                  hintText: 'AI가 이름을 지어줘요',
+                  hintText: AppLocalizations.of(context)!.captureNameHint,
                   counterText: '',
                   suffixIcon: _naming
                       ? const Padding(
@@ -312,7 +322,7 @@ class _CaptureResultScreenState extends State<CaptureResultScreen> {
                 ),
                 children: [
                   _MoodChip(
-                    label: '원본',
+                    label: AppLocalizations.of(context)!.captureOriginalLabel,
                     selected: _selected == null,
                     onTap: () => _selectMood(null),
                   ),
