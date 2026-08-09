@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../user_repository.dart';
 import '../models/user_profile.dart';
@@ -35,6 +36,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _changePhoto() async {
     if (_busy) return;
+    final l = AppLocalizations.of(context)!;
     // 픽업 단계에서 축소·JPEG 근접 형식으로 받아 디코딩 실패(HEIC 등) 여지를 줄인다.
     final x = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -53,13 +55,16 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e, st) {
       // 원인(권한/디코딩 등)을 파악할 수 있게 실제 에러를 노출한다.
       debugPrint('프로필 사진 변경 실패: $e\n$st');
-      messenger.showSnackBar(SnackBar(content: Text('사진 변경 실패: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.accountPhotoChangeFailed(e.toString()))),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _editNickname(String current) async {
+    final l = AppLocalizations.of(context)!;
     // 컨트롤러는 다이얼로그가 자기 State.dispose에서 정리한다(닫힘 애니메이션 중
     // dispose로 인한 'used after disposed' 방지).
     final result = await showDialog<String>(
@@ -71,24 +76,27 @@ class _AccountScreenState extends State<AccountScreen> {
     if (!isValidNickname(trimmed)) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('닉네임은 1~20자로 입력해 주세요')));
+      ).showSnackBar(SnackBar(content: Text(l.accountNicknameInvalid)));
       return;
     }
     final messenger = ScaffoldMessenger.of(context);
     try {
       await widget.users.updateProfile(uid: _uid, nickname: trimmed);
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('닉네임 변경에 실패했어요')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.accountNicknameChangeFailed)),
+      );
     }
   }
 
   Future<void> _logout() async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.waving_hand,
-      title: '로그아웃 할까요?',
-      body: '다시 로그인하면 이어서 사용할 수 있어요.',
-      confirmLabel: '로그아웃',
+      title: l.accountLogoutTitle,
+      body: l.accountLogoutBody,
+      confirmLabel: l.accountLogoutConfirm,
       destructive: true,
     );
     if (ok != true) return;
@@ -97,12 +105,13 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _withdraw() async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.person_remove,
-      title: '정말 탈퇴하시겠어요?',
-      body: '다시 로그인하면 재가입할 수 있어요.',
-      confirmLabel: '탈퇴',
+      title: l.accountWithdrawTitle,
+      body: l.accountWithdrawBody,
+      confirmLabel: l.accountWithdrawConfirm,
       destructive: true,
     );
     if (ok != true || !mounted) return;
@@ -112,22 +121,23 @@ class _AccountScreenState extends State<AccountScreen> {
       await widget.auth.signOut();
       if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('탈퇴에 실패했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.accountWithdrawFailed)));
     }
   }
 
-  static String _themeModeLabel(CommunityThemeMode m) {
+  static String _themeModeLabel(CommunityThemeMode m, AppLocalizations l) {
     switch (m) {
       case CommunityThemeMode.system:
-        return '시스템 설정';
+        return l.accountThemeSystem;
       case CommunityThemeMode.light:
-        return '라이트';
+        return l.accountThemeLight;
       case CommunityThemeMode.dark:
-        return '다크';
+        return l.accountThemeDark;
     }
   }
 
   Future<void> _pickThemeMode() async {
+    final l = AppLocalizations.of(context)!;
     final controller = CommunityTheme.controllerOf(context);
     final selected = await showModalBottomSheet<CommunityThemeMode>(
       context: context,
@@ -137,13 +147,16 @@ class _AccountScreenState extends State<AccountScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '화면 테마',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    l.accountThemePickerTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -156,7 +169,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     for (final m in CommunityThemeMode.values)
                       RadioListTile<CommunityThemeMode>(
                         value: m,
-                        title: Text(_themeModeLabel(m)),
+                        title: Text(_themeModeLabel(m, l)),
                         activeColor: AppColors.accent,
                       ),
                   ],

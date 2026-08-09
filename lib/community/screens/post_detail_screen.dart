@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
@@ -40,12 +41,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool get _isMine => _uid.isNotEmpty && widget.post.authorUid == _uid;
 
   Future<void> _delete() async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.delete_outline,
-      title: '이 글을 삭제할까요?',
-      body: '삭제하면 되돌릴 수 없어요.',
-      confirmLabel: '삭제',
+      title: l.postDeleteTitle,
+      body: l.postDeleteBody,
+      confirmLabel: l.postDeleteTooltip,
       destructive: true,
     );
     if (ok != true || !mounted) return;
@@ -54,17 +56,18 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     final navigator = Navigator.of(context);
     try {
       await widget.posts.deletePost(widget.post);
-      messenger.showSnackBar(const SnackBar(content: Text('삭제했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.postDeleteSuccess)));
       navigator.pop();
     } catch (_) {
       if (mounted) {
         setState(() => _deleting = false);
-        messenger.showSnackBar(const SnackBar(content: Text('삭제에 실패했어요')));
+        messenger.showSnackBar(SnackBar(content: Text(l.postDeleteFailed)));
       }
     }
   }
 
   Future<void> _send() async {
+    final l = AppLocalizations.of(context)!;
     final text = _input.text.trim();
     if (text.isEmpty || _uid.isEmpty || _sending) return;
     setState(() => _sending = true);
@@ -74,7 +77,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       await widget.posts.addComment(
         postId: widget.post.id,
         uid: _uid,
-        authorName: profile?.nickname ?? '익명',
+        authorName: profile?.nickname ?? l.postAnonymous,
         authorPhotoUrl: profile?.photoUrl,
         text: text,
       );
@@ -83,7 +86,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('댓글 전송에 실패했어요')));
+        ).showSnackBar(SnackBar(content: Text(l.postCommentSendFailed)));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -91,12 +94,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Future<void> _confirmDelete(Comment c) async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.delete_outline,
-      title: '댓글을 삭제할까요?',
-      body: '삭제한 댓글은 되돌릴 수 없어요.',
-      confirmLabel: '삭제',
+      title: l.postCommentDeleteTitle,
+      body: l.postCommentDeleteBody,
+      confirmLabel: l.postDeleteTooltip,
       destructive: true,
     );
     if (ok != true) return;
@@ -107,12 +111,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('삭제에 실패했어요')));
+        ).showSnackBar(SnackBar(content: Text(l.postDeleteFailed)));
       }
     }
   }
 
   Future<void> _reportComment(Comment c) async {
+    final l = AppLocalizations.of(context)!;
     final reason = await showReportSheet(context);
     if (reason == null || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -123,21 +128,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         uid: _uid,
         reason: reason,
       );
-      messenger.showSnackBar(const SnackBar(content: Text('신고되었습니다')));
+      messenger.showSnackBar(SnackBar(content: Text(l.postReportSuccess)));
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('신고에 실패했어요 (이미 신고했을 수 있어요)')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l.postReportFailed)));
     }
   }
 
   Future<void> _blockAuthor(Comment c) async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.block,
-      title: '${c.authorName} 님을 차단할까요?',
-      body: '이 사용자의 게시물과 댓글이 보이지 않아요.',
-      confirmLabel: '차단',
+      title: l.postBlockTitle(c.authorName),
+      body: l.postBlockBody,
+      confirmLabel: l.feedBlockConfirm,
       destructive: true,
     );
     if (ok != true || !mounted) return;
@@ -148,9 +152,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         blockedUid: c.authorUid,
         blockedName: c.authorName,
       );
-      messenger.showSnackBar(const SnackBar(content: Text('차단했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.postBlockSuccess)));
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('차단에 실패했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.postBlockFailed)));
     }
   }
 
@@ -162,6 +166,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final post = widget.post;
     return Theme(
       data: CommunityTheme.themeOf(context),
@@ -171,7 +176,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           actions: [
             if (_isMine)
               IconButton(
-                tooltip: '삭제',
+                tooltip: l.postDeleteTooltip,
                 icon: const Icon(Icons.delete_outline),
                 onPressed: _deleting ? null : _delete,
               ),
@@ -221,9 +226,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             stream: widget.posts.comments(post.id),
                             builder: (context, snap) {
                               if (snap.hasError) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(24),
-                                  child: Center(child: Text('댓글을 불러오지 못했어요')),
+                                return Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Center(
+                                    child: Text(l.postCommentLoadFailed),
+                                  ),
                                 );
                               }
                               if (!snap.hasData) {
@@ -242,9 +249,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 reportedIds: reported,
                               );
                               if (items.isEmpty) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(24),
-                                  child: Center(child: Text('첫 댓글을 남겨보세요')),
+                                return Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Center(
+                                    child: Text(l.postCommentEmpty),
+                                  ),
                                 );
                               }
                               return Column(
@@ -285,14 +294,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                   _blockAuthor(c);
                                                 }
                                               },
-                                              itemBuilder: (_) => const [
+                                              itemBuilder: (_) => [
                                                 PopupMenuItem(
                                                   value: 'report',
-                                                  child: Text('신고하기'),
+                                                  child: Text(l.postMenuReport),
                                                 ),
                                                 PopupMenuItem(
                                                   value: 'block',
-                                                  child: Text('차단하기'),
+                                                  child: Text(l.postMenuBlock),
                                                 ),
                                               ],
                                             ),
@@ -324,9 +333,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         minLines: 1,
                         maxLines: 4,
                         enabled: _uid.isNotEmpty,
-                        decoration: const InputDecoration(
-                          hintText: '댓글을 남겨보세요',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          hintText: l.postCommentHint,
+                          border: const OutlineInputBorder(),
                           counterText: '',
                         ),
                       ),

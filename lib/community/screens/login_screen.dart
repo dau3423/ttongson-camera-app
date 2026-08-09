@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../models/user_profile.dart';
 import '../theme/community_theme.dart';
@@ -36,11 +37,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _email.text.trim();
     final pw = _pw.text;
     if (email.isEmpty || pw.isEmpty) {
-      setState(() => _err = '이메일과 비밀번호를 입력해주세요.');
+      setState(() => _err = AppLocalizations.of(context)!.authEmailEmpty);
       return;
     }
     if (!isValidEmail(email)) {
-      setState(() => _err = '올바른 이메일 형식이 아니에요.');
+      setState(() => _err = AppLocalizations.of(context)!.authInvalidEmail);
       return;
     }
     await _run(
@@ -83,48 +84,52 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _err = emailFlow ? _emailErrorMessage(e.code) : '로그인에 실패했어요.';
+          _err = emailFlow
+              ? _emailErrorMessage(e.code)
+              : AppLocalizations.of(context)!.authLoginFailed;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _busy = false;
-          _err = '로그인에 실패했어요. 다시 시도해 주세요.';
+          _err = AppLocalizations.of(context)!.authLoginFailedRetry;
         });
       }
     }
   }
 
   String _emailErrorMessage(String code) {
+    final l = AppLocalizations.of(context)!;
     switch (code) {
       case 'invalid-credential':
       case 'wrong-password':
       case 'user-not-found':
-        return '이메일 또는 비밀번호가 올바르지 않아요.';
+        return l.authWrongCredential;
       case 'invalid-email':
-        return '올바른 이메일 형식이 아니에요.';
+        return l.authInvalidEmail;
       case 'user-disabled':
-        return '사용할 수 없는 계정이에요.';
+        return l.authAccountDisabled;
       default:
-        return '로그인에 실패했어요. 다시 시도해 주세요.';
+        return l.authLoginFailedRetry;
     }
   }
 
   Future<bool?> _confirmRejoin() {
+    final l = AppLocalizations.of(context)!;
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('탈퇴한 계정이에요'),
-        content: const Text('이 계정은 탈퇴 처리됐어요. 다시 가입할까요?'),
+        title: Text(l.authWithdrawnTitle),
+        content: Text(l.authWithdrawnBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
+            child: Text(l.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('재가입'),
+            child: Text(l.authRejoin),
           ),
         ],
       ),
@@ -142,6 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
@@ -153,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.fromLTRB(30, 56, 30, 40),
                   children: [
                     Text(
-                      '다시 오셨네요',
+                      l.authWelcomeBack,
                       style: TextStyle(
                         fontFamily: AppFonts.display,
                         color: p.text,
@@ -164,18 +170,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '똥손도 프로처럼 · 로그인하고 이어서 찍기',
+                      l.authLoginSubtitle,
                       style: TextStyle(color: p.textMuted, fontSize: 14),
                     ),
                     const SizedBox(height: 36),
-                    const AuthLabel('이메일'),
+                    AuthLabel(l.authEmailLabel),
                     AuthField(
                       controller: _email,
                       hint: 'you@example.com',
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 18),
-                    const AuthLabel('비밀번호'),
+                    AuthLabel(l.authPasswordLabel),
                     AuthField(
                       controller: _pw,
                       hint: '••••••••',
@@ -201,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                     const SizedBox(height: 24),
                     AmberButton(
-                      label: '로그인',
+                      label: l.authLoginButton,
                       onTap: _busy ? null : _emailLogin,
                     ),
                     const SizedBox(height: 26),
@@ -241,10 +247,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: TextSpan(
                             style: TextStyle(color: p.textMuted, fontSize: 14),
                             children: [
-                              const TextSpan(text: '아직 계정이 없으신가요? '),
-                              const TextSpan(
-                                text: '회원가입',
-                                style: TextStyle(
+                              TextSpan(text: l.authNoAccount),
+                              TextSpan(
+                                text: l.authSignupLink,
+                                style: const TextStyle(
                                   color: AppColors.accent,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -269,9 +275,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: AuthSuccessOverlay(
                     circleColor: AppColors.accent,
                     emoji: '📷',
-                    title: '환영합니다!',
-                    subtitle: '이제 촬영을 시작해볼까요?',
-                    cta: '촬영하러 가기',
+                    title: l.authLoginSuccess,
+                    subtitle: l.authLoginSuccessSubtitle,
+                    cta: l.authLoginSuccessCta,
                     onCta: () => Navigator.pop(context, true),
                   ),
                 ),
@@ -287,12 +293,16 @@ class _OrDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(child: Divider(color: p.divider)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('또는', style: TextStyle(color: p.textMuted, fontSize: 12)),
+          child: Text(
+            l.authOrDivider,
+            style: TextStyle(color: p.textMuted, fontSize: 12),
+          ),
         ),
         Expanded(child: Divider(color: p.divider)),
       ],

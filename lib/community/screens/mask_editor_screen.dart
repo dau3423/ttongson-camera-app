@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../masking.dart';
 import '../mask_processor.dart';
 import '../models/mask_region.dart';
@@ -56,6 +57,7 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
   }
 
   Future<void> _done() async {
+    final l = AppLocalizations.of(context)!;
     if (_processing) return;
     setState(() => _processing = true);
     try {
@@ -66,7 +68,7 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
         setState(() => _processing = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('가림 처리에 실패했어요')));
+        ).showSnackBar(SnackBar(content: Text(l.maskEditorApplyFailed)));
       }
     }
   }
@@ -141,17 +143,18 @@ class _MaskEditorScreenState extends State<MaskEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     final decoded = _decoded;
     final selected = _selected;
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('개인정보 가림'),
+          title: Text(l.maskEditorTitle),
           actions: [
             TextButton(
               onPressed: _processing ? null : _done,
-              child: const Text('완료'),
+              child: Text(l.maskEditorDone),
             ),
           ],
         ),
@@ -237,6 +240,7 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -246,7 +250,7 @@ class _Controls extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                '드래그로 가릴 영역 추가 · 탭으로 선택',
+                l.maskEditorHint,
                 style: TextStyle(fontSize: 12, color: palette.textMuted),
               ),
             ),
@@ -255,12 +259,14 @@ class _Controls extends StatelessWidget {
               icon: Icon(
                 selectedEnabled ? Icons.visibility_off : Icons.visibility,
               ),
-              label: Text(selectedEnabled ? '가림 끄기' : '가림 켜기'),
+              label: Text(
+                selectedEnabled ? l.maskEditorShow : l.maskEditorHide,
+              ),
             ),
             TextButton.icon(
               onPressed: hasSelection ? onDelete : null,
               icon: const Icon(Icons.delete_outline),
-              label: const Text('삭제'),
+              label: Text(l.maskEditorDelete),
             ),
           ],
         ),

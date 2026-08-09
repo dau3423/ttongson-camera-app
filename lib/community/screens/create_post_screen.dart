@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/shooting_mode.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../mask_processor.dart';
 import '../post_repository.dart';
@@ -38,17 +39,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _pick() async {
+    final l = AppLocalizations.of(context)!;
     final picked = await ImagePicker().pickMultiImage();
     if (picked.isEmpty || !mounted) return;
     final remaining = _maxImages - _images.length;
     if (remaining <= 0) {
-      _snack('사진은 최대 10장까지 올릴 수 있어요');
+      _snack(l.createPostMaxImages);
       return;
     }
     var toAdd = picked;
     if (picked.length > remaining) {
       toAdd = picked.sublist(0, remaining);
-      _snack('사진은 최대 10장까지 올릴 수 있어요');
+      _snack(l.createPostMaxImages);
     }
     setState(() => _masking = true);
     try {
@@ -81,6 +83,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   void _removeAt(int i) => setState(() => _images.removeAt(i));
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context)!;
     final uid = widget.auth.currentUser?.uid;
     if (_images.isEmpty || uid == null || _uploading) return;
     setState(() => _uploading = true);
@@ -88,7 +91,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       final profile = await widget.auth.ensureMyProfile();
       await widget.posts.createPost(
         uid: uid,
-        authorName: profile?.nickname ?? '익명',
+        authorName: profile?.nickname ?? l.postAnonymous,
         images: _images.map((e) => e.masked).toList(),
         caption: _caption.text.trim(),
         mode: _mode,
@@ -97,7 +100,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _uploading = false);
-        _snack('업로드에 실패했어요');
+        _snack(l.createPostUploadFailed);
       }
     }
   }
@@ -111,17 +114,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('사진 올리기'),
+          title: Text(l.createPostTitle),
           actions: [
             TextButton(
               onPressed: (_images.isNotEmpty && !_uploading && !_masking)
                   ? _submit
                   : null,
-              child: const Text('올리기'),
+              child: Text(l.createPostSubmit),
             ),
           ],
         ),
@@ -196,14 +200,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '${_images.length}/$_maxImages · 얼굴은 자동으로 가려집니다. 사진을 탭해 수정할 수 있어요.',
+              l.createPostCountLabel(_images.length, _maxImages),
               style: TextStyle(
                 fontSize: 12,
                 color: p.text.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 16),
-            const Text('촬영 모드', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              l.createPostModeLabel,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -227,9 +234,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             TextField(
               controller: _caption,
               maxLength: 140,
-              decoration: const InputDecoration(
-                hintText: '한 줄 팁을 남겨보세요',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l.createPostCaptionHint,
+                border: const OutlineInputBorder(),
               ),
             ),
             if (_uploading)

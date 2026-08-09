@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/shooting_mode.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
 import '../auth_service.dart';
@@ -57,6 +58,7 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     final uid = widget.auth.currentUser?.uid ?? '';
     return Theme(
       data: CommunityTheme.themeOf(context),
@@ -65,24 +67,32 @@ class _FeedScreenState extends State<FeedScreen> {
           titleSpacing: 20,
           title: Row(
             children: [
-              const Text(
-                '촬영 팁',
-                style: TextStyle(
+              Text(
+                l.feedTitle,
+                style: const TextStyle(
                   fontFamily: AppFonts.display,
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              _Tab('인기', _popular, () => setState(() => _popular = true)),
+              _Tab(
+                l.feedTabPopular,
+                _popular,
+                () => setState(() => _popular = true),
+              ),
               const SizedBox(width: 4),
-              _Tab('최신', !_popular, () => setState(() => _popular = false)),
+              _Tab(
+                l.feedTabRecent,
+                !_popular,
+                () => setState(() => _popular = false),
+              ),
             ],
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.person_outline),
-              tooltip: '내 계정',
+              tooltip: l.feedMyAccountTooltip,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -100,7 +110,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 children: [
-                  _FilterChip('전체', _filter == null, () {
+                  _FilterChip(l.feedFilterAll, _filter == null, () {
                     setState(() => _filter = null);
                   }),
                   for (final m in ShootingMode.values)
@@ -136,7 +146,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   stream: widget.posts.feed(),
                   builder: (context, snap) {
                     if (snap.hasError) {
-                      return const Center(child: Text('불러오지 못했어요'));
+                      return Center(child: Text(l.feedLoadFailed));
                     }
                     if (!snap.hasData) {
                       return const Center(child: CircularProgressIndicator());
@@ -151,9 +161,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       ),
                     );
                     if (items.isEmpty) {
-                      return const Center(
-                        child: Text('아직 게시물이 없어요. 첫 사진을 올려보세요!'),
-                      );
+                      return Center(child: Text(l.feedEmpty));
                     }
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -285,26 +293,26 @@ class _PostCard extends StatelessWidget {
   });
 
   Future<void> _report(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
     final reason = await showReportSheet(context);
     if (reason == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
       await posts.reportPost(postId: post.id, uid: uid, reason: reason);
-      messenger.showSnackBar(const SnackBar(content: Text('신고되었습니다')));
+      messenger.showSnackBar(SnackBar(content: Text(l.feedReportSuccess)));
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('신고에 실패했어요 (이미 신고했을 수 있어요)')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l.feedReportFailed)));
     }
   }
 
   Future<void> _delete(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.delete_outline,
-      title: '이 글을 삭제할까요?',
-      body: '삭제하면 되돌릴 수 없어요.',
-      confirmLabel: '삭제',
+      title: l.feedDeleteTitle,
+      body: l.feedDeleteBody,
+      confirmLabel: l.feedDeleteConfirm,
       destructive: true,
     );
     if (ok != true || !context.mounted) return;
@@ -312,19 +320,20 @@ class _PostCard extends StatelessWidget {
     try {
       // 피드는 스트림이라 문서가 삭제되면 카드가 자동으로 사라진다.
       await posts.deletePost(post);
-      messenger.showSnackBar(const SnackBar(content: Text('삭제했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.feedDeleteSuccess)));
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('삭제에 실패했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.feedDeleteFailed)));
     }
   }
 
   Future<void> _block(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
     final ok = await showAppConfirm(
       context,
       icon: Icons.block,
-      title: '${post.authorName} 님을 차단할까요?',
-      body: '이 사용자의 게시물과 댓글이 보이지 않아요.',
-      confirmLabel: '차단',
+      title: l.feedBlockTitle(post.authorName),
+      body: l.feedBlockBody,
+      confirmLabel: l.feedBlockConfirm,
       destructive: true,
     );
     if (ok != true || !context.mounted) return;
@@ -335,15 +344,16 @@ class _PostCard extends StatelessWidget {
         blockedUid: post.authorUid,
         blockedName: post.authorName,
       );
-      messenger.showSnackBar(const SnackBar(content: Text('차단했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.feedBlockSuccess)));
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('차단에 실패했어요')));
+      messenger.showSnackBar(SnackBar(content: Text(l.feedBlockFailed)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     final initial = post.authorName.isNotEmpty
         ? post.authorName.characters.first
         : '?';
@@ -396,13 +406,16 @@ class _PostCard extends StatelessWidget {
                       if (v == 'report') _report(context);
                       if (v == 'block') _block(context);
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'report', child: Text('신고하기')),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'report',
+                        child: Text(l.feedMenuReport),
+                      ),
                       PopupMenuItem(
                         value: 'block',
                         child: Text(
-                          '차단하기',
-                          style: TextStyle(color: AppColors.danger),
+                          l.feedMenuBlock,
+                          style: const TextStyle(color: AppColors.danger),
                         ),
                       ),
                     ],
@@ -415,12 +428,12 @@ class _PostCard extends StatelessWidget {
                     onSelected: (v) {
                       if (v == 'delete') _delete(context);
                     },
-                    itemBuilder: (_) => const [
+                    itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          '삭제하기',
-                          style: TextStyle(color: AppColors.danger),
+                          l.feedMenuDelete,
+                          style: const TextStyle(color: AppColors.danger),
                         ),
                       ),
                     ],

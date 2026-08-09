@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../models/user_profile.dart';
 import '../theme/community_theme.dart';
@@ -34,27 +35,28 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _signup() async {
     if (_busy) return;
+    final l = AppLocalizations.of(context)!;
     final nick = _nick.text.trim();
     final email = _email.text.trim();
     final pw = _pw.text;
     if (nick.isEmpty || email.isEmpty || pw.isEmpty) {
-      setState(() => _err = '모든 항목을 입력해주세요.');
+      setState(() => _err = l.authAllFieldsRequired);
       return;
     }
     if (!isValidNickname(nick)) {
-      setState(() => _err = '닉네임은 1~20자로 입력해주세요.');
+      setState(() => _err = l.authNicknameInvalid);
       return;
     }
     if (!isValidEmail(email)) {
-      setState(() => _err = '올바른 이메일 형식이 아니에요.');
+      setState(() => _err = l.authInvalidEmail);
       return;
     }
     if (!isValidPassword(pw)) {
-      setState(() => _err = '비밀번호는 8자 이상이어야 해요.');
+      setState(() => _err = l.authWeakPassword);
       return;
     }
     if (!_agree) {
-      setState(() => _err = '약관에 동의해주세요.');
+      setState(() => _err = l.authAgreeRequired);
       return;
     }
     setState(() {
@@ -79,28 +81,30 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _err = '가입에 실패했어요. 다시 시도해 주세요.';
+          _err = l.authSignupFailed;
         });
       }
     }
   }
 
   String _signupErrorMessage(String code) {
+    final l = AppLocalizations.of(context)!;
     switch (code) {
       case 'email-already-in-use':
-        return '이미 가입된 이메일이에요. 로그인해 주세요.';
+        return l.authEmailInUse;
       case 'invalid-email':
-        return '올바른 이메일 형식이 아니에요.';
+        return l.authInvalidEmail;
       case 'weak-password':
-        return '비밀번호가 너무 약해요. 8자 이상으로 해주세요.';
+        return l.authWeakPasswordServer;
       default:
-        return '가입에 실패했어요. 다시 시도해 주세요.';
+        return l.authSignupFailed;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
@@ -114,7 +118,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   padding: const EdgeInsets.fromLTRB(30, 40, 30, 40),
                   children: [
                     Text(
-                      '가입하기',
+                      l.authSignupTitle,
                       style: TextStyle(
                         fontFamily: AppFonts.display,
                         color: p.text,
@@ -125,22 +129,26 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '30초면 충분해요',
+                      l.authSignupSubtitle,
                       style: TextStyle(color: p.textMuted, fontSize: 14),
                     ),
                     const SizedBox(height: 30),
-                    const AuthLabel('닉네임'),
-                    AuthField(controller: _nick, hint: '똥손탈출러'),
+                    AuthLabel(l.authNicknameLabel),
+                    AuthField(controller: _nick, hint: l.authNicknameHint),
                     const SizedBox(height: 16),
-                    const AuthLabel('이메일'),
+                    AuthLabel(l.authEmailLabel),
                     AuthField(
                       controller: _email,
                       hint: 'you@example.com',
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
-                    const AuthLabel('비밀번호'),
-                    AuthField(controller: _pw, hint: '8자 이상', obscure: true),
+                    AuthLabel(l.authPasswordLabel),
+                    AuthField(
+                      controller: _pw,
+                      hint: l.authPasswordHint,
+                      obscure: true,
+                    ),
                     const SizedBox(height: 20),
                     _AgreeRow(
                       checked: _agree,
@@ -158,7 +166,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ],
                     const SizedBox(height: 14),
                     AmberButton(
-                      label: '가입하고 시작하기',
+                      label: l.authSignupButton,
                       onTap: _busy ? null : _signup,
                     ),
                     const SizedBox(height: 22),
@@ -168,11 +176,11 @@ class _SignupScreenState extends State<SignupScreen> {
                         child: RichText(
                           text: TextSpan(
                             style: TextStyle(color: p.textMuted, fontSize: 14),
-                            children: const [
-                              TextSpan(text: '이미 계정이 있으신가요? '),
+                            children: [
+                              TextSpan(text: l.authHaveAccount),
                               TextSpan(
-                                text: '로그인',
-                                style: TextStyle(
+                                text: l.authSigninLink,
+                                style: const TextStyle(
                                   color: AppColors.accent,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -197,9 +205,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: AuthSuccessOverlay(
                     circleColor: AppColors.ready,
                     emoji: '🎉',
-                    title: '가입 완료!',
-                    subtitle: '이제 촬영을 시작해볼까요?',
-                    cta: '촬영하러 가기',
+                    title: l.authSignupSuccess,
+                    subtitle: l.authLoginSuccessSubtitle,
+                    cta: l.authLoginSuccessCta,
                     onCta: () => Navigator.pop(context, true),
                   ),
                 ),
@@ -219,6 +227,7 @@ class _AgreeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -243,7 +252,7 @@ class _AgreeRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '이용약관 및 개인정보 처리방침에 동의합니다',
+              l.authAgreeTerms,
               style: TextStyle(
                 color: p.text.withValues(alpha: 0.7),
                 fontSize: 13,
