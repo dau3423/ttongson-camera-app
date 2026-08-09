@@ -1,6 +1,6 @@
 # 번역 검수표 (ko 기준 → en / ja / zh)
 
-총 210개 키(검수 완료본). 수정할 값 있으면 알려주세요.
+총 211개 키(검수 완료본). 수정할 값 있으면 알려주세요.
 
 | key | ko | en | ja | zh |
 |---|---|---|---|---|
@@ -31,6 +31,7 @@
 | `commonCancel` | 취소 | Cancel | キャンセル | 取消 |
 | `commonAgree` | 동의 | Agree | 同意する | 同意 |
 | `commonRetry` | 다시 시도 | Retry | 再試行 | 重试 |
+| `commonDelete` | 삭제 | Delete | 削除 | 删除 |
 | `cameraSwitchFailed` | 카메라 전환에 실패했어요 | Couldn't switch camera | カメラの切り替えに失敗しました | 切换相机失败 |
 | `galleryOpenFailed` | 사진첩을 열 수 없어요 | Can't open photo library | 写真を開けませんでした | 无法打开相册 |
 | `saveFailed` | 저장 실패: {error} | Save failed: {error} | 保存失敗: {error} | 保存失败：{error} |

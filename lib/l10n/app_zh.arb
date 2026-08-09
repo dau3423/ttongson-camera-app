@@ -28,6 +28,7 @@
   "commonCancel": "取消",
   "commonAgree": "同意",
   "commonRetry": "重试",
+  "commonDelete": "删除",
   "cameraSwitchFailed": "切换相机失败",
   "galleryOpenFailed": "无法打开相册",
   "saveFailed": "保存失败：{error}",

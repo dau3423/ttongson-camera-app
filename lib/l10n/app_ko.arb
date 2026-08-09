@@ -28,6 +28,7 @@
   "commonCancel": "취소",
   "commonAgree": "동의",
   "commonRetry": "다시 시도",
+  "commonDelete": "삭제",
   "cameraSwitchFailed": "카메라 전환에 실패했어요",
   "galleryOpenFailed": "사진첩을 열 수 없어요",
   "saveFailed": "저장 실패: {error}",

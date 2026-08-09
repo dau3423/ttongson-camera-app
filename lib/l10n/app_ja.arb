@@ -28,6 +28,7 @@
   "commonCancel": "キャンセル",
   "commonAgree": "同意する",
   "commonRetry": "再試行",
+  "commonDelete": "削除",
   "cameraSwitchFailed": "カメラの切り替えに失敗しました",
   "galleryOpenFailed": "写真を開けませんでした",
   "saveFailed": "保存失敗: {error}",

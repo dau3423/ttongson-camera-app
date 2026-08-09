@@ -28,6 +28,7 @@
   "commonCancel": "Cancel",
   "commonAgree": "Agree",
   "commonRetry": "Retry",
+  "commonDelete": "Delete",
   "cameraSwitchFailed": "Couldn't switch camera",
   "galleryOpenFailed": "Can't open photo library",
   "saveFailed": "Save failed: {error}",

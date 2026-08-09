@@ -47,7 +47,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       icon: Icons.delete_outline,
       title: l.postDeleteTitle,
       body: l.postDeleteBody,
-      confirmLabel: l.postDeleteTooltip,
+      confirmLabel: l.commonDelete,
       destructive: true,
     );
     if (ok != true || !mounted) return;
@@ -100,7 +100,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       icon: Icons.delete_outline,
       title: l.postCommentDeleteTitle,
       body: l.postCommentDeleteBody,
-      confirmLabel: l.postDeleteTooltip,
+      confirmLabel: l.commonDelete,
       destructive: true,
     );
     if (ok != true) return;
