@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import 'pose.dart';
 
@@ -10,6 +11,7 @@ Future<void> showPosePicker(
   required void Function(Pose?) onSelect,
   required VoidCallback onAiRecommend,
 }) {
+  final l = AppLocalizations.of(context)!;
   final grouped = groupByCategory(poses);
   return showModalBottomSheet<void>(
     context: context,
@@ -28,7 +30,7 @@ Future<void> showPosePicker(
                     onSelect(null);
                   },
                   icon: const Icon(Icons.visibility_off, size: 18),
-                  label: const Text('끄기'),
+                  label: Text(l.poseOff),
                 ),
                 const Spacer(),
                 TextButton.icon(
@@ -37,17 +39,17 @@ Future<void> showPosePicker(
                     onAiRecommend();
                   },
                   icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('AI 추천'),
+                  label: Text(l.poseAiRecommend),
                 ),
               ],
             ),
-            const TabBar(
+            TabBar(
               isScrollable: true,
               tabs: [
-                Tab(text: '셀카'),
-                Tab(text: '전신'),
-                Tab(text: '커플'),
-                Tab(text: '우정'),
+                Tab(text: l.poseCategorySelfie),
+                Tab(text: l.poseCategoryFullBody),
+                Tab(text: l.poseCategoryCouple),
+                Tab(text: l.poseCategoryFriends),
               ],
             ),
             SizedBox(
@@ -79,8 +81,9 @@ class _PoseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     if (poses.isEmpty) {
-      return const Center(child: Text('포즈 준비 중'));
+      return Center(child: Text(l.posePreparing));
     }
     return ListView(
       scrollDirection: Axis.horizontal,

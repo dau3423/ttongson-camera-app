@@ -2,6 +2,7 @@
 // 역할 선택 + 호스트 QR 표시. 판단 없음: 표시·선택만.
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 
 import '../remote/protocol/pairing_payload.dart';
 
@@ -13,8 +14,9 @@ class RemotePairingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('리모컨 촬영')),
+      appBar: AppBar(title: Text(l.remotePairingTitle)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -24,21 +26,21 @@ class RemotePairingScreen extends StatelessWidget {
             _roleCard(
               context,
               icon: Icons.photo_camera,
-              title: '이 폰으로 촬영하기',
-              subtitle: '삼각대에 두고, 다른 폰에서 QR을 스캔해요',
+              title: l.remotePairingHostTitle,
+              subtitle: l.remotePairingHostSubtitle,
               role: RemoteRole.host,
             ),
             const SizedBox(height: 16),
             _roleCard(
               context,
               icon: Icons.settings_remote,
-              title: '이 폰을 리모컨으로',
-              subtitle: '촬영 폰에 뜬 QR을 스캔해서 연결해요',
+              title: l.remotePairingRemoteTitle,
+              subtitle: l.remotePairingRemoteSubtitle,
               role: RemoteRole.remote,
             ),
             const SizedBox(height: 24),
             Text(
-              '두 폰이 같은 Wi-Fi(또는 한 폰의 핫스팟)에 있어야 해요.',
+              l.remotePairingWifiHint,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -75,8 +77,9 @@ class RemoteHostQrScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('리모컨 연결 대기')),
+      appBar: AppBar(title: Text(l.remoteHostQrTitle)),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -87,10 +90,7 @@ class RemoteHostQrScreen extends StatelessWidget {
               child: QrImageView(data: payload.encode(), size: 240),
             ),
             const SizedBox(height: 24),
-            const Text(
-              '리모컨 폰의 똥손카메라에서\n[리모컨 촬영 → 이 폰을 리모컨으로]를 눌러\n이 QR을 스캔하세요.',
-              textAlign: TextAlign.center,
-            ),
+            Text(l.remoteHostQrInstruction, textAlign: TextAlign.center),
             const SizedBox(height: 12),
             const CircularProgressIndicator(),
           ],

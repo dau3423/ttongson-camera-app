@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 
 import '../remote/protocol/pairing_payload.dart';
 import '../remote/protocol/remote_message.dart';
@@ -79,6 +80,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     PairingPayload payload, {
     bool viaReconnect = false,
   }) async {
+    final l = AppLocalizations.of(context)!;
     setState(() => _phase = _Phase.connecting);
     try {
       final welcome = await _client.connect(payload);
@@ -102,10 +104,10 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       });
     } on RemoteRejectedException catch (e) {
       _fail(switch (e.reason) {
-        'bad-token' => 'QR이 만료됐어요. 촬영 폰에서 QR을 다시 띄워 스캔해 주세요.',
-        'busy' => '이미 다른 리모컨이 연결돼 있어요.',
-        'version' => '연결이 거부됐어요. 두 폰의 앱을 최신으로 업데이트해 주세요.',
-        _ => '연결이 거부됐어요. 두 폰의 앱을 최신으로 업데이트해 주세요.',
+        'bad-token' => l.remoteQrExpired,
+        'busy' => l.remoteBusy,
+        'version' => l.remoteVersionMismatch,
+        _ => l.remoteVersionMismatch,
       });
     } catch (_) {
       // I3(c): viaReconnect이고 정책이 소진되지 않았으면 재접속 경로로 처리.
@@ -113,7 +115,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
       if (viaReconnect) {
         _scheduleReconnect();
       } else {
-        _fail('연결하지 못했어요. 두 폰이 같은 Wi-Fi(또는 핫스팟)에 있는지 확인해 주세요.');
+        _fail(l.remoteConnectFailed);
       }
     }
   }
@@ -133,6 +135,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
   // I3: 재접속 스케줄링 로직 분리 — _onDisconnected와 _connect catch 양쪽에서 호출.
   void _scheduleReconnect() {
     if (!mounted) return;
+    final l = AppLocalizations.of(context)!;
     _watchdogTimer?.cancel();
     _cancelCountdown();
     setState(() {
@@ -141,7 +144,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     final delay = _reconnect.next();
     final payload = _payload;
     if (delay == null || payload == null) {
-      _fail('연결이 끊겼어요.');
+      _fail(l.remoteDisconnected);
       return;
     }
     setState(() => _phase = _Phase.connecting);
@@ -170,6 +173,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
 
   void _onMessage(RemoteMessage m) {
     if (!mounted) return;
+    final l = AppLocalizations.of(context)!;
     _lastRxAt = DateTime.now(); // I2: 메시지 수신 시각 갱신
     switch (m) {
       case StateMessage():
@@ -192,15 +196,15 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
                 children: [
                   Image.memory(thumb, height: 56),
                   const SizedBox(width: 12),
-                  const Text('찰칵! 촬영 폰에 저장했어요'),
+                  Text(l.remoteCaptureSuccess),
                 ],
               ),
             ),
           );
         } else if (!m.ok) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(m.error ?? '명령이 실패했어요')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(m.error ?? l.remoteCommandFailed)),
+          );
         }
       default:
         break;
@@ -249,25 +253,26 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: const Text('리모컨')),
+      appBar: AppBar(title: Text(l.remoteControlTitle)),
       body: switch (_phase) {
-        _Phase.scanning => _scanner(),
+        _Phase.scanning => _scanner(l),
         _Phase.connecting => const Center(child: CircularProgressIndicator()),
         _Phase.failed => Center(
           child: ElevatedButton(
             onPressed: () => setState(() => _phase = _Phase.scanning),
-            child: const Text('QR 다시 스캔'),
+            child: Text(l.remoteQrRescan),
           ),
         ),
-        _Phase.connected => _controls(),
+        _Phase.connected => _controls(l),
       },
     );
   }
 
   /// QR 스캔 단계 UI. 스캔 프레임·안내 문구로 촬영 화면과 혼동되지 않게 한다.
-  Widget _scanner() {
+  Widget _scanner(AppLocalizations l) {
     const frameSize = 260.0;
     return Stack(
       fit: StackFit.expand,
@@ -323,9 +328,9 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  '촬영 폰에 표시된 QR 코드를 스캔하세요',
-                  style: TextStyle(
+                child: Text(
+                  l.remoteScanPrompt,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -334,9 +339,9 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '촬영 폰: 카메라 화면 상단 리모컨 아이콘 → 이 폰으로 촬영하기',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+              Text(
+                l.remoteScanHint,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -346,7 +351,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     );
   }
 
-  Widget _controls() {
+  Widget _controls(AppLocalizations l) {
     final welcome = _welcome!;
     final shutterEnabled = _pendingShutterSeq == null; // I1: in-flight이면 비활성
     return Column(
@@ -381,7 +386,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          _hints.isEmpty ? '좋아요' : _hints.first,
+                          _hints.isEmpty ? l.remoteHintReady : _hints.first,
                           style: TextStyle(
                             color: _hints.isEmpty
                                 ? Colors.greenAccent
@@ -433,7 +438,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _timerButton(),
+              _timerButton(l),
               // I1: shutterEnabled가 false면 비활성(onTap null).
               GestureDetector(
                 onTap: shutterEnabled ? _sendShutter : null,
@@ -463,7 +468,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
     );
   }
 
-  Widget _timerButton() {
+  Widget _timerButton(AppLocalizations l) {
     const options = [0, 3, 5, 10];
     return TextButton(
       onPressed: () {
@@ -472,7 +477,7 @@ class _RemoteControlScreenState extends State<RemoteControlScreen> {
         setState(() => _timerSeconds = next);
       },
       child: Text(
-        _timerSeconds == 0 ? '타이머\n끔' : '타이머\n$_timerSeconds초',
+        _timerSeconds == 0 ? l.remoteTimerOff : l.remoteTimerOn(_timerSeconds),
         textAlign: TextAlign.center,
         style: const TextStyle(color: Colors.white),
       ),
