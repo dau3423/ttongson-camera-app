@@ -406,6 +406,9 @@ class _CameraScreenState extends State<CameraScreen>
 
   Future<void> _capture() async {
     _triggerCaptureFeedback();
+    // async gap 전에 context 의존값을 미리 캡처(사용 시점 dispose 경쟁 회피).
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context)!;
     try {
       final String shotPath;
       if (_portrait && _mode == ShootingMode.person) {
@@ -428,15 +431,9 @@ class _CameraScreenState extends State<CameraScreen>
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.saveFailed(e.toString()),
-            ),
-          ),
-        );
-      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.saveFailed(e.toString()))),
+      );
     } finally {
       if (mounted) {
         _camera.startStream(_onFrame);
