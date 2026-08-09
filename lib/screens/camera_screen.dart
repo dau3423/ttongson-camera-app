@@ -209,10 +209,11 @@ class _CameraScreenState extends State<CameraScreen>
         final stateNow = DateTime.now();
         if (stateNow.difference(_lastStateSentAt).inMilliseconds >= 500) {
           _lastStateSentAt = stateNow;
-          // 호스트(이 기기) 로케일로 힌트를 만들어 전송한다. State.context는
-          // 프레임 콜백에서도 유효하므로 mounted 가드 후 사용.
-          final hints = mounted
-              ? activeHintTexts(AppLocalizations.of(context)!, m)
+          // 호스트(이 기기) 로케일로 힌트를 만들어 전송한다. mounted를 확인한
+          // 뒤 사이에 await 없이 즉시 context를 읽으므로 dispose와 경쟁하지 않는다.
+          final l10n = mounted ? AppLocalizations.of(context) : null;
+          final hints = l10n != null
+              ? activeHintTexts(l10n, m)
               : const <String>[];
           host.pushState(
             StateMessage(
