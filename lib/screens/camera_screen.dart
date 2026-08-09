@@ -363,9 +363,11 @@ class _CameraScreenState extends State<CameraScreen>
       // switchCamera는 실패 시 원래 렌즈로 복구하므로 프리뷰를 다시 켠다.
       if (mounted) {
         setState(() => _ready = true);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('카메라 전환에 실패했어요')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.cameraSwitchFailed),
+          ),
+        );
       }
       return false;
     }
@@ -375,15 +377,19 @@ class _CameraScreenState extends State<CameraScreen>
     try {
       final ok = await openDeviceGallery();
       if (!ok && mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('사진첩을 열 수 없어요')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.galleryOpenFailed),
+          ),
+        );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('사진첩을 열 수 없어요')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.galleryOpenFailed),
+          ),
+        );
       }
     }
   }
@@ -423,9 +429,13 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.saveFailed(e.toString()),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -448,19 +458,16 @@ class _CameraScreenState extends State<CameraScreen>
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('구도 추천 안내'),
-          content: const Text(
-            '구도 추천 시 현재 화면 1장을 분석 서버로 전송합니다. '
-            '이미지는 저장하지 않습니다.',
-          ),
+          title: Text(AppLocalizations.of(ctx)!.compositionConsentTitle),
+          content: Text(AppLocalizations.of(ctx)!.compositionConsentBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('취소'),
+              child: Text(AppLocalizations.of(ctx)!.commonCancel),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('동의'),
+              child: Text(AppLocalizations.of(ctx)!.commonAgree),
             ),
           ],
         ),
@@ -484,7 +491,7 @@ class _CameraScreenState extends State<CameraScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('추천을 못 받았어요. 다시 시도해 주세요.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.suggestFailed)),
         );
       }
     } finally {
@@ -495,9 +502,9 @@ class _CameraScreenState extends State<CameraScreen>
 
   void _openPosePicker() {
     if (_poses.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('포즈를 불러오지 못했어요')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.posesLoadFailed)),
+      );
       return;
     }
     showPosePicker(
@@ -518,16 +525,16 @@ class _CameraScreenState extends State<CameraScreen>
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('AI 추천 안내'),
-          content: const Text('추천 시 현재 화면 1장을 분석 서버로 전송합니다. 이미지는 저장하지 않습니다.'),
+          title: Text(AppLocalizations.of(ctx)!.aiConsentTitle),
+          content: Text(AppLocalizations.of(ctx)!.aiConsentBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('취소'),
+              child: Text(AppLocalizations.of(ctx)!.commonCancel),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('동의'),
+              child: Text(AppLocalizations.of(ctx)!.commonAgree),
             ),
           ],
         ),
@@ -555,9 +562,11 @@ class _CameraScreenState extends State<CameraScreen>
         }
       }
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('추천을 못 받았어요. 다시 시도해 주세요.')),
-      );
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.suggestFailed)),
+        );
+      }
     } finally {
       if (mounted) {
         _camera.startStream(_onFrame);
@@ -685,9 +694,15 @@ class _CameraScreenState extends State<CameraScreen>
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('카메라를 다시 시작하지 못했어요: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(
+                  context,
+                )!.cameraRestartFailedDetail(e.toString()),
+              ),
+            ),
+          );
         }
       }
       return;
@@ -704,8 +719,8 @@ class _CameraScreenState extends State<CameraScreen>
     if (ip == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Wi-Fi에 연결돼 있지 않아요. 같은 Wi-Fi 또는 핫스팟에 연결해 주세요.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.wifiNotConnected),
           ),
         );
       }
@@ -767,7 +782,9 @@ class _CameraScreenState extends State<CameraScreen>
       await _stopHost();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('리모컨 연결 준비에 실패했어요. 잠시 후 다시 시도해 주세요.')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.remotePrepFailed),
+          ),
         );
       }
       return null;
@@ -1009,7 +1026,7 @@ class _CameraScreenState extends State<CameraScreen>
                   });
                   _init();
                 },
-                child: const Text('다시 시도'),
+                child: Text(AppLocalizations.of(context)!.commonRetry),
               ),
             ],
           ),
@@ -1129,7 +1146,13 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                _remoteConnected ? '리모컨 연결됨' : '리모컨 대기 중',
+                                _remoteConnected
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.remoteConnected
+                                    : AppLocalizations.of(
+                                        context,
+                                      )!.remoteWaiting,
                                 style: const TextStyle(color: Colors.white),
                               ),
                               const SizedBox(width: 6),
