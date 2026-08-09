@@ -225,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(width: 10),
                         ],
                         AuthOutlineButton(
-                          label: '카카오',
+                          label: l.authKakao,
                           onTap: _busy
                               ? null
                               : () => _run(widget.auth.signInWithKakao),

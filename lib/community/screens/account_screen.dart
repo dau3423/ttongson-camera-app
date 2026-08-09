@@ -187,22 +187,23 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final p = CommunityTheme.paletteOf(context);
+    final l = AppLocalizations.of(context)!;
     return Theme(
       data: CommunityTheme.themeOf(context),
       child: Scaffold(
-        appBar: AppBar(title: const Text('내 프로필')),
+        appBar: AppBar(title: Text(l.accountTitle)),
         body: StreamBuilder<UserProfile?>(
           stream: widget.users.watchProfile(_uid),
           builder: (context, snap) {
             if (snap.hasError) {
-              return const Center(child: Text('불러오지 못했어요'));
+              return Center(child: Text(l.accountLoadFailed));
             }
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
             final profile = snap.data;
             if (profile == null) {
-              return const Center(child: Text('프로필이 없어요'));
+              return Center(child: Text(l.accountNoProfile));
             }
             final hasPhoto =
                 profile.photoUrl != null && profile.photoUrl!.isNotEmpty;
@@ -274,7 +275,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        profile.userId ?? '${profile.loginType.name} 로그인',
+                        profile.userId ??
+                            '${profile.loginType.name}${l.accountLoginTypeSuffix}',
                         style: TextStyle(
                           fontFamily: AppFonts.mono,
                           color: p.textMuted,
@@ -287,17 +289,17 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 20),
                 _tile(
                   icon: Icons.edit_outlined,
-                  label: '닉네임 편집',
+                  label: l.accountEditNickname,
                   onTap: () => _editNickname(profile.nickname),
                 ),
                 _tile(
                   icon: Icons.image_outlined,
-                  label: '프로필 사진 변경',
+                  label: l.accountChangePhoto,
                   onTap: _busy ? null : _changePhoto,
                 ),
                 _tile(
                   icon: Icons.badge_outlined,
-                  label: '로그인 방식',
+                  label: l.accountLoginMethod,
                   trailing: Text(
                     profile.loginType.name,
                     style: TextStyle(color: p.textMuted),
@@ -305,7 +307,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 _tile(
                   icon: Icons.block,
-                  label: '차단한 사용자',
+                  label: l.accountBlockedUsers,
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -318,9 +320,12 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 _tile(
                   icon: Icons.brightness_6_outlined,
-                  label: '화면 테마',
+                  label: l.accountTheme,
                   trailing: Text(
-                    _themeModeLabel(CommunityTheme.controllerOf(context).mode),
+                    _themeModeLabel(
+                      CommunityTheme.controllerOf(context).mode,
+                      l,
+                    ),
                     style: TextStyle(color: p.textMuted),
                   ),
                   onTap: _pickThemeMode,
@@ -341,9 +346,9 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                       minimumSize: const Size.fromHeight(0),
                     ),
-                    child: const Text(
-                      '로그아웃',
-                      style: TextStyle(
+                    child: Text(
+                      l.accountLogout,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -355,7 +360,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: TextButton(
                     onPressed: _withdraw,
                     child: Text(
-                      '회원 탈퇴',
+                      l.accountWithdraw,
                       style: TextStyle(color: p.textMuted, fontSize: 13),
                     ),
                   ),
@@ -412,8 +417,9 @@ class _NicknameEditDialogState extends State<_NicknameEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('닉네임 편집'),
+      title: Text(l.accountEditNicknameTitle),
       content: TextField(
         controller: _controller,
         maxLength: 20,
@@ -424,11 +430,11 @@ class _NicknameEditDialogState extends State<_NicknameEditDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
+          child: Text(l.commonCancel),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: const Text('저장'),
+          child: Text(l.accountSave),
         ),
       ],
     );

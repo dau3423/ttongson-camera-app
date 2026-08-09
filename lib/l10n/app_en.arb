@@ -84,6 +84,7 @@
   "authSignupButton": "Sign up and start",
   "authHaveAccount": "Already have an account? ",
   "authSigninLink": "Sign in",
+  "authKakao": "Kakao",
   "authAllFieldsRequired": "Please fill in all fields.",
   "authNicknameInvalid": "Nickname must be 1–20 characters.",
   "authWeakPassword": "Password must be at least 8 characters.",

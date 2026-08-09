@@ -84,6 +84,7 @@
   "authSignupButton": "가입하고 시작하기",
   "authHaveAccount": "이미 계정이 있으신가요? ",
   "authSigninLink": "로그인",
+  "authKakao": "카카오",
   "authAllFieldsRequired": "모든 항목을 입력해주세요.",
   "authNicknameInvalid": "닉네임은 1~20자로 입력해주세요.",
   "authWeakPassword": "비밀번호는 8자 이상이어야 해요.",

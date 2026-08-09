@@ -84,6 +84,7 @@
   "authSignupButton": "注册并开始",
   "authHaveAccount": "已有账户？ ",
   "authSigninLink": "登录",
+  "authKakao": "Kakao",
   "authAllFieldsRequired": "请填写所有字段。",
   "authNicknameInvalid": "昵称需为1至20个字符。",
   "authWeakPassword": "密码至少需要8个字符。",

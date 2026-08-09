@@ -84,6 +84,7 @@
   "authSignupButton": "登録して始める",
   "authHaveAccount": "すでにアカウントをお持ちですか？ ",
   "authSigninLink": "ログイン",
+  "authKakao": "カカオ",
   "authAllFieldsRequired": "すべての項目を入力してください。",
   "authNicknameInvalid": "ニックネームは1〜20文字で入力してください。",
   "authWeakPassword": "パスワードは8文字以上にしてください。",
