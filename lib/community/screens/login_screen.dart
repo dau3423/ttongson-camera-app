@@ -2,7 +2,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../models/user_profile.dart';
 import '../theme/community_theme.dart';

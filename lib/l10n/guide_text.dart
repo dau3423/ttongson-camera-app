@@ -1,4 +1,4 @@
-import 'app_localizations.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../analysis/tilt.dart';
 import '../analysis/headroom.dart';
 import '../analysis/angle_zoom.dart';

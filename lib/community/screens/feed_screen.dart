@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/shooting_mode.dart';
 import '../../theme/app_colors.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../post_repository.dart';
 import '../user_repository.dart';
 import '../auth_service.dart';

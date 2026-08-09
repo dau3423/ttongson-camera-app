@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:ttongson_camera/l10n/app_localizations.dart';
 import '../auth_service.dart';
 import '../user_repository.dart';
 import '../models/user_profile.dart';
